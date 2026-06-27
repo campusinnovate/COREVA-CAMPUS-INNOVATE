@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Innovate - Workspace Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root { 
+            --primary: #0A3055; 
+            --secondary: #F6B23B; 
+            --bg-app: #f1f5f9; 
+            --bg-panel: #ffffff;
+            --text-dark: #0f172a; 
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --chat-me: #e0f2fe;
+            --chat-other: #ffffff;
+            --green: #10b981; 
+            --red: #ef4444; 
+            --blue: #3b82f6; 
+            --mention-bg: #eff6ff;
+            --mention-text: #2563eb;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: var(--bg-app);
+            color: var(--text-dark);
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+        }
+
+        /* ANIMASI */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* TOAST NOTIFICATION */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999999; display: flex; flex-direction: column; gap: 12px; pointer-events: none;}
+        .toast { background: var(--bg-panel); border-left: 5px solid var(--primary); box-shadow: var(--shadow-md); padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; min-width: 280px; transform: translateX(120%); pointer-events: auto; animation: slideInToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOutToast 0.4s forwards 4s; }
+        .toast.success { border-left-color: var(--green); }
+        .toast.error { border-left-color: var(--red); }
+        .toast i { font-size: 1.4rem; color: var(--primary); }
+        .toast.success i { color: var(--green); }
+        .toast.error i { color: var(--red); }
+        .toast-content { display: flex; flex-direction: column; }
+        .toast-title { font-weight: 800; font-size: 0.95rem; color: var(--text-dark); }
+        .toast-message { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin-top: 3px;}
+
+        @keyframes slideInToast { to { transform: translateX(0); } }
+        @keyframes fadeOutToast { to { opacity: 0; transform: translateX(100%); visibility: hidden; } }
+
+        /* SIDEBAR KIRI */
+        .app-sidebar { width: 75px; background: var(--bg-panel); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; padding: 20px 0; z-index: 100; box-shadow: var(--shadow-sm);}
+        .app-sidebar .logo { width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #1a4b80); color: var(--secondary); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; margin-bottom: 35px; cursor: pointer; box-shadow: var(--shadow-md); transition: 0.3s;}
+        .app-sidebar .logo:hover { transform: scale(1.05) rotate(-5deg); }
+        .nav-icon { width: 55px; height: 55px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #94a3b8; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 14px; margin-bottom: 8px; text-decoration: none; position: relative; }
+        .nav-icon:hover { color: var(--primary); background: #f8fafc; transform: translateY(-2px); }
+        .nav-icon.active { color: var(--primary); background: #eff6ff; box-shadow: inset 3px 0 0 var(--primary); border-radius: 10px; }
+        .nav-icon i { font-size: 1.35rem; margin-bottom: 4px; transition: 0.3s;}
+        .nav-icon:hover i { transform: scale(1.1); }
+        .nav-icon span { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.5px;}
+
+        .sidebar-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 15px;}
+        .profile-avatar-mini { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--secondary), #f59e0b); color: var(--primary); display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.2rem; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-md); transition: 0.3s;}
+        .profile-avatar-mini:hover { transform: scale(1.1); }
+
+        /* PANEL LIST CHAT */
+        .chat-list-panel { width: 340px; background: #f8fafc; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 90; }
+        .chat-list-header { padding: 25px 20px 15px; background: #f8fafc; }
+        .chat-list-header h2 { font-size: 1.5rem; font-weight: 900; color: var(--primary); display: flex; justify-content: space-between; align-items: center;}
+        .chat-list-header h2 button { background: white; border: 1px solid var(--border-color); width: 35px; height: 35px; border-radius: 10px; font-size: 1rem; color: var(--text-dark); cursor: pointer; transition: 0.3s; box-shadow: var(--shadow-sm);}
+        .chat-list-header h2 button:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: var(--shadow-md);}
+        
+        .search-box { margin-top: 15px; position: relative; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1rem;}
+        .search-box input { width: 100%; padding: 12px 15px 12px 42px; border: 1px solid var(--border-color); border-radius: 12px; outline: none; background: white; font-size: 0.9rem; font-weight: 600; box-shadow: var(--shadow-sm); transition: 0.3s;}
+        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(10, 48, 85, 0.1);}
+
+        .chat-tabs { display: flex; padding: 0 15px; margin-bottom: 10px; gap: 5px; }
+        .chat-tab { flex: 1; text-align: center; padding: 8px 0; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); cursor: pointer; border-radius: 20px; transition: 0.3s; }
+        .chat-tab:hover { background: #e2e8f0; color: var(--text-dark); }
+        .chat-tab.active { background: var(--primary); color: white; box-shadow: var(--shadow-sm); }
+
+        .chat-list-content { flex: 1; overflow-y: auto; padding: 10px 15px; }
+        .chat-list-content::-webkit-scrollbar { width: 6px; }
+        .chat-list-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .chat-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 14px; cursor: pointer; transition: all 0.2s ease; position: relative; margin-bottom: 5px; border: 1px solid transparent;}
+        .chat-item:hover { background: white; border-color: var(--border-color); box-shadow: var(--shadow-sm); transform: translateX(2px); }
+        .chat-item.active { background: white; border-color: var(--border-color); box-shadow: var(--shadow-md); border-left: 4px solid var(--primary); }
+        
+        .chat-item.has-unread { background: #eff6ff; border-left: 4px solid var(--blue); }
+        .chat-item.has-unread .chat-item-name { color: var(--blue); font-weight: 900; }
+        .chat-item.has-unread .chat-item-preview { color: var(--text-dark); font-weight: 700; }
+
+        .chat-item-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 800; color: white; font-size: 1.2rem; flex-shrink: 0; position: relative; box-shadow: var(--shadow-sm); }
+        .status-dot { position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; background: #cbd5e1; transition: 0.3s;}
+        .status-dot.online { background: var(--green); box-shadow: 0 0 5px var(--green);}
+
+        .chat-item-info { flex: 1; overflow: hidden; }
+        .chat-item-name { font-weight: 800; font-size: 0.95rem; color: var(--text-dark); display: flex; justify-content: space-between; align-items: center;}
+        .chat-item-preview { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; display: flex; align-items: center; gap: 5px;}
+        .admin-badge { color: var(--secondary); font-size: 0.85rem; }
+        .unread-badge { background: var(--red); color: white; border-radius: 20px; padding: 2px 7px; font-size: 0.7rem; font-weight: 900; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);}
+
+        /* AREA CHAT UTAMA */
+        .chat-main-area { flex: 1; background: white; display: flex; flex-direction: column; position: relative; z-index: 80; }
+        .empty-chat-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #94a3b8; background: #f8fafc;}
+        .empty-chat-state i { font-size: 6rem; color: #e2e8f0; margin-bottom: 25px; animation: float 3s ease-in-out infinite;}
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .empty-chat-state h3 { font-size: 1.8rem; color: var(--primary); font-weight: 900; margin-bottom: 10px; letter-spacing: -0.5px;}
+        
+        .chat-header { padding: 18px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); z-index: 10;}
+        .chat-header-info { display: flex; align-items: center; gap: 18px; }
+        .btn-back-mobile { display: none; background: none; border: none; font-size: 1.2rem; color: var(--text-dark); cursor: pointer; margin-right: 5px;}
+        .chat-header-avatar { width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; font-size: 1.2rem; box-shadow: var(--shadow-sm);}
+        .chat-header-text h3 { font-size: 1.2rem; font-weight: 900; color: var(--text-dark); line-height: 1.2;}
+        .chat-header-text p { font-size: 0.85rem; color: var(--green); font-weight: 700;}
+        
+        .chat-header-actions { display: flex; gap: 12px;}
+        .chat-header-actions button { background: white; border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 10px; color: var(--primary); font-size: 1rem; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; box-shadow: var(--shadow-sm);}
+        .chat-header-actions button:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: var(--shadow-md);}
+        .btn-danger { color: var(--red) !important; }
+        .btn-danger:hover { background: var(--red) !important; color: white !important;}
+
+        .messages-container { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: url('https://www.transparenttextures.com/patterns/cubes.png'), var(--bg-app); background-blend-mode: multiply; }
+        .messages-container::-webkit-scrollbar { width: 8px; }
+        .messages-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .message-row { display: flex; gap: 15px; max-width: 85%; animation: fadeIn 0.3s ease; }
+        .message-row.me { align-self: flex-end; flex-direction: row-reverse; }
+        .message-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #94a3b8, #64748b); display: flex; justify-content: center; align-items: center; color: white; font-weight: 800; font-size: 0.95rem; flex-shrink: 0; box-shadow: var(--shadow-sm);}
+        .message-content { display: flex; flex-direction: column; gap: 6px; }
+        .message-row.me .message-content { align-items: flex-end; }
+        .message-sender { font-size: 0.8rem; font-weight: 800; color: #64748b; margin-left: 5px; text-transform: capitalize;}
+        .message-row.me .message-sender { margin-right: 5px; margin-left: 0;}
+        
+        .message-bubble { padding: 14px 20px; border-radius: 18px; font-size: 0.95rem; line-height: 1.6; position: relative; word-wrap: break-word; font-weight: 500; box-shadow: var(--shadow-sm);}
+        .message-row.other .message-bubble { background: var(--chat-other); color: var(--text-dark); border-top-left-radius: 4px; border: 1px solid var(--border-color); }
+        .message-row.me .message-bubble { background: linear-gradient(135deg, var(--primary), #1e40af); color: white; border-top-right-radius: 4px; box-shadow: 0 4px 15px rgba(10,48,85,0.2);}
+        .message-time { font-size: 0.65rem; color: #94a3b8; text-align: right; margin-top: 8px; font-weight: 700;}
+        .message-row.me .message-time { color: rgba(255,255,255,0.8); }
+
+        .mention-tag { background: #e0f2fe; color: #1d4ed8; padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; cursor: pointer; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 4px;}
+        .message-row.me .mention-tag { background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.3);}
+
+        .chat-input-area { padding: 20px 30px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); display: flex; flex-direction: column;}
+        
+        #typing-indicator { display: none; font-size: 0.8rem; color: var(--primary); font-weight: 800; margin-bottom: 10px; padding-left: 15px; font-style: italic; animation: fadeIn 0.3s ease;}
+        
+        .input-wrapper { background: white; border: 2px solid var(--border-color); border-radius: 20px; padding: 12px 15px; display: flex; flex-direction: column; transition: all 0.3s ease; position: relative; box-shadow: var(--shadow-sm); }
+        .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 8px 25px rgba(10,48,85,0.1); transform: translateY(-2px);}
+        .rich-input { width: 100%; min-height: 50px; max-height: 150px; overflow-y: auto; outline: none; font-size: 1rem; line-height: 1.5; padding: 5px; color: var(--text-dark); font-weight: 500; }
+        .rich-input[placeholder]:empty:before { content: attr(placeholder); color: #94a3b8; cursor: text; }
+        .rich-input::-webkit-scrollbar { width: 5px; }
+        .rich-input::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .input-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+        .input-tools { display: flex; gap: 8px; }
+        .input-tools button { background: #f8fafc; border: 1px solid transparent; color: #64748b; font-size: 1.1rem; cursor: pointer; padding: 8px 12px; border-radius: 10px; transition: all 0.2s; display: flex; align-items: center; justify-content: center;}
+        .input-tools button:hover { color: var(--primary); background: #eff6ff; border-color: #bfdbfe; transform: translateY(-2px);}
+        .btn-send { background: linear-gradient(135deg, var(--primary), #1e40af); color: white; border: none; padding: 10px 24px; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 10px rgba(10,48,85,0.2);}
+        .btn-send:hover { background: linear-gradient(135deg, #1e40af, var(--primary)); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(10,48,85,0.3);}
+
+        /* MENTION DROPDOWN */
+        .mention-dropdown { position: absolute; bottom: calc(100% + 15px); left: 0; width: 380px; background: white; border-radius: 16px; box-shadow: 0 15px 50px rgba(0,0,0,0.15); border: 1px solid var(--border-color); display: none; flex-direction: column; overflow: hidden; z-index: 1000; animation: fadeUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .mention-dropdown.active { display: flex; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .mention-header { padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 800; color: var(--primary); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.5px;}
+        .mention-list { max-height: 280px; overflow-y: auto; padding: 5px 0;}
+        .mention-item { padding: 12px 18px; display: flex; align-items: center; gap: 15px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s;}
+        .mention-item:hover, .mention-item.selected { background: #eff6ff; border-left-color: var(--primary); }
+        .mention-item-icon { width: 35px; height: 35px; border-radius: 10px; display: flex; justify-content: center; align-items: center; color: white; font-size: 1rem; box-shadow: var(--shadow-sm);}
+        .mention-item-icon.type-user { background: var(--primary); border-radius: 50%;}
+        .mention-item-icon.type-doc { background: #3b82f6; } 
+        .mention-item-icon.type-prog { background: #10b981; } 
+        .mention-item-icon.type-fin { background: #f59e0b; } 
+        .mention-item-icon.type-task { background: #8b5cf6; } 
+        .mention-item-icon.type-agenda { background: #ef4444; }
+        .mention-item-text { display: flex; flex-direction: column; gap: 2px;}
+        .mention-item-title { font-size: 0.95rem; font-weight: 800; color: var(--text-dark);}
+        .mention-item-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 600;}
+
+        /* PROFILE PANEL */
+        .profile-panel { width: 320px; background: var(--bg-panel); border-left: 1px solid var(--border-color); display: none; flex-direction: column; z-index: 95; box-shadow: -5px 0 20px rgba(0,0,0,0.02);}
+        .profile-panel.active { display: flex; animation: slideLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .profile-header { padding: 25px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: var(--primary); font-size: 1.2rem;}
+        .profile-header button { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; color: var(--text-muted); transition: 0.2s;}
+        .profile-header button:hover { color: white; background: var(--red); transform: rotate(90deg);}
+        .profile-body { padding: 25px 20px; text-align: center; overflow-y: auto;}
+        .profile-avatar-large { width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #1e40af); color: white; font-size: 3.5rem; font-weight: 900; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(10,48,85,0.3); position: relative;}
+        .profile-name { font-size: 1.4rem; font-weight: 900; color: var(--text-dark); margin-bottom: 8px; letter-spacing: -0.5px;}
+        .profile-role { font-size: 0.85rem; color: white; font-weight: 800; background: var(--secondary); padding: 6px 18px; border-radius: 20px; display: inline-block; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(246, 178, 59, 0.3);}
+        
+        .profile-info-group { text-align: left; margin-bottom: 25px;}
+        .profile-info-label { font-size: 0.8rem; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;}
+        .profile-info-label i { color: var(--secondary); }
+        
+        .group-member-list { display: flex; flex-direction: column; gap: 10px; }
+        .group-member-item { display: flex; align-items: center; gap: 12px; padding: 10px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border-color); transition: 0.2s;}
+        .group-member-item:hover { border-color: var(--primary); transform: translateX(5px); background: white; box-shadow: var(--shadow-sm);}
+        .group-member-avatar { width: 35px; height: 35px; border-radius: 50%; background: var(--primary); color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.9rem;}
+        .group-member-name { font-weight: 700; font-size: 0.9rem; color: var(--text-dark);}
+        .group-member-role { font-size: 0.7rem; color: var(--text-muted); font-weight: 600;}
+
+        /* MODALS UMUM */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 999999; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.3s ease;}
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box { background: white; width: 90%; max-width: 500px; border-radius: 24px; padding: 35px; transform: translateY(40px) scale(0.95); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); max-height: 90vh; overflow-y: auto;}
+        .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+        .modal-box h3 { font-size: 1.6rem; font-weight: 900; color: var(--primary); margin-bottom: 10px; letter-spacing: -0.5px;}
+        .modal-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; font-weight: 500;}
+        .form-group { margin-bottom: 22px; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;}
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 14px 16px; border: 2px solid var(--border-color); border-radius: 12px; outline: none; font-size: 0.95rem; font-weight: 600; transition: 0.3s; background: #f8fafc;}
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); background: white; box-shadow: 0 4px 12px rgba(10,48,85,0.08);}
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;}
+        .btn-cancel { padding: 12px 24px; background: #f1f5f9; color: var(--text-dark); border: none; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.2s;}
+        .btn-cancel:hover { background: #e2e8f0; transform: translateY(-2px);}
+        .btn-submit { padding: 12px 24px; background: linear-gradient(135deg, var(--primary), #1e40af); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 12px rgba(10,48,85,0.2);}
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(10,48,85,0.3);}
+
+        /* STRUKTUR ORGANISASI GRID (FIX 3) */
+        .org-chart-container { display: flex; flex-direction: column; gap: 25px; }
+        .org-level { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+        .org-level-title { font-size: 0.95rem; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 15px; border-bottom: 2px dashed var(--border-color); padding-bottom: 8px;}
+        .org-member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .org-member { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: white; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm);}
+        .org-member:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-md); background: #eff6ff;}
+        .org-member-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--secondary); color: var(--primary); display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.1rem; flex-shrink: 0;}
+        .org-member-info { display: flex; flex-direction: column; }
+        .org-member-name { font-size: 0.95rem; font-weight: 800; color: var(--text-dark); }
+        .org-member-role { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-top: 2px;}
+
+        /* KALENDER BULANAN */
+        .calendar-container { width: 100%; max-width: 600px; margin: 0 auto; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;}
+        .calendar-header h4 { font-size: 1.3rem; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;}
+        .calendar-nav-btn { background: #f8fafc; border: 1px solid var(--border-color); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; color: var(--primary); transition: 0.2s; font-weight: bold;}
+        .calendar-nav-btn:hover { background: var(--primary); color: white; transform: scale(1.1);}
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-day-name { text-align: center; font-size: 0.75rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; padding-bottom: 10px;}
+        .calendar-cell { aspect-ratio: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; border: 2px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: all 0.2s; font-weight: 800; color: var(--text-dark); position: relative; font-size: 1.1rem;}
+        .calendar-cell:hover:not(.empty) { border-color: var(--primary); transform: translateY(-3px) scale(1.05); box-shadow: var(--shadow-md); background: #eff6ff; color: var(--primary);}
+        .calendar-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+        .calendar-cell.today { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(10,48,85,0.3);}
+        .calendar-cell.has-agenda::after { content: ''; position: absolute; bottom: 6px; width: 6px; height: 6px; background: var(--secondary); border-radius: 50%; box-shadow: 0 0 5px var(--secondary);}
+
+        /* RESPONSIVE MOBILE */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .app-sidebar { width: 100%; height: 60px; flex-direction: row; padding: 0 10px; border-right: none; border-top: 1px solid var(--border-color); order: 3; justify-content: space-around; z-index: 1000;}
+            .app-sidebar .logo { display: none; }
+            .sidebar-bottom { margin-top: 0; flex-direction: row; }
+            .nav-icon { width: 45px; height: 45px; margin-bottom: 0; }
+            .nav-icon span { display: none; }
+            
+            .chat-list-panel { width: 100%; position: absolute; top: 0; left: 0; height: calc(100vh - 60px); transition: transform 0.3s ease; z-index: 90; }
+            .chat-main-area { position: absolute; top: 0; left: 100%; width: 100%; height: calc(100vh - 60px); transition: transform 0.3s ease; z-index: 100; }
+            
+            body.chat-active .chat-list-panel { transform: translateX(-100%); }
+            body.chat-active .chat-main-area { transform: translateX(-100%); }
+            
+            .btn-back-mobile { display: block; }
+            .profile-panel { position: absolute; top: 0; right: 0; height: 100%; width: 100%; box-shadow: -10px 0 30px rgba(0,0,0,0.1);}
+            .mention-dropdown { width: calc(100vw - 40px); left: -10px;}
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <nav class="app-sidebar">
+        <div class="logo" onclick="window.location.href='user-hub.html'" title="Kembali ke Dashboard"><i class="fa-solid fa-layer-group"></i></div>
+        <a href="#" class="nav-icon active" onclick="activateSidebar(this); switchTab('all', document.querySelectorAll('.chat-tab')[0])"><i class="fa-solid fa-message"></i><span>Obrolan</span></a>
+        <a href="#" class="nav-icon" onclick="activateSidebar(this); switchTab('groups', document.querySelectorAll('.chat-tab')[2])" title="Lihat Grup Divisi"><i class="fa-solid fa-users-rectangle"></i><span>Grup Divisi</span></a>
+        <a href="#" class="nav-icon" onclick="openOrgChartModal(); activateSidebar(this)" title="Lihat Struktur Organisasi"><i class="fa-solid fa-sitemap"></i><span>Struktur</span></a>
+        <a href="#" class="nav-icon" onclick="openCalendarModal(); activateSidebar(this)" title="Jadwalkan Agenda"><i class="fa-solid fa-calendar-check"></i><span>Agenda</span></a>
+        <div class="sidebar-bottom">
+            <a href="#" class="nav-icon" onclick="openActivityModal(); activateSidebar(this)" title="Aktivitas Terbaru"><i class="fa-solid fa-bell"></i></a>
+            <div class="profile-avatar-mini" id="my-mini-avatar" onclick="alert('Profile Menu')">U</div>
+        </div>
+    </nav>
+
+    <aside class="chat-list-panel">
+        <div class="chat-list-header">
+            <h2>Obrolan <button onclick="openCreateGroupModal()" title="Buat Grup Baru"><i class="fa-solid fa-pen-to-square"></i></button></h2>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Cari pesan, nama, atau grup..." oninput="filterChatList(this.value)">
+            </div>
+        </div>
+        <div class="chat-tabs">
+            <div class="chat-tab active" onclick="switchTab('all', this)">Semua</div>
+            <div class="chat-tab" onclick="switchTab('unread', this)">Belum Dibaca</div>
+            <div class="chat-tab" onclick="switchTab('groups', this)">Grup Divisi</div>
+        </div>
+        <div class="chat-list-content" id="chat-list-container">
+            <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <p style="font-size: 0.85rem; font-weight: 600;">Memuat workspace...</p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="chat-main-area">
+        <div class="empty-chat-state" id="empty-chat-state">
+            <i class="fa-regular fa-comments"></i>
+            <h3>Workspace Messenger</h3>
+            <p style="max-width: 350px; text-align: center; font-size: 0.95rem; line-height: 1.6;">Pilih obrolan dari panel sebelah kiri atau mulai pesan baru dengan rekan dan admin lainnya.</p>
+        </div>
+
+        <div style="display: none; flex-direction: column; height: 100%;" id="active-chat-view">
+            <div class="chat-header fade-in">
+                <div class="chat-header-info">
+                    <button class="btn-back-mobile" onclick="closeChatMobile()"><i class="fa-solid fa-arrow-left"></i></button>
+                    <div class="chat-header-avatar" id="active-chat-avatar" style="background: var(--primary);">G</div>
+                    <div class="chat-header-text">
+                        <h3 id="active-chat-name">Nama Grup / User</h3>
+                        <p id="active-chat-status">Tersambung</p>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button title="Jadwalkan Agenda Kalender" onclick="openCalendarModal()"><i class="fa-solid fa-calendar-plus"></i></button>
+                    <button title="Detail Informasi & Anggota" onclick="toggleProfilePanel()"><i class="fa-solid fa-circle-info"></i></button>
+                    <button title="Hapus Grup" id="btn-delete-group" class="btn-danger" onclick="deleteCurrentGroup()" style="display:none;"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messages-container"></div>
+
+            <div class="chat-input-area fade-in">
+                <div id="typing-indicator">
+                    <i class="fa-solid fa-pen-nib fa-bounce"></i> <span id="typing-text">Seseorang sedang mengetik...</span>
+                </div>
+                
+                <div class="input-wrapper">
+                    <div class="mention-dropdown" id="mention-dropdown">
+                        <div class="mention-header">
+                            <span style="display:flex; align-items:center; gap:5px;"><i class="fa-solid fa-database"></i> Tautkan Data Workspace</span>
+                            <button style="background:none;border:none;cursor:pointer;color:var(--text-muted);" onclick="closeMention()"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="mention-list" id="mention-list"></div>
+                    </div>
+
+                    <div class="rich-input" id="chat-input" contenteditable="true" placeholder="Ketik pesan baru... Gunakan '@' untuk menautkan tugas/dokumen/agenda."></div>
+                    
+                    <div class="input-actions">
+                        <div class="input-tools">
+                            <button title="Format Teks"><i class="fa-solid fa-font"></i></button>
+                            <button title="Lampirkan File"><i class="fa-solid fa-paperclip"></i></button>
+                            <button title="Sematkan Data Workspace (Ketik @)" onclick="triggerMention()"><i class="fa-solid fa-at"></i></button>
+                        </div>
+                        <button class="btn-send" onclick="sendMessage()">Kirim <i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PANEL PROFIL (KANAN) -->
+    <aside class="profile-panel" id="profile-panel">
+        <div class="profile-header">
+            Info <span id="panel-title-type">Profil</span>
+            <button onclick="toggleProfilePanel()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="profile-body">
+            <div class="profile-avatar-large" id="profile-detail-avatar">G</div>
+            <div class="profile-name" id="profile-detail-name">Nama Pengguna</div>
+            <div class="profile-role" id="profile-detail-role">Jabatan</div>
+
+            <div class="profile-info-group" id="panel-extra-info">
+                <div class="profile-info-label"><i class="fa-solid fa-shield-halved"></i> Posisi & Struktur</div>
+                <div class="profile-info-val">Akses Workspace Sesuai Sistem.</div>
+            </div>
+
+            <!-- CONTAINER ANGGOTA GRUP -->
+            <div class="profile-info-group" id="group-members-container" style="display: none;">
+                <div class="profile-info-label"><i class="fa-solid fa-users-viewfinder"></i> Anggota Grup (<span id="member-count">0</span>)</div>
+                <div class="group-member-list" id="group-member-list">
+                    <!-- Anggota Grup Diisi JS -->
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MODAL KALENDER BULANAN -->
+    <div class="modal-overlay" id="modalCalendarView">
+        <div class="modal-box" style="max-width: 650px;">
+            <h3>Kalender Workspace</h3>
+            <p class="modal-desc">Klik pada kotak tanggal untuk menambahkan jadwal agenda/rapat baru.</p>
+            
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button class="calendar-nav-btn" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h4 id="calendar-month-year">MEI 2026</h4>
+                    <button class="calendar-nav-btn" onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-day-name">Min</div><div class="calendar-day-name">Sen</div><div class="calendar-day-name">Sel</div>
+                    <div class="calendar-day-name">Rab</div><div class="calendar-day-name">Kam</div><div class="calendar-day-name">Jum</div><div class="calendar-day-name">Sab</div>
+                </div>
+                <div class="calendar-grid" id="calendar-days-grid">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="btn-cancel" onclick="closeCalendarModal()">Tutup Kalender</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM AGENDA -->
+    <div class="modal-overlay" id="modalScheduleAgenda" style="z-index: 9999999;">
+        <div class="modal-box">
+            <h3>Jadwalkan Agenda</h3>
+            <p class="modal-desc">Agenda ini akan di-broadcast dan ditautkan ke Kalender Dashboard.</p>
+            <div class="form-group">
+                <label>Judul Agenda</label>
+                <input type="text" id="agendaTitle" placeholder="Cth: Evaluasi Progres Divisi">
+            </div>
+            <div class="form-group" style="display: flex; gap: 15px;">
+                <div style="flex: 1;">
+                    <label>Tanggal</label>
+                    <input type="date" id="agendaDate" readonly style="background: #e2e8f0; cursor: not-allowed; color:#64748b;">
+                </div>
+                <div style="flex: 1;">
+                    <label>Waktu</label>
+                    <input type="time" id="agendaTime">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Deskripsi & Tautan Rapat</label>
+                <textarea id="agendaDesc" rows="3" placeholder="Masukkan link Zoom/Meet atau catatan..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="document.getElementById('modalScheduleAgenda').classList.remove('active')">Batal</button>
+                <button class="btn-submit" onclick="submitAgenda()"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BUAT GRUP -->
+    <div class="modal-overlay" id="modalCreateGroup">
+        <div class="modal-box">
+            <h3>Buat Ruang Grup Baru</h3>
+            <p class="modal-desc">Kumpulkan rekan tim dalam satu ruang obrolan divisi khusus.</p>
+            <div class="form-group">
+                <label>Nama Grup Divisi</label>
+                <input type="text" id="newGroupName" placeholder="Cth: Divisi Kreatif & Desain">
+            </div>
+            <div class="form-group">
+                <label>Pilih Anggota</label>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Gunakan Ctrl/Cmd untuk memilih lebih dari satu orang.</p>
+                <select id="newGroupMembers" multiple style="width: 100%; height: 140px; border-radius: 12px; padding: 10px;"></select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeCreateGroupModal()">Batal</button>
+                <button class="btn-submit" onclick="submitCreateGroup()"><i class="fa-solid fa-users-viewfinder"></i> Buat Grup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL STRUKTUR ORGANISASI (FIX 3) -->
+    <div class="modal-overlay" id="modalOrgChart">
+        <div class="modal-box" style="max-width: 800px;">
+            <h3>Struktur Workspace</h3>
+            <p class="modal-desc">Klik profil anggota di bawah untuk langsung membuka <strong>Private Chat</strong>.</p>
+            <div class="org-chart-container" id="orgChartContainer">
+                <!-- Di Render JS -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeOrgChartModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AKTIVITAS -->
+    <div class="modal-overlay" id="modalAktivitas">
+        <div class="modal-box">
+            <h3>Log Aktivitas</h3>
+            <p class="modal-desc">Riwayat terbaru dari sistem dan komunikasi di dalam workspace.</p>
+            <div class="activity-container" id="activityContainer">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeActivityModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- UTILITY & NOTIFICATIONS ---
+        function escapeHtml(unsafe) {
+            if(!unsafe) return '';
+            return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = type === 'error' ? 'fa-circle-exclamation' : (type === 'success' ? 'fa-circle-check' : 'fa-bell');
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><div class="toast-content"><span class="toast-title">${title}</span><span class="toast-message">${message}</span></div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 4400);
+        }
+
+        function activateSidebar(element) {
+            document.querySelectorAll('.nav-icon').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
+        }
+
+        // --- SUPABASE CONFIG ---
+        const SUPABASE_URL = 'https://wnhftesxaicqffnyrdkn.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_i2-_17x_KOh0HxNw4DaaNA_vqXMBO2R'; 
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let currentWorkspaceId = null;
+        let allMembers = [];
+        let chatGroups = [];
+        let activeChatType = null; 
+        let activeChatId = null; 
+        let activeChatName = "";
+        
+        let onlineUsers = {}; 
+        let realtimeChannel = null;
+        let unreadCounts = {}; // Fix 2
+
+        const dummyDashboardData = [
+            { id: 't_dummy1', type: 'task', title: 'Menyusun Proposal Sponsor', sub: 'Tugas Dashboard - Deadline: Besok' },
+            { id: 'p_dummy1', type: 'prog', title: 'Seminar Nasional Digitalisasi', sub: 'Program Kerja' },
+            { id: 'f_dummy1', type: 'fin', title: 'Sewa Tenda 4x4m', sub: 'RAB - Menunggu ACC' },
+            { id: 'd_dummy1', type: 'doc', title: '015/BEM/EXT/V/2026', sub: 'Surat Peminjaman Gedung' }
+        ];
+
+        // --- INIT LISTENER ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+            
+            if (sessionError || !session) {
+                showToast("Sesi Habis", "Mengarahkan ke halaman login...", "error");
+                setTimeout(() => window.location.href = 'index.html', 1500);
+                return;
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            currentWorkspaceId = urlParams.get('workspace');
+            
+            if(!currentWorkspaceId) {
+                let { data: wsMem } = await supabaseClient.from('workspace_members').select('workspace_id').eq('user_id', session.user.id).limit(1);
+                if(wsMem && wsMem.length > 0) { currentWorkspaceId = wsMem[0].workspace_id; } 
+                else {
+                    let { data: anyWs } = await supabaseClient.from('workspace_members').select('workspace_id').limit(1);
+                    if (anyWs && anyWs.length > 0) currentWorkspaceId = anyWs[0].workspace_id;
+                    else currentWorkspaceId = 'default-workspace-id';
+                }
+            }
+
+            // Ambil data asli dari Auth Supabase untuk berjaga-jaga
+            let fallbackName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split('@')[0];
+
+            let { data: myProfile } = await supabaseClient.from('workspace_members').select('*').eq('user_id', session.user.id).eq('workspace_id', currentWorkspaceId).single();
+            
+            // LOGIKA AUTO-HEALING (PERBAIKAN OTOMATIS)
+            if (!myProfile) {
+                try {
+                    const { data: newProfile, error: insertErr } = await supabaseClient.from('workspace_members').insert([{
+                        workspace_id: currentWorkspaceId, user_id: session.user.id, nama_user: fallbackName, role: 'Member'
+                    }]).select().single();
+                    if (newProfile) myProfile = newProfile; else throw insertErr;
+                } catch(e) {
+                    myProfile = { user_id: session.user.id, nama_user: fallbackName, role: 'Member' };
+                    allMembers.push(myProfile);
+                }
+            } else if (!myProfile.nama_user || myProfile.nama_user === 'User Tanpa Nama' || myProfile.nama_user.trim() === '') {
+                // Jika user masuk via kode undangan dan namanya kosong, update ke database sekarang juga!
+                await supabaseClient.from('workspace_members')
+                    .update({ nama_user: fallbackName })
+                    .eq('user_id', session.user.id)
+                    .eq('workspace_id', currentWorkspaceId);
+                
+                myProfile.nama_user = fallbackName; // Update data lokal
+            }
+
+            // Mencegah error charAt(0)
+            let finalName = myProfile.nama_user || fallbackName || "User";
+            currentUser = { id: session.user.id, name: finalName, role: myProfile.role || 'Member' };
+            
+            // Set inisial avatar dengan aman
+            document.getElementById('my-mini-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+
+            currentUser = { id: session.user.id, name: myProfile.nama_user, role: myProfile.role };
+            document.getElementById('my-mini-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+            
+            await loadWorkspaceMembers();
+            await loadChatGroups();
+            setupRealtimeSystem(); 
+            setupMentionInput();
+            renderChatList();
+        });
+
+        // --- SISTEM REALTIME (SATU KONEKSI) ---
+        function setupRealtimeSystem() {
+            realtimeChannel = supabaseClient.channel('workspace_channel_' + currentWorkspaceId, {
+                config: { broadcast: { ack: false }, presence: { key: currentUser.id } }
+            });
+
+            realtimeChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const newState = realtimeChannel.presenceState();
+                    onlineUsers = {};
+                    for (let id in newState) onlineUsers[id] = true;
+                    renderChatList(); 
+                })
+                .on('broadcast', { event: 'typing' }, payload => {
+                    handleTypingEvent(payload.payload);
+                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+    const msg = payload.new;
+    if(msg.sender_id === currentUser.id) return; 
+    
+    let isRelevant = (activeChatType === 'group' && msg.group_id === activeChatId) || 
+                     (activeChatType === 'user' && msg.sender_id === activeChatId && msg.receiver_id === currentUser.id);
+    
+    // FIX REALTIME OVERLAPPING: Cek apakah pesan grup ini milik grup yang user ikuti
+    const isMyGroup = msg.group_id && chatGroups.some(g => g.id === msg.group_id);
+
+    if(isRelevant) { 
+        appendMessageToUI(msg); 
+        scrollToBottom(); 
+        document.getElementById('typing-indicator').style.display = 'none';
+    } 
+    else if(msg.receiver_id === currentUser.id || isMyGroup) { 
+        let key = msg.group_id ? msg.group_id : msg.sender_id;
+        unreadCounts[key] = (unreadCounts[key] || 0) + 1;
+        showToast("Pesan Baru Masuk", "Ada pesan masuk di obrolan lain.", "info"); 
+        renderChatList(); 
+    }
+})
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await realtimeChannel.track({ user_id: currentUser.id, name: currentUser.name });
+                    }
+                });
+        }
+
+        // --- TYPING INDICATOR LOGIC ---
+        let typingTimer;
+        document.getElementById('chat-input').addEventListener('input', () => {
+            handleMentionInput(); 
+            if(!activeChatId || !realtimeChannel) return;
+
+            realtimeChannel.send({
+                type: 'broadcast', event: 'typing',
+                payload: { sender_id: currentUser.id, target_id: activeChatId, chat_type: activeChatType, is_typing: true }
+            });
+
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                realtimeChannel.send({
+                    type: 'broadcast', event: 'typing',
+                    payload: { sender_id: currentUser.id, target_id: activeChatId, chat_type: activeChatType, is_typing: false }
+                });
+            }, 1500);
+        });
+
+        function handleTypingEvent(data) {
+            const indicator = document.getElementById('typing-indicator');
+            const typingText = document.getElementById('typing-text');
+            let isRelevant = false;
+            
+            if(activeChatType === 'group' && data.chat_type === 'group' && data.target_id === activeChatId) isRelevant = true;
+            else if(activeChatType === 'user' && data.chat_type === 'user' && data.target_id === currentUser.id && data.sender_id === activeChatId) isRelevant = true;
+
+            if(isRelevant && data.is_typing) {
+                const sender = allMembers.find(m => m.user_id === data.sender_id);
+                typingText.innerText = `${sender ? sender.nama_user : "Seseorang"} sedang mengetik...`;
+                indicator.style.display = 'block';
+                scrollToBottom();
+            } else if (isRelevant && !data.is_typing) {
+                indicator.style.display = 'none';
+            }
+        }
+
+        // --- DB DATA LOADERS ---
+        async function loadWorkspaceMembers() {
+            try {
+                const { data } = await supabaseClient.from('workspace_members').select('*').eq('workspace_id', currentWorkspaceId);
+                if (data) {
+                    if (!data.some(d => d.user_id === currentUser.id)) {
+                        data.push({ user_id: currentUser.id, nama_user: currentUser.name, role: currentUser.role });
+                    }
+                    allMembers = data;
+                }
+            } catch (e) {}
+        }
+
+        async function loadChatGroups() {
+    try {
+        // HANYA ambil grup dimana pengguna terdaftar sebagai member
+        const { data } = await supabaseClient.from('chat_group_members')
+            .select('group_id, chat_groups(*)')
+            .eq('user_id', currentUser.id);
+        
+        if (data) {
+            // Filter null dan pastikan sesuai workspace
+            chatGroups = data.map(d => d.chat_groups).filter(g => g !== null && g.workspace_id === currentWorkspaceId);
+        }
+    } catch (err) { console.error(err); }
+}
+
+        // --- UI RENDER CHAT LIST ---
+        // --- UI RENDER CHAT LIST ---
+        function renderChatList(filter = 'all', searchQuery = '') {
+            const container = document.getElementById('chat-list-container');
+            let html = '';
+            
+            // Amankan teks pencarian agar tidak null
+            const safeQuery = (searchQuery || '').toLowerCase();
+            
+            if (filter === 'all' || filter === 'groups') {
+                html += `<div style="font-size:0.75rem; font-weight:800; color:#94a3b8; margin: 15px 10px 8px; text-transform:uppercase; letter-spacing:0.5px;">Grup Divisi</div>`;
+                
+                // FIX: Gunakan (g.name || '') untuk mencegah error jika nama grup null
+                let filteredGroups = chatGroups.filter(g => (g.name || '').toLowerCase().includes(safeQuery));
+                
+                filteredGroups.forEach(g => {
+                    const isActive = (activeChatType === 'group' && activeChatId === g.id) ? 'active' : '';
+                    const unreadCnt = unreadCounts[g.id] || 0;
+                    const unreadClass = unreadCnt > 0 ? 'has-unread' : '';
+                    const unreadHtml = unreadCnt > 0 ? `<div class="unread-badge">${unreadCnt}</div>` : '';
+                    
+                    const safeGroupName = g.name || 'Grup Tanpa Nama'; // Fallback
+
+                    html += `
+                        <div class="chat-item ${isActive} ${unreadClass}" onclick="openChat('group', '${g.id}', '${escapeHtml(safeGroupName)}')">
+                            <div class="chat-item-avatar" style="background: linear-gradient(135deg, var(--secondary), #f59e0b); color: white;"><i class="fa-solid fa-users"></i></div>
+                            <div class="chat-item-info">
+                                <div class="chat-item-name">${escapeHtml(safeGroupName)} ${unreadHtml}</div>
+                                <div class="chat-item-preview"><i class="fa-solid fa-comment-dots" style="font-size:0.7rem;"></i> Ruang Kolaborasi</div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            if (filter === 'all' || filter === 'unread') {
+                html += `<div style="font-size:0.75rem; font-weight:800; color:#94a3b8; margin: 25px 10px 8px; text-transform:uppercase; letter-spacing:0.5px;">Direct Message</div>`;
+                
+                // FIX: Gunakan (m.nama_user || '') untuk mencegah error jika nama user null
+                let filteredMembers = allMembers.filter(m => m.user_id !== currentUser.id && (m.nama_user || '').toLowerCase().includes(safeQuery));
+                
+                filteredMembers.forEach((m) => {
+                    const isActive = (activeChatType === 'user' && activeChatId === m.user_id) ? 'active' : '';
+                    const safeUserName = m.nama_user || "User Tanpa Nama"; // Fallback
+                    const initial = safeUserName.charAt(0).toUpperCase();
+                    const isOnline = onlineUsers[m.user_id] ? true : false;
+                    const dotClass = isOnline ? 'online' : '';
+                    
+                    const unreadCnt = unreadCounts[m.user_id] || 0;
+                    if(filter === 'unread' && unreadCnt === 0) return;
+
+                    const unreadClass = unreadCnt > 0 ? 'has-unread' : '';
+                    const unreadHtml = unreadCnt > 0 ? `<div class="unread-badge">${unreadCnt}</div>` : '';
+
+                    const isAdmin = (m.role && m.role.toLowerCase().includes('admin'));
+                    const adminIcon = isAdmin ? '<i class="fa-solid fa-crown admin-badge" title="Admin"></i>' : '';
+
+                    html += `
+                        <div class="chat-item ${isActive} ${unreadClass}" onclick="openChat('user', '${m.user_id}', '${escapeHtml(safeUserName)}', '${escapeHtml(m.role || 'Member')}')">
+                            <div class="chat-item-avatar" style="background: linear-gradient(135deg, var(--primary), #1e40af);">${initial}
+                                <div class="status-dot ${dotClass}"></div>
+                            </div>
+                            <div class="chat-item-info">
+                                <div class="chat-item-name">${escapeHtml(safeUserName)} ${unreadHtml}</div>
+                                <div class="chat-item-preview">${adminIcon} ${escapeHtml(m.role || 'Member')}</div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            container.innerHTML = html || `<div style="text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.85rem;"><i class="fa-regular fa-folder-open" style="font-size:2rem; margin-bottom:10px; display:block;"></i>Belum ada data.</div>`;
+        }
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+            if(el) el.classList.add('active');
+            renderChatList(tab);
+        }
+
+        function filterChatList(val) {
+            const activeTab = document.querySelector('.chat-tab.active');
+            let tabType = activeTab ? (activeTab.innerText.includes('Belum') ? 'unread' : (activeTab.innerText.includes('Grup') ? 'groups' : 'all')) : 'all';
+            renderChatList(tabType, val);
+        }
+
+        // --- BUKA OBROLAN ---
+        function openChat(type, id, name, role = 'Grup Internal Divisi') {
+            activeChatType = type; activeChatId = id; activeChatName = name;
+            
+            if(unreadCounts[id]) { unreadCounts[id] = 0; }
+
+            document.getElementById('empty-chat-state').style.display = 'none';
+            document.getElementById('active-chat-view').style.display = 'flex';
+            document.getElementById('active-chat-name').innerText = name;
+            
+            const avatar = document.getElementById('active-chat-avatar');
+            const profAvatar = document.getElementById('profile-detail-avatar');
+            
+            if(type === 'group') {
+                document.getElementById('active-chat-status').innerText = 'Ruang Kolaborasi Tim';
+                document.getElementById('panel-title-type').innerText = 'Grup';
+                avatar.innerHTML = '<i class="fa-solid fa-users"></i>';
+                avatar.style.background = 'linear-gradient(135deg, var(--secondary), #f59e0b)'; 
+                profAvatar.innerHTML = '<i class="fa-solid fa-users"></i>';
+                profAvatar.style.background = 'linear-gradient(135deg, var(--secondary), #f59e0b)'; 
+                document.getElementById('btn-delete-group').style.display = 'flex';
+                document.getElementById('group-members-container').style.display = 'block'; 
+            } else {
+                document.getElementById('active-chat-status').innerText = role;
+                document.getElementById('panel-title-type').innerText = 'Profil';
+                avatar.innerHTML = name.charAt(0).toUpperCase();
+                avatar.style.background = 'linear-gradient(135deg, var(--primary), #1e40af)'; 
+                profAvatar.innerHTML = name.charAt(0).toUpperCase();
+                profAvatar.style.background = 'linear-gradient(135deg, var(--primary), #1e40af)'; 
+                document.getElementById('btn-delete-group').style.display = 'none';
+                document.getElementById('group-members-container').style.display = 'none'; 
+            }
+            
+            document.getElementById('profile-detail-name').innerText = name;
+            document.getElementById('profile-detail-role').innerText = role;
+            if(window.innerWidth <= 768) document.body.classList.add('chat-active');
+
+            renderChatList();
+            loadChatHistory(type, id);
+        }
+
+        function closeChatMobile() { document.body.classList.remove('chat-active'); }
+
+        async function toggleProfilePanel() { 
+            const panel = document.getElementById('profile-panel');
+            panel.classList.toggle('active'); 
+            
+            if(panel.classList.contains('active') && activeChatType === 'group') {
+                const listContainer = document.getElementById('group-member-list');
+                listContainer.innerHTML = '<div style="text-align:center; padding:10px;"><i class="fa-solid fa-spinner fa-spin color-primary"></i></div>';
+                
+                try {
+                    const { data: relations } = await supabaseClient.from('chat_group_members').select('user_id').eq('group_id', activeChatId);
+                    
+                    if(relations && relations.length > 0) {
+                        document.getElementById('member-count').innerText = relations.length;
+                        let html = '';
+                        relations.forEach(rel => {
+                            const memberInfo = allMembers.find(m => m.user_id === rel.user_id);
+                            if(memberInfo) {
+                                const initial = memberInfo.nama_user.charAt(0).toUpperCase();
+                                html += `
+                                <div class="group-member-item">
+                                    <div class="group-member-avatar">${initial}</div>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span class="group-member-name">${escapeHtml(memberInfo.nama_user)}</span>
+                                        <span class="group-member-role">${escapeHtml(memberInfo.role || 'Member')}</span>
+                                    </div>
+                                </div>`;
+                            }
+                        });
+                        listContainer.innerHTML = html;
+                    } else {
+                        document.getElementById('member-count').innerText = 0;
+                        listContainer.innerHTML = '<span style="font-size:0.8rem; color:#94a3b8;">Belum ada anggota.</span>';
+                    }
+                } catch(e) {
+                    listContainer.innerHTML = '<span style="font-size:0.8rem; color:#ef4444;">Gagal memuat anggota.</span>';
+                }
+            }
+        }
+
+        // --- MESSAGING ---
+        async function loadChatHistory(type, id) {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = `<div style="text-align:center; padding: 30px; color:#94a3b8;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><br>Menarik enkripsi pesan...</div>`;
+            
+            try {
+                let query = supabaseClient.from('chat_messages').select('*').order('created_at', { ascending: true });
+                if (type === 'group') query = query.eq('group_id', id);
+                else query = query.is('group_id', null).in('sender_id', [currentUser.id, id]).in('receiver_id', [currentUser.id, id]);
+                
+                const { data, error } = await query;
+                if(error) throw error;
+                renderMessages(data || []);
+            } catch (err) {
+                container.innerHTML = `
+                    <div style="text-align:center; margin-top:60px; color:#cbd5e1; animation: fadeIn 0.5s;">
+                        <i class="fa-regular fa-paper-plane" style="font-size:4.5rem; margin-bottom:20px; color:#e2e8f0;"></i>
+                        <p style="font-weight:700; font-size:1.1rem; color:var(--primary);">Mulai Percakapan</p>
+                        <p style="font-size:0.85rem;">Kirim pesan pertama Anda ke ${escapeHtml(activeChatName)}</p>
+                    </div>`;
+            }
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+            if(messages.length === 0) {
+                 container.innerHTML = `
+                    <div style="text-align:center; margin-top:60px; color:#cbd5e1; animation: fadeIn 0.5s;">
+                        <i class="fa-regular fa-paper-plane" style="font-size:4.5rem; margin-bottom:20px; color:#e2e8f0;"></i>
+                        <p style="font-weight:700; font-size:1.1rem; color:var(--primary);">Mulai Percakapan</p>
+                        <p style="font-size:0.85rem;">Kirim pesan pertama Anda ke ${escapeHtml(activeChatName)}</p>
+                    </div>`;
+                return;
+            }
+            messages.forEach(msg => appendMessageToUI(msg));
+            scrollToBottom();
+        }
+
+        function appendMessageToUI(msg) {
+            const container = document.getElementById('messages-container');
+            const isMe = msg.sender_id === currentUser.id;
+            let senderName = isMe ? currentUser.name : (allMembers.find(m => m.user_id === msg.sender_id)?.nama_user || "User");
+            const time = new Date(msg.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+
+            if(container.innerHTML.includes("Mulai Percakapan")) container.innerHTML = '';
+
+            container.innerHTML += `
+                <div class="message-row ${isMe ? 'me' : 'other'}">
+                    <div class="message-avatar" style="${isMe ? 'display:none;' : ''}">${senderName.charAt(0).toUpperCase()}</div>
+                    <div class="message-content">
+                        <div class="message-sender" style="${isMe ? 'display:none;' : ''}">${escapeHtml(senderName)}</div>
+                        <div class="message-bubble">
+                            ${msg.content}
+                            <div class="message-time">${time}</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function scrollToBottom() { 
+            const c = document.getElementById('messages-container'); 
+            c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' }); 
+        }
+
+        async function sendMessage() {
+            const inputEl = document.getElementById('chat-input');
+            const content = inputEl.innerHTML.trim(); 
+            if(!content || content === '<br>') return;
+            if(!activeChatId || !activeChatType) return;
+
+            inputEl.innerHTML = ''; 
+
+            clearTimeout(typingTimer);
+            if(realtimeChannel) {
+                realtimeChannel.send({ type: 'broadcast', event: 'typing', payload: { sender_id: currentUser.id, target_id: activeChatId, chat_type: activeChatType, is_typing: false }});
+            }
+
+            const newMsg = { sender_id: currentUser.id, content: content, created_at: new Date().toISOString() };
+            if(activeChatType === 'group') { newMsg.group_id = activeChatId; newMsg.receiver_id = null; } 
+            else { newMsg.group_id = null; newMsg.receiver_id = activeChatId; }
+
+            appendMessageToUI(newMsg);
+            scrollToBottom();
+
+            try {
+                const { error } = await supabaseClient.from('chat_messages').insert([newMsg]);
+                if(error) throw error;
+            } catch (err) { 
+                showToast("Pengiriman Bermasalah", "Pesan hanya terkirim ke sistem lokal.", "error"); 
+            }
+        }
+
+        document.getElementById('chat-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); 
+                if (document.getElementById('mention-dropdown').classList.contains('active')) return; 
+                sendMessage();
+            }
+        });
+
+        // --- FULL DATABASE MENTIONS (FIX 4: Array Filter Logic) ---
+        const chatInput = document.getElementById('chat-input');
+        const mentionDropdown = document.getElementById('mention-dropdown');
+        const mentionList = document.getElementById('mention-list');
+        let isMentioning = false; let mentionQuery = ''; let savedRange = null;
+
+        function setupMentionInput() {
+            chatInput.addEventListener('keydown', handleMentionNavigation);
+        }
+
+        function triggerMention() { 
+            chatInput.focus(); document.execCommand('insertText', false, '@'); handleMentionInput(); 
+        }
+
+        function handleMentionInput() {
+            const text = chatInput.innerText || "";
+            const selection = window.getSelection();
+            if(!selection.rangeCount) return;
+
+            savedRange = selection.getRangeAt(0).cloneRange();
+            const textBeforeCursor = text.substring(0, savedRange.startOffset);
+            const match = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_-]*)$/);
+
+            if (match !== null) { 
+                isMentioning = true; mentionQuery = match[1].toLowerCase(); showMentionDropdown(); 
+            } else { 
+                isMentioning = false; closeMention(); 
+            }
+        }
+
+        window.handleMentionClick = function(type, id, title) {
+            showToast("Membuka Tautan", `Menuju rincian: ${title}`, "success");
+        };
+
+        async function showMentionDropdown() {
+    mentionList.innerHTML = '<div style="text-align:center; padding:15px;"><i class="fa-solid fa-spinner fa-spin fa-lg color-primary"></i><br><small style="color:#94a3b8; margin-top:5px; display:block;">Menyinkronkan Database...</small></div>';
+    mentionDropdown.classList.add('active');
+
+    try {
+        let combinedData = [];
+
+        // 1. Ambil dari tabel Programs
+        try {
+            const { data: progs } = await supabaseClient.from('programs')
+                .select('id, nama_program, status').eq('workspace_id', currentWorkspaceId).ilike('nama_program', `%${mentionQuery}%`).limit(5);
+            if(progs) progs.forEach(p => combinedData.push({ id: p.id, type: 'prog', title: p.nama_program, sub: `Program: ${p.status}` }));
+        } catch(e) {}
+
+        // 2. Ambil dari tabel Custom Schedules (Agenda)
+        try {
+            const { data: agendas } = await supabaseClient.from('custom_schedules')
+                .select('id, judul_kegiatan, tanggal_mulai').eq('workspace_id', currentWorkspaceId).ilike('judul_kegiatan', `%${mentionQuery}%`).limit(5);
+            if(agendas) agendas.forEach(ag => combinedData.push({ id: ag.id, type: 'agenda', title: ag.judul_kegiatan, sub: `Jadwal: ${ag.tanggal_mulai}` }));
+        } catch(e) {}
+
+        // 3. Ambil dari tabel Digital Office (Dokumen/Surat)
+        try {
+            const { data: docs } = await supabaseClient.from('digital_office')
+                .select('id, judul_surat, status').eq('workspace_id', currentWorkspaceId).ilike('judul_surat', `%${mentionQuery}%`).limit(5);
+            if(docs) docs.forEach(d => combinedData.push({ id: d.id, type: 'doc', title: d.judul_surat, sub: `Surat: ${d.status}` }));
+        } catch(e) {}
+
+        // 4. Ambil dari daftar pengguna
+        allMembers.forEach(m => {
+            if(m.user_id !== currentUser.id && m.nama_user.toLowerCase().includes(mentionQuery)) {
+                combinedData.push({ id: m.user_id, type: 'user', title: m.nama_user, sub: m.role || 'Member' });
+            }
+        });
+
+        if(mentionQuery.length > 0) {
+             combinedData = combinedData.filter(item => item && item.title && item.title.toLowerCase().includes(mentionQuery));
+        }
+
+        mentionList.innerHTML = '';
+        if(combinedData.length === 0) {
+            mentionList.innerHTML = '<div style="padding: 15px; font-size:0.85rem; text-align:center; color:#94a3b8;"><i class="fa-solid fa-folder-open fa-2x"></i><br>Tidak ada data di sistem yang cocok.</div>';
+        } else {
+            combinedData.forEach((item, index) => {
+                let iconHtml = '';
+                if(item.type === 'prog') iconHtml = '<div class="mention-item-icon type-prog"><i class="fa-solid fa-list-check"></i></div>';
+                else if(item.type === 'doc') iconHtml = '<div class="mention-item-icon type-doc"><i class="fa-solid fa-file-signature"></i></div>';
+                else if(item.type === 'agenda') iconHtml = '<div class="mention-item-icon type-agenda"><i class="fa-solid fa-calendar-day"></i></div>';
+                else iconHtml = `<div class="mention-item-icon type-user">${item.title.charAt(0)}</div>`;
+
+                const div = document.createElement('div');
+                div.className = `mention-item ${index === 0 ? 'selected' : ''}`;
+                div.innerHTML = `
+                    ${iconHtml}
+                    <div class="mention-item-text">
+                        <span class="mention-item-title">${escapeHtml(item.title)}</span>
+                        <span class="mention-item-sub">${escapeHtml(item.sub)}</span>
+                    </div>
+                `;
+                div.onclick = () => insertMention(item);
+                mentionList.appendChild(div);
+            });
+        }
+    } catch (e) { console.error("Mention System DB Fetch Error:", e); }
+}
+
+        function handleMentionNavigation(e) {
+            if(!isMentioning || !mentionDropdown.classList.contains('active')) return;
+            const items = mentionList.querySelectorAll('.mention-item');
+            if(items.length === 0) return;
+            let currentIndex = Array.from(items).findIndex(it => it.classList.contains('selected'));
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault(); items[currentIndex].classList.remove('selected');
+                let next = (currentIndex + 1) % items.length;
+                items[next].classList.add('selected'); items[next].scrollIntoView({block: 'nearest'});
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault(); items[currentIndex].classList.remove('selected');
+                let prev = (currentIndex - 1 + items.length) % items.length;
+                items[prev].classList.add('selected'); items[prev].scrollIntoView({block: 'nearest'});
+            } else if (e.key === 'Enter') {
+                e.preventDefault(); insertMention(null, items[currentIndex]);
+            } else if (e.key === 'Escape') { closeMention(); }
+        }
+
+        function insertMention(itemData, htmlElement = null) {
+            if(!itemData && htmlElement) {
+                const title = htmlElement.querySelector('.mention-item-title').innerText;
+                const sub = htmlElement.querySelector('.mention-item-sub').innerText;
+                let iconClass = htmlElement.querySelector('.mention-item-icon').className;
+                let type = 'user';
+                if(iconClass.includes('prog')) type = 'prog';
+                if(iconClass.includes('fin')) type = 'fin';
+                if(iconClass.includes('doc')) type = 'doc';
+                if(iconClass.includes('task')) type = 'task';
+                if(iconClass.includes('agenda')) type = 'agenda';
+                itemData = { id: 'linked_id', title: title, type: type, sub: sub };
+            }
+            if(!itemData || !savedRange) return;
+
+            let iconCode = '@';
+            if(itemData.type === 'prog') iconCode = '<i class="fa-solid fa-list-check"></i>';
+            if(itemData.type === 'fin') iconCode = '<i class="fa-solid fa-wallet"></i>';
+            if(itemData.type === 'doc') iconCode = '<i class="fa-solid fa-file-signature"></i>';
+            if(itemData.type === 'task') iconCode = '<i class="fa-solid fa-clipboard-check"></i>';
+            if(itemData.type === 'agenda') iconCode = '<i class="fa-solid fa-calendar-day"></i>';
+
+            const safeTitle = escapeHtml(itemData.title).replace(/'/g, "\\'");
+            const tagHTML = `<span class="mention-tag" contenteditable="false" onclick="handleMentionClick('${itemData.type}', '${itemData.id}', '${safeTitle}')" title="Klik untuk melihat detail ${itemData.type}">${iconCode} ${escapeHtml(itemData.title)}</span>`;
+            
+            const selection = window.getSelection();
+            selection.removeAllRanges(); selection.addRange(savedRange);
+            for(let i=0; i <= mentionQuery.length; i++) document.execCommand('delete', false, null);
+            document.execCommand('insertHTML', false, tagHTML + "&nbsp;");
+            
+            closeMention(); chatInput.focus();
+        }
+        function closeMention() { isMentioning = false; mentionDropdown.classList.remove('active'); }
+
+        // --- GROUP MANAGEMENT ---
+        function openCreateGroupModal() { 
+            document.getElementById('modalCreateGroup').classList.add('active'); 
+            const select = document.getElementById('newGroupMembers');
+            select.innerHTML = '';
+            
+            allMembers.forEach(m => {
+                if(m.user_id !== currentUser.id) {
+                    const isAdmin = (m.role && m.role.toLowerCase().includes('admin')) ? '⭐' : '';
+                    select.innerHTML += `<option value="${m.user_id}">${escapeHtml(m.nama_user)} ${isAdmin}</option>`;
+                }
+            });
+            if(select.innerHTML === '') select.innerHTML = '<option disabled>Belum ada rekan tim.</option>';
+        }
+
+        function closeCreateGroupModal() { document.getElementById('modalCreateGroup').classList.remove('active'); document.getElementById('newGroupName').value = '';}
+        
+        async function submitCreateGroup() {
+            const name = document.getElementById('newGroupName').value;
+            const select = document.getElementById('newGroupMembers');
+            const selectedMembers = Array.from(select.selectedOptions).map(opt => opt.value).filter(val => val !== '');
+            
+            if(!name) return showToast("Peringatan", "Nama grup wajib diisi.", "error");
+            if(selectedMembers.length === 0) return showToast("Peringatan", "Pilih minimal 1 rekan tim.", "error");
+
+            try {
+                const { data: groupData, error: groupErr } = await supabaseClient.from('chat_groups')
+                    .insert([{ workspace_id: currentWorkspaceId, name: name, created_by: currentUser.id }])
+                    .select().single();
+                if(groupErr) throw groupErr;
+
+                selectedMembers.push(currentUser.id);
+                const membersData = selectedMembers.map(uid => ({ group_id: groupData.id, user_id: uid }));
+                await supabaseClient.from('chat_group_members').insert(membersData);
+
+                showToast("Berhasil", "Ruang kolaborasi telah dibuat.", "success");
+                closeCreateGroupModal();
+                await loadChatGroups(); renderChatList(); openChat('group', groupData.id, groupData.name);
+            } catch (err) { showToast("Gagal", "Gagal menyimpan ke database.", "error"); }
+        }
+
+        async function deleteCurrentGroup() {
+            if(activeChatType !== 'group') return;
+            if(confirm(`Ruang ${activeChatName} akan dihapus secara permanen. Yakin?`)) {
+                try {
+                    await supabaseClient.from('chat_groups').delete().eq('id', activeChatId);
+                    showToast("Berhasil", "Grup telah dihapus.", "success");
+                    document.getElementById('active-chat-view').style.display = 'none';
+                    document.getElementById('empty-chat-state').style.display = 'flex';
+                    await loadChatGroups(); renderChatList();
+                } catch(err) {}
+            }
+        }
+
+        // --- STRUKTUR ORGANISASI GRID (FIX 3) ---
+        function openOrgChartModal() {
+            document.getElementById('modalOrgChart').classList.add('active');
+            renderOrgChart();
+        }
+        function closeOrgChartModal() { document.getElementById('modalOrgChart').classList.remove('active'); }
+
+        function renderOrgChart() {
+            const container = document.getElementById('orgChartContainer');
+            if (allMembers.length === 0) { container.innerHTML = '<p>Memuat struktur...</p>'; return; }
+            let html = '';
+            
+            if (allMembers.length < 5) {
+                html += `<div class="org-level"><div class="org-level-title">Tim Organisasi (Struktur Setara)</div><div class="org-member-grid">`;
+                allMembers.forEach(member => {
+                    const icon = (member.role && member.role.toLowerCase().includes('admin')) ? '<i class="fa-solid fa-crown" style="color:var(--secondary);"></i>' : '<i class="fa-solid fa-user-tag"></i>';
+                    html += `
+                    <div class="org-member" onclick="closeOrgChartModal(); openChat('user', '${member.user_id}', '${escapeHtml(member.nama_user)}', '${escapeHtml(member.role || 'Member')}')">
+                        <div class="org-member-avatar">${member.nama_user.charAt(0).toUpperCase()}</div>
+                        <div class="org-member-info">
+                            <span class="org-member-name">${escapeHtml(member.nama_user)}</span>
+                            <span class="org-member-role">${icon} Pengurus Workspace</span>
+                        </div>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            } else {
+                const admins = allMembers.filter(m => m.role && m.role.toLowerCase().includes('admin'));
+                const users = allMembers.filter(m => !m.role || !m.role.toLowerCase().includes('admin'));
+
+                html += `<div class="org-level"><div class="org-level-title">Pimpinan Inti Workspace</div><div class="org-member-grid">`;
+                admins.forEach(admin => {
+                    html += `<div class="org-member" onclick="closeOrgChartModal(); openChat('user', '${admin.user_id}', '${escapeHtml(admin.nama_user)}', '${escapeHtml(admin.role)}')">
+                                <div class="org-member-avatar" style="background:var(--primary); color:white;">${admin.nama_user.charAt(0).toUpperCase()}</div>
+                                <div class="org-member-info"><span class="org-member-name">${escapeHtml(admin.nama_user)}</span><span class="org-member-role"><i class="fa-solid fa-crown" style="color:var(--secondary);"></i> Admin</span></div>
+                             </div>`;
+                });
+                html += `</div></div><div class="org-level"><div class="org-level-title">Tim Eksekutif & Staf Divisi</div><div class="org-member-grid">`;
+                users.forEach(user => {
+                    html += `<div class="org-member" onclick="closeOrgChartModal(); openChat('user', '${user.user_id}', '${escapeHtml(user.nama_user)}', '${escapeHtml(user.role || 'Member')}')">
+                                <div class="org-member-avatar">${user.nama_user.charAt(0).toUpperCase()}</div>
+                                <div class="org-member-info"><span class="org-member-name">${escapeHtml(user.nama_user)}</span><span class="org-member-role"><i class="fa-solid fa-user-tag"></i> ${escapeHtml(user.role || 'Member')}</span></div>
+                             </div>`;
+                });
+                html += `</div></div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // --- AKTIVITAS ---
+        function openActivityModal() { document.getElementById('modalAktivitas').classList.add('active'); renderActivityFeed(); }
+        function closeActivityModal() { document.getElementById('modalAktivitas').classList.remove('active'); }
+
+        async function renderActivityFeed() {
+            const container = document.getElementById('activityContainer');
+            container.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-circle-notch fa-spin color-primary"></i></div>';
+            try {
+                const { data: messages } = await supabaseClient.from('chat_messages').select('*').order('created_at', { ascending: false }).limit(20);
+                let validMessages = messages ? messages.filter(msg => allMembers.some(m => m.user_id === msg.sender_id)).slice(0, 5) : [];
+                let html = '';
+                if(validMessages.length > 0) {
+                    validMessages.forEach(msg => {
+                        const senderName = allMembers.find(m => m.user_id === msg.sender_id)?.nama_user || "Seseorang";
+                        const isPersonal = msg.receiver_id === currentUser.id;
+                        const action = msg.group_id ? 'merespon di Grup' : (isPersonal ? 'mengirimi Anda file/pesan' : 'mencatat log baru');
+                        const icon = msg.group_id ? '<i class="fa-solid fa-users"></i>' : '<i class="fa-solid fa-bolt"></i>';
+                        html += `
+                        <div class="activity-item">
+                            <div class="activity-icon">${icon}</div>
+                            <div class="activity-info"><span class="activity-title"><strong>${escapeHtml(senderName)}</strong> ${action}.</span><span class="activity-time">${new Date(msg.created_at).toLocaleString('id-ID')}</span></div>
+                        </div>`;
+                    });
+                } else html = '<p style="text-align:center; font-size:0.85rem; color:#94a3b8;">Belum ada log server.</p>';
+                container.innerHTML = html;
+            } catch (err) { container.innerHTML = '<p style="text-align:center; font-size:0.85rem; color:var(--red);">Gagal memuat log DB.</p>'; }
+        }
+
+        // --- KALENDER VIEW ---
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        let agendaData = [];
+
+        async function fetchAgendasForCalendar() {
+            try {
+                const { data } = await supabaseClient.from('workspace_agenda').select('*').eq('workspace_id', currentWorkspaceId);
+                if(data) agendaData = data;
+            } catch(e) {}
+        }
+
+        async function openCalendarModal() {
+            document.getElementById('modalCalendarView').classList.add('active');
+            await fetchAgendasForCalendar();
+            renderCalendar(currentMonth, currentYear);
+        }
+
+        function closeCalendarModal() { document.getElementById('modalCalendarView').classList.remove('active'); }
+
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            renderCalendar(currentMonth, currentYear);
+        }
+
+        function renderCalendar(month, year) {
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+            const grid = document.getElementById('calendar-days-grid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1).getDay(); 
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            for(let i=0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="calendar-cell empty"></div>`;
+            }
+
+            for(let day=1; day <= daysInMonth; day++) {
+                const fullDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                let isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) ? 'today' : '';
+                let hasAgenda = agendaData.some(ag => ag.date === fullDateStr) ? 'has-agenda' : '';
+
+                grid.innerHTML += `
+                    <div class="calendar-cell ${isToday} ${hasAgenda}" onclick="openAgendaForm('${fullDateStr}')" title="Klik untuk tambah jadwal">
+                        ${day}
+                    </div>
+                `;
+            }
+        }
+
+        function openAgendaForm(dateStr) {
+            document.getElementById('modalCalendarView').classList.remove('active');
+            document.getElementById('modalScheduleAgenda').classList.add('active');
+            document.getElementById('agendaDate').value = dateStr;
+            document.getElementById('agendaTitle').value = '';
+            document.getElementById('agendaTime').value = '09:00';
+            document.getElementById('agendaDesc').value = '';
+        }
+
+        async function submitAgenda() {
+            const title = document.getElementById('agendaTitle').value;
+            const date = document.getElementById('agendaDate').value;
+            const time = document.getElementById('agendaTime').value;
+            const desc = document.getElementById('agendaDesc').value;
+
+            if (!title || !date || !time) return showToast("Peringatan", "Harap isi Judul, Tanggal, dan Waktu.", "error");
+
+            try {
+                const { error } = await supabaseClient.from('workspace_agenda').insert([{ 
+                    workspace_id: currentWorkspaceId, title: title, date: date, time: time, description: desc, created_by: currentUser.id 
+                }]);
+                if(error) throw error;
+                
+                showToast("Berhasil Disimpan", `Jadwal tersinkronisasi ke Dashboard Tim.`, "success");
+                
+                if (activeChatId) {
+                    const inputEl = document.getElementById('chat-input');
+                    inputEl.innerHTML = `
+                        <div style="background:#eff6ff; padding:14px; border-left:4px solid var(--primary); border-radius:8px; margin-bottom:5px; box-shadow:var(--shadow-sm);">
+                            <strong style="color:var(--primary); font-size:1.05rem;"><i class="fa-solid fa-calendar-check"></i> Undangan Pertemuan: ${escapeHtml(title)}</strong><br>
+                            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; font-weight:bold;">
+                                <i class="fa-regular fa-clock"></i> ${date} | Pukul: ${time}
+                            </div>
+                            <div style="font-size:0.9rem; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;"><i>"${escapeHtml(desc)}"</i></div>
+                        </div>`;
+                    sendMessage(); 
+                }
+
+                document.getElementById('modalScheduleAgenda').classList.remove('active');
+                
+            } catch (error) { showToast("Gagal", "Database Error.", "error"); }
+        }
+    </script>
+</body>
+</html>

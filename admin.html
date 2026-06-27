@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Workspace - Campus Innovate</title>
+    <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { 
+            --primary: #0A3055; 
+            --secondary: #F6B23B; 
+            --bg: #f4f7fa; 
+            --text: #1e293b; 
+            --white: #fff; 
+            --green: #2ecc71; 
+            --red: #e74c3c; 
+            --blue: #3498db; 
+            --border: #e2e8f0;
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        
+        body { 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            color: var(--text); 
+            overflow-x: hidden; 
+            height: 100vh;
+        }
+        
+        .mobile-header { 
+            display: none; 
+            background: var(--primary); 
+            padding: 15px 20px; 
+            color: white; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            z-index: 998; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .mobile-header h2 { 
+            font-size: 1.2rem; 
+            color: var(--secondary); 
+            margin: 0;
+        }
+        
+        .menu-toggle { 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+        }
+        
+        .sidebar-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 999; 
+            backdrop-filter: blur(3px); 
+            opacity: 0; 
+            transition: opacity 0.3s; 
+        }
+        
+        .sidebar-overlay.active { 
+            display: block; 
+            opacity: 1; 
+        }
+
+        .sidebar { 
+            width: 260px; 
+            background: var(--primary); 
+            height: 100vh; 
+            padding: 25px 20px; 
+            color: var(--white); 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1); 
+            z-index: 1000; 
+            overflow-y: auto; 
+            transition: transform 0.3s;
+        }
+        
+        .sidebar h2 { 
+            color: var(--secondary); 
+            margin-bottom: 5px; 
+            font-size: 1.5rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        
+        .sidebar-subtitle { 
+            font-size: 0.8rem; 
+            color: #cbd5e1; 
+            margin-bottom: 30px; 
+            line-height: 1.5; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+        }
+        
+        .nav-item { 
+            padding: 12px 15px; 
+            margin-bottom: 8px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            color: #cbd5e1;
+        }
+        
+        .nav-item:hover { 
+            background: rgba(255,255,255,0.08); 
+            color: var(--white); 
+            transform: translateX(5px); 
+        }
+        
+        .nav-item.active { 
+            background: var(--secondary); 
+            color: var(--primary); 
+            box-shadow: 0 4px 10px rgba(246, 178, 59, 0.3); 
+        }
+        
+        .premium-badge { 
+            background: linear-gradient(45deg, #FFD700, #FFA500); 
+            color: #000; 
+            font-size: 0.65rem; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            margin-left: auto; 
+        }
+        
+        .main-content { 
+            margin-left: 260px; 
+            padding: 30px; 
+            width: calc(100% - 260px); 
+            height: 100vh; 
+            overflow-y: auto; 
+            animation: fadeIn 0.5s ease; 
+            flex-grow: 1; 
+        }
+        
+        .card { 
+            background: var(--white); 
+            padding: 30px; 
+            border-radius: 15px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+        }
+        
+        .btn-primary { 
+            background: var(--secondary); 
+            color: var(--primary); 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            font-size: 1rem; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px; 
+            justify-content: center;
+        }
+        
+        .btn-primary:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(246, 178, 59, 0.4); 
+        }
+        
+        .btn-danger { 
+            background: var(--red); 
+            color: white; 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        
+        .btn-sm { 
+            padding: 8px 15px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 0.85rem; 
+            transition: 0.3s; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px;
+        }
+        
+        .menu-content { 
+            display: none; 
+            animation: fadeIn 0.4s ease; 
+            height: 100%;
+        }
+        
+        .menu-content.active { 
+            display: block; 
+        }
+        
+        /* MODAL STYLES */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 48, 85, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.4s ease; z-index: 10000; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--white); width: 95%; max-width: 650px; border-radius: 25px; padding: 40px; transform: scale(0.9) translateY(30px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;}
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;}
+        .modal-header h2 { color: var(--primary); font-size: 1.6rem; font-weight: 800; line-height: 1.2;}
+        .close-btn { background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; color: #64748b; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;}
+        .close-btn:hover { background: var(--red); color: white; transform: rotate(90deg); }
+
+        .input-group { margin-bottom: 25px; text-align: left; }
+        .input-group label { display: block; font-weight: 700; font-size: 0.95rem; color: var(--primary); margin-bottom: 10px;}
+        .input-group input, .input-group select { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; outline: none; transition: 0.3s; font-weight: 500; color: var(--text);}
+        .input-group input:focus, .input-group select:focus { border-color: var(--blue); background: white; box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);}
+
+
+        /* -------------------------------------
+           ADVANCED BUILDER & LIVE PREVIEW STYLES
+           ------------------------------------- */
+        .builder-wrapper { 
+            display: flex; 
+            gap: 0; 
+            height: calc(100vh - 120px); 
+            transition: 0.3s ease; 
+            position: relative; 
+        }
+        
+        .builder-fullscreen { 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: 0 !important; 
+            width: 100vw !important; 
+            height: 100vh !important; 
+            z-index: 99999 !important; 
+            background: var(--bg) !important; 
+            padding: 70px 20px 20px 20px !important; 
+            box-sizing: border-box; 
+            margin: 0 !important; 
+        }
+        .builder-fullscreen .builder-tools, 
+        .builder-fullscreen .builder-properties { height: calc(100vh - 90px) !important; }
+        .builder-fullscreen .builder-canvas-container { height: calc(100vh - 90px) !important; }
+        
+        .btn-exit-fs { 
+            display: none; 
+            position: fixed; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 100000; 
+            background: var(--red); 
+            color: white; 
+            border: none; 
+            padding: 10px 25px; 
+            border-radius: 30px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); 
+        }
+        .builder-fullscreen .btn-exit-fs { display: flex; align-items: center; gap: 8px; animation: slideDownFS 0.3s ease; }
+        
+        @keyframes slideDownFS { from { top: -50px; opacity: 0; } to { top: 20px; opacity: 1; } }
+
+        .builder-tools { 
+            width: 250px; min-width: 180px; flex-shrink: 0; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+        }
+        
+        .builder-canvas-container { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 15px; position: relative; }
+        
+        .builder-properties { 
+            width: 340px; min-width: 250px; flex-shrink: 0; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow-y: auto; display: none; border-left: 4px solid var(--secondary);
+        }
+        
+        .builder-properties.active { display: block; animation: slideInRight 0.3s ease; }
+        
+        .resizer { width: 15px; cursor: col-resize; display: flex; align-items: center; justify-content: center; z-index: 10; transition: 0.2s; }
+        .resizer::after { content: ''; width: 4px; height: 50px; background: #cbd5e1; border-radius: 5px; transition: 0.2s; }
+        .resizer:hover::after, .resizer.resizing::after { background: var(--secondary); height: 80px; }
+
+        .prop-header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .prop-header-flex h3 { font-size: 1.1rem; color: var(--primary); font-weight: 800; margin: 0; }
+        .btn-close-prop { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: #64748b; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn-close-prop:hover { background: var(--red); color: white; }
+        
+        .tool-category { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-top: 10px; margin-bottom: 5px; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
+        .tool-btn { background: #f8fafc; border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; cursor: grab; font-size: 0.85rem; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .tool-btn:hover { border-color: var(--secondary); background: rgba(246, 178, 59, 0.1); transform: translateX(3px); }
+        
+        .canvas-area { flex: 1; background: #e2e8f0; border-radius: 15px; border: 2px dashed #cbd5e1; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; }
+        .canvas-area.drag-over { background: rgba(46, 204, 113, 0.1); border-color: var(--green); }
+        
+        .preview-window { width: 100%; height: 100%; background: #fff; overflow-y: auto; position: relative; scroll-behavior: smooth; }
+        
+        .preview-navbar { position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 100; border-bottom: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .preview-navbar .brand { font-weight: 800; color: var(--primary); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .preview-nav-links { display: flex; gap: 20px; }
+        .preview-nav-links a { text-decoration: none; color: #64748b; font-size: 0.85rem; font-weight: 600; transition: 0.2s; }
+        .preview-nav-links a:hover { color: var(--secondary); }
+
+        .preview-section { position: relative; transition: 0.3s; border: 2px solid transparent; box-sizing: border-box; }
+        .preview-section::before { content: ''; position: absolute; inset: 0; background: transparent; z-index: 50; transition: 0.2s; pointer-events: none; }
+        .preview-section:hover::before { background: rgba(246, 178, 59, 0.05); }
+        .preview-section:hover { border: 2px dashed var(--secondary); cursor: pointer; }
+        .preview-section.selected { border: 2px solid var(--secondary); z-index: 51; box-shadow: 0 0 15px rgba(246, 178, 59, 0.3); }
+        
+        .preview-actions { position: absolute; top: 10px; right: 10px; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: none; z-index: 100; gap: 5px; }
+        .preview-section:hover .preview-actions, .preview-section.selected .preview-actions { display: flex; }
+        .preview-actions button { background: #f1f5f9; border: none; padding: 8px; border-radius: 5px; cursor: pointer; color: var(--primary); transition: 0.2s; font-size: 0.8rem; }
+        .preview-actions button:hover { background: var(--primary); color: white; }
+        .preview-actions button.del-btn:hover { background: var(--red); color: white; }
+
+        .prop-group { margin-bottom: 15px; }
+        .prop-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 5px;}
+        .prop-group input, .prop-group select, .prop-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; outline: none; transition: 0.2s; background: #f8fafc;}
+        .prop-group input:focus, .prop-group textarea:focus, .prop-group select:focus { border-color: var(--blue); background: white; box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);}
+        
+        .mini-rte-container { border: 1px solid var(--border); border-radius: 8px; background: #fff; overflow: hidden; margin-top: 5px; }
+        .mini-rte-toolbar { background: #f8fafc; padding: 8px; border-bottom: 1px solid var(--border); display: flex; gap: 5px; flex-wrap: wrap; }
+        .mini-rte-toolbar button { background: white; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px 10px; cursor: pointer; color: var(--primary); transition: 0.2s;}
+        .mini-rte-toolbar button:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .mini-rte-editor { padding: 12px; min-height: 120px; max-height: 400px; overflow-y: auto; outline: none; font-size: 0.9rem; line-height: 1.6; color: #334155; }
+        .mini-rte-editor ul, .mini-rte-editor ol { padding-left: 20px; margin: 10px 0;}
+
+        .drag-over-org { background-color: #e0f2fe !important; outline: 2px dashed var(--blue); }
+        
+        .pricing-card { border: 2px solid var(--secondary); border-radius: 15px; padding: 30px; text-align: center; background: linear-gradient(180deg, #fff, #fffdf8); position: relative; overflow: hidden;}
+        .pricing-card .badge { position: absolute; top: 15px; right: -30px; background: var(--secondary); color: var(--primary); padding: 5px 40px; transform: rotate(45deg); font-weight: bold; font-size: 0.8rem;}
+        
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--white); border-left: 4px solid var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; gap: 15px; min-width: 300px; font-weight: 600; animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+
+        .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px; }
+        .chart-box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #eee; width: 100%; }
+        .chart-container-wrapper { position: relative; height: 250px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px;}
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem;}
+        th { background: #f8fafc; color: var(--primary); font-weight: 700;}
+
+        .badge-status { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+        .badge-online { background: rgba(46, 204, 113, 0.15); color: #27ae60; }
+        .badge-offline { background: #f1f5f9; color: #64748b; }
+        .badge-role { background: rgba(10, 48, 85, 0.1); color: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;}
+        .live-counter { background: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--green); display: inline-flex; align-items: center; gap: 15px; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--primary);}
+        .live-counter .count { background: var(--green); color: white; padding: 2px 10px; border-radius: 15px; font-size: 1.1rem; }
+
+        @media (max-width: 1024px) {
+            .builder-wrapper:not(.builder-fullscreen) { flex-direction: column; height: auto; }
+            .builder-wrapper:not(.builder-fullscreen) .builder-tools { width: 100%; flex-direction: row; flex-wrap: wrap; height: auto; padding: 15px;}
+            .builder-wrapper:not(.builder-fullscreen) .builder-properties { width: 100%; border-left: none; border-top: 4px solid var(--secondary); margin-left: 0;}
+            .builder-wrapper:not(.builder-fullscreen) .resizer { display: none; }
+        }
+        @media (max-width: 768px) {
+            .mobile-header { display: flex; }
+            .sidebar { transform: translateX(-100%); z-index: 1001;}
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; width: 100%; padding: 80px 15px 20px; height: auto;}
+            .analytics-grid { grid-template-columns: 1fr; }
+        }
+
+        .tree-preview-wrapper { width: 100%; overflow-x: auto; padding: 40px 0; display: flex; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+        .tree-preview-wrapper::-webkit-scrollbar { height: 10px; }
+        .tree-preview-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        .tree-preview-wrapper::-webkit-scrollbar-track { background: transparent; }
+        .tree-container-inner { margin: 0 auto; display: inline-flex; flex-direction: column; align-items: center; }
+        .tree-children-preview { display: flex; justify-content: center; position: relative; padding-top: 30px; }
+        .tree-children-preview::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 3px solid #cbd5e1; width: 0; height: 30px; transform: translateX(-50%); }
+        .tree-node-preview { display: flex; flex-direction: column; align-items: center; position: relative; padding: 30px 15px 0 15px; transition: 0.3s; flex: 0 0 auto; }
+        .tree-node-preview::before { content: ''; position: absolute; top: 0; left: 0; right: 0; border-top: 3px solid #cbd5e1; }
+        .tree-node-preview::after { content: ''; position: absolute; top: 0; left: 50%; border-left: 3px solid #cbd5e1; width: 0; height: 30px; transform: translateX(-50%); }
+        .tree-node-preview:first-child::before { left: 50%; }
+        .tree-node-preview:last-child::before { right: 50%; }
+        .tree-node-preview:first-child:last-child::before { display: none; }
+        .tree-container-inner > .tree-children-preview > .tree-node-preview::before,
+        .tree-container-inner > .tree-children-preview > .tree-node-preview::after { display: none; }
+        .tree-container-inner > .tree-children-preview > .tree-node-preview { padding-top: 0; }
+        .tree-container-inner > .tree-children-preview::before { display: none; }
+        .tree-container-inner > .tree-children-preview { padding-top: 0; }
+        
+        .tree-card-preview { background: white; padding: clamp(10px, 2vw, 25px) clamp(10px, 1.5vw, 20px); border-radius: clamp(12px, 2vw, 20px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-top: 5px solid var(--theme-color); text-align: center; width: clamp(140px, 18vw, 260px); white-space: normal; position: relative; z-index: 2; transition: 0.3s; }
+        .tree-card-preview:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-color: var(--secondary); }
+        .tree-avatar-preview { width: clamp(45px, 6vw, 80px); height: clamp(45px, 6vw, 80px); background: #f1f5f9; border-radius: 50%; margin: 0 auto clamp(8px, 1vw, 15px); display: flex; align-items: center; justify-content: center; font-size: clamp(1.2rem, 2vw, 2.2rem); color: #cbd5e1; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.06); }
+        .tree-name-preview { font-weight: 800; font-size: clamp(0.85rem, 1.2vw, 1.15rem); color: var(--theme-color); margin-bottom: 2px; line-height: 1.2; }
+        .tree-role-preview { font-size: clamp(0.65rem, 0.9vw, 0.85rem); color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bph-badge-preview { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--secondary); color:var(--primary); padding:4px 12px; border-radius:20px; font-weight:800; font-size: clamp(0.6rem, 0.8vw, 0.75rem); white-space:nowrap; box-shadow:0 4px 10px rgba(246, 178, 59, 0.4); }
+    </style>
+</head>
+<body>
+    
+    <div class="mobile-header">
+        <h2><i class="fa-solid fa-layer-group"></i> CI Admin</h2>
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div id="toast-container"></div>
+
+    <div class="sidebar" id="appSidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <h2><i class="fa-solid fa-layer-group"></i> CI Admin</h2>
+            <button onclick="toggleSidebar()" class="menu-toggle" style="display: none; color: white;" id="closeSidebarBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="sidebar-subtitle">Ruang Kerja:<br><strong id="sidebar-workspace-name" style="color: white; font-size: 1rem;">Memuat...</strong></div>
+        
+        <div class="nav-item active" onclick="switchMenu('setup')"><i class="fa-solid fa-sliders"></i> Konfigurasi Utama</div>
+        <div class="nav-item" onclick="switchMenu('builder')"><i class="fa-solid fa-wand-magic-sparkles"></i> Web Builder Studio</div>
+        <div class="nav-item" onclick="switchMenu('struktur')"><i class="fa-solid fa-sitemap"></i> Struktur Organisasi</div>
+        <div class="nav-item" onclick="switchMenu('berita')"><i class="fa-solid fa-newspaper"></i> Berita & Pengumuman</div>
+        <div class="nav-item" onclick="switchMenu('users')"><i class="fa-solid fa-users"></i> Manajemen Pengurus</div>
+        <div class="nav-item" onclick="switchMenu('transparansi')"><i class="fa-solid fa-scale-balanced"></i> Transparansi & KPI</div>
+        <div class="nav-item" onclick="switchMenu('analytics')"><i class="fa-solid fa-chart-line"></i> Analitik Interaksi</div>
+        
+        <div class="nav-item" onclick="switchMenu('premium')" style="background: rgba(246, 178, 59, 0.1); color: var(--secondary); border: 1px solid var(--secondary); margin-top: 15px;">
+            <i class="fa-solid fa-crown"></i> Domain & Pro <span class="premium-badge">NEW</span>
+        </div>
+        <div class="nav-item" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;" onclick="handleLogout()"><i class="fa-solid fa-sign-out-alt"></i> Keluar</div>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="setup-workspace-section" class="card" style="display:none;">
+            <div style="text-align: center; max-width: 600px; margin: 50px auto;">
+                <h1 style="color: var(--primary);">Selamat Datang, Admin!</h1>
+                <p style="color: #777; margin-bottom: 30px;">Silakan buat identitas organisasi Anda terlebih dahulu.</p>
+                <form onsubmit="createWorkspace(event)">
+                    <div class="prop-group" style="text-align: left;">
+                        <label>Nama Organisasi</label>
+                        <input type="text" id="orgName" placeholder="Contoh: BEM IPB, BEM FKUB..." required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;">Bangun Ruang Kerja</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="active-workspace-section" style="display:none; height: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <h1 style="color: var(--primary); font-size: 1.5rem; font-weight: 800;">Manajemen: <span id="header-workspace-name" style="color: var(--secondary);">...</span></h1>
+                <button class="btn-sm" style="background: var(--blue); color: white; padding: 10px 20px;" onclick="goToUserDashboard()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Dashboard Internal</button>
+            </div>
+
+            <div class="modal-overlay" id="modalDirectCreateMember">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h2><i class="fa-solid fa-user-plus"></i> Tambah Pengurus Baru</h2>
+                            <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px;">Daftarkan anggota secara manual ke dalam organisasi Anda.</p>
+                        </div>
+                        <button class="close-btn" onclick="closeModal('modalDirectCreateMember')"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    
+                    <form onsubmit="handleDirectMemberCreate(event)">
+                        <div class="input-group">
+                            <label>Nama Lengkap Pengurus</label>
+                            <input type="text" id="create-member-name" placeholder="contoh: Muhammad Hanif Riza" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Alamat Email</label>
+                            <input type="email" id="create-member-email" placeholder="contoh: anggota@kampus.ac.id" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Buatkan Kata Sandi (Password)</label>
+                            <input type="text" id="create-member-password" placeholder="Minimal 6 karakter" required minlength="6">
+                        </div>
+                        <div class="input-group">
+                            <label>Tetapkan Hak Akses</label>
+                            <select id="create-member-role" required>
+                                <option value="admin">Admin Organisasi (Tertinggi)</option>
+                                <option value="user" selected>Pengurus/Anggota Biasa</option>
+                            </select>
+                        </div>
+
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; font-size: 0.85rem; color: #475569; text-align: justify;">
+                            Akun pengurus akan aktif seketika. Pastikan Anda mencatat dan memberikan kredensial (Email & Sandi) kepada pengurus yang bersangkutan agar mereka bisa login.
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="btn-submit-create-member" style="width: 100%; justify-content: center; background: var(--blue); font-size: 1rem;">
+                            <i class="fa-solid fa-paper-plane"></i> Tambahkan Pengurus
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="menu-setup" class="menu-content active">
+                <div class="card">
+                    <h2 style="font-weight: 800;"><i class="fa-solid fa-globe"></i> Status Website Publik</h2>
+                    <div style="background: #f8fafc; padding:20px; border-radius: 10px; border-left: 4px solid var(--secondary); margin-top: 15px;">
+                        <p id="ws-status-text">Memeriksa status...</p>
+                        <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+                            <a href="#" id="link-public" target="_blank" class="btn-primary" style="display:none; text-decoration: none; font-size: 0.9rem;"><i class="fa-solid fa-eye"></i> Kunjungi Web</a>
+                            <button id="btn-hapus-web" onclick="deleteLandingPage()" class="btn-danger" style="display:none; font-size: 0.9rem;"><i class="fa-solid fa-trash"></i> Hapus Web</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <h2 style="font-weight: 800; margin: 0;"><i class="fa-solid fa-building"></i> Identitas & Konfigurasi Global</h2>
+                        <button class="btn-primary" onclick="saveLandingPage()"><i class="fa-solid fa-save"></i> Simpan Konfigurasi</button>
+                    </div>
+                    
+                    <div class="analytics-grid" style="align-items: start;">
+                        <div>
+                            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Brand Organisasi</h3>
+                            <div class="prop-group">
+                                <label>Nama Organisasi (Tampil di Website Publik)</label>
+                                <input type="text" id="config-org-name" placeholder="Contoh: BEM Universitas Vokasi...">
+                            </div>
+                            <div class="prop-group">
+                                <label>URL Logo Organisasi (Opsional)</label>
+                                <input type="url" id="config-org-logo" placeholder="https://domain.com/logo-organisasi.png">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Informasi Footer Organisasi</h3>
+                            <div class="prop-group">
+                                <label><i class="fa-brands fa-instagram" style="color:#E1306C;"></i> Link Instagram (Opsional)</label>
+                                <input type="url" id="config-org-ig" placeholder="https://instagram.com/...">
+                            </div>
+                            <div class="prop-group">
+                                <label><i class="fa-brands fa-tiktok" style="color:#000;"></i> Link TikTok (Opsional)</label>
+                                <input type="url" id="config-org-tiktok" placeholder="https://tiktok.com/@...">
+                            </div>
+                            <div class="prop-group">
+                                <label><i class="fa-solid fa-envelope" style="color:#ea4335;"></i> Email Publik Organisasi (Opsional)</label>
+                                <input type="email" id="config-org-email" placeholder="humas@organisasi.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-builder" class="menu-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2 style="color: var(--primary); margin: 0; font-weight: 800;"><i class="fa-solid fa-pen-ruler"></i> Web Builder Studio</h2>
+                        <p style="font-size: 0.85rem; color: #777;">Drag elemen ke kanvas tengah. Geser garis tepi (splitter) untuk menyesuaikan ukuran panel.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-sm" style="background: #e2e8f0; color: var(--primary); padding: 10px 15px;" onclick="toggleFullscreenBuilder()" id="btn-fullscreen"><i class="fa-solid fa-expand"></i> Fullscreen</button>
+                        <button class="btn-primary" onclick="saveLandingPage()"><i class="fa-solid fa-cloud-arrow-up"></i> Publish Update</button>
+                    </div>
+                </div>
+
+                <div class="builder-wrapper" id="builder-main-wrapper">
+                    <button class="btn-exit-fs" onclick="toggleFullscreenBuilder()"><i class="fa-solid fa-compress"></i> Keluar Fullscreen</button>
+
+                    <div class="builder-tools" id="builder-tools-panel">
+                        <div class="tool-category">Struktur Utama</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'hero')"><i class="fa-solid fa-image"></i> Hero Banner</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'text')"><i class="fa-solid fa-align-left"></i> Teks Paragraf</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'image')"><i class="fa-solid fa-image"></i> Single Image</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'video')"><i class="fa-brands fa-youtube"></i> Video Embed</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'divider')"><i class="fa-solid fa-minus"></i> Garis Pembatas</div>
+                        
+                        <div class="tool-category">Modul Informasi</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'grid-news')"><i class="fa-solid fa-table-cells-large"></i> Grid Berita (Live)</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'newsletter')"><i class="fa-regular fa-newspaper"></i> Pengumuman (Live)</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'struktur')"><i class="fa-solid fa-sitemap"></i> Struktur Anggota</div>
+                        
+                        <div class="tool-category">Widget Otomatis</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'finance')"><i class="fa-solid fa-wallet" style="color:var(--blue);"></i> Data Keuangan</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'kpi')"><i class="fa-solid fa-bullseye" style="color:var(--green);"></i> Capaian KPI</div>
+                        <div class="tool-btn" draggable="true" ondragstart="dragStartTool(event, 'program')"><i class="fa-solid fa-list-check" style="color:#d35400;"></i> Status Program</div>
+                    </div>
+
+                    <div class="resizer" id="resizer-left"></div>
+
+                    <div class="builder-canvas-container" id="builder-canvas-panel">
+                        <div class="canvas-area" id="canvas-dropzone" ondragover="allowDrop(event)" ondrop="dropToCanvas(event)">
+                            <div class="preview-window" id="preview-window">
+                                <div id="canvas-placeholder" style="text-align: center; color: #aaa; margin-top: 150px;">
+                                    <i class="fa-solid fa-hand-pointer" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i><br>
+                                    Drop elemen desain ke area website ini
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="resizer" id="resizer-right" style="display: none;"></div>
+
+                    <div class="builder-properties" id="properties-panel">
+                        <div class="prop-header-flex">
+                            <h3><i class="fa-solid fa-sliders"></i> Detail & Styling</h3>
+                            <button class="btn-close-prop" onclick="closePropertiesPanel()" title="Sembunyikan Panel"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        
+                        <div id="prop-empty" style="color: #aaa; font-size: 0.85rem; text-align: center; margin-top: 50px;">
+                            Klik komponen di area preview (tengah) untuk mengedit isinya secara langsung.
+                        </div>
+                        <div id="prop-form" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-struktur" class="menu-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--primary); font-weight: 800;"><i class="fa-solid fa-sitemap"></i> Manajemen Struktur Organisasi BEM</h2>
+                        <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0;">Susun hierarki organisasi BPH, Menteri, dan Staff. Tarik dan lepas (Drag & Drop) baris untuk memindahkan posisi.</p>
+                    </div>
+                    <button class="btn-primary" onclick="saveLandingPage()"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan Ke Publik</button>
+                </div>
+
+                <div class="analytics-grid" style="align-items: start;">
+                    <div class="card">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);">Tambah Jabatan & Posisi</h3>
+                        <form id="form-org" onsubmit="addOrgMember(event)">
+                            <div class="prop-group">
+                                <label>Pilih Pengurus Aktif</label>
+                                <select id="org-user-select" required>
+                                    <option value="">-- Menunggu Data Member --</option>
+                                </select>
+                            </div>
+                            <div class="prop-group">
+                                <label>Nama Jabatan / Peran</label>
+                                <input type="text" id="org-role-input" placeholder="Contoh: Ketua Umum / Menteri PSDM" required>
+                            </div>
+                            <div class="prop-group">
+                                <label>Pilih Atasan Langsung (Garis Komando)</label>
+                                <select id="org-parent-select">
+                                    <option value="">-- Tanpa Atasan (Posisi Tertinggi/BPH) --</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary" style="width: 100%;"><i class="fa-solid fa-plus"></i> Tambah Ke Bagan</button>
+                        </form>
+                    </div>
+
+                    <div class="card" style="overflow-x: auto;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);">Bagan Hierarki Interaktif</h3>
+                        <table style="width:100%; text-align:left; background: #f8fafc; border-radius: 8px;">
+                            <thead ondragover="allowDropOrg(event)" ondrop="dropToRoot(event)" ondragenter="this.classList.add('drag-over-org')" ondragleave="this.classList.remove('drag-over-org')" style="transition: 0.2s;">
+                                <tr>
+                                    <th title="Tarik item ke sini untuk menjadikan Pimpinan Tertinggi"><i class="fa-solid fa-arrows-down-to-line"></i> Nama & Jabatan (Drop ke Sini untuk Posisi Tertinggi)</th>
+                                    <th style="width: 100px; text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="org-table-body">
+                                <tr><td colspan="2" style="text-align: center; padding: 20px; color: #aaa;">Belum ada hierarki.</td></tr>
+                            </tbody>
+                        </table>
+                        <p style="font-size: 0.75rem; color: #aaa; margin-top: 10px;"><i class="fa-solid fa-circle-info"></i> Klik dan tahan pada baris, lalu seret ke atas nama orang lain untuk menjadikannya bawahan orang tersebut.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-berita" class="menu-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--primary); font-weight: 800;"><i class="fa-solid fa-newspaper"></i> Konten Berita & Pengumuman</h2>
+                        <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0;">Update informasi dan artikel berita langsung ke website publik tanpa batas.</p>
+                    </div>
+                    <button class="btn-primary" onclick="saveLandingPage()"><i class="fa-solid fa-cloud-arrow-up"></i> Simpan Ke Publik</button>
+                </div>
+
+                <div class="card" style="border-left: 4px solid var(--secondary);">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-bullhorn"></i> Setup Pengumuman Darurat (Banner)</h3>
+                    <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                        <label style="font-weight: bold; font-size: 0.9rem;">Status Banner:</label>
+                        <select id="ann-status" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; outline: none;">
+                            <option value="false">Tidak Aktif (Sembunyikan)</option>
+                            <option value="true">Aktif (Tampilkan di Web Publik)</option>
+                        </select>
+                    </div>
+                    <div class="prop-group">
+                        <label>Judul Pengumuman</label>
+                        <input type="text" id="ann-title" placeholder="Contoh: Pendaftaran Kepanitiaan Telah Dibuka!">
+                    </div>
+                    <div class="prop-group">
+                        <label>Isi Detail Pengumuman</label>
+                        <div class="mini-rte-container">
+                            <div class="mini-rte-toolbar">
+                                <button type="button" onclick="document.execCommand('bold',false,null)" title="Tebal"><i class="fa-solid fa-bold"></i></button>
+                                <button type="button" onclick="document.execCommand('italic',false,null)" title="Miring"><i class="fa-solid fa-italic"></i></button>
+                                <button type="button" onclick="document.execCommand('underline',false,null)" title="Garis Bawah"><i class="fa-solid fa-underline"></i></button>
+                                <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)" title="Bullet"><i class="fa-solid fa-list-ul"></i></button>
+                                <button type="button" onclick="document.execCommand('insertOrderedList',false,null)" title="Number"><i class="fa-solid fa-list-ol"></i></button>
+                            </div>
+                            <div id="ann-content" class="mini-rte-editor" contenteditable="true" placeholder="Tuliskan detail pengumuman di sini..."></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-grid" style="align-items: start;">
+                    <div class="card">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-pen-to-square"></i> Tulis Berita/Agenda Baru</h3>
+                        <form id="form-news" onsubmit="addNewsItem(event)">
+                            <div class="prop-group">
+                                <label>URL Gambar Thumbnail</label>
+                                <input type="url" id="news-img" placeholder="https://..." required>
+                            </div>
+                            <div class="prop-group">
+                                <label>Tag Waktu / Kategori</label>
+                                <input type="text" id="news-date" placeholder="Contoh: Hari Ini / Workshop" required>
+                            </div>
+                            <div class="prop-group">
+                                <label>Judul Berita</label>
+                                <input type="text" id="news-title" placeholder="Judul artikel yang menarik..." required>
+                            </div>
+                            <div class="prop-group">
+                                <label>Ringkasan / Paragraf Berita</label>
+                                <div class="mini-rte-container">
+                                    <div class="mini-rte-toolbar">
+                                        <button type="button" onclick="document.execCommand('bold',false,null)"><i class="fa-solid fa-bold"></i></button>
+                                        <button type="button" onclick="document.execCommand('italic',false,null)"><i class="fa-solid fa-italic"></i></button>
+                                        <button type="button" onclick="document.execCommand('underline',false,null)"><i class="fa-solid fa-underline"></i></button>
+                                        <button type="button" onclick="document.execCommand('insertUnorderedList',false,null)"><i class="fa-solid fa-list-ul"></i></button>
+                                    </div>
+                                    <div id="news-desc" class="mini-rte-editor" contenteditable="true" style="min-height: 150px;"></div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="background: var(--blue); color: white; width: 100%;"><i class="fa-solid fa-plus"></i> Terbitkan Berita</button>
+                        </form>
+                    </div>
+
+                    <div class="card" style="overflow-x: auto; max-height: 700px;">
+                        <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-list"></i> Daftar Berita Tersimpan</h3>
+                        <div id="news-list-container" style="display: flex; flex-direction: column; gap: 15px;">
+                            <p style="color: #aaa; text-align: center;">Belum ada berita.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-transparansi" class="menu-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2 style="margin: 0; color: var(--primary); font-weight: 800;"><i class="fa-solid fa-scale-balanced"></i> Transparansi & Pencapaian KPI</h2>
+                        <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0;">Review singkat data yang ditarik dari dashboard internal pengurus untuk disajikan ke publik.</p>
+                    </div>
+                    <button class="btn-sm" style="background: var(--blue); color: white;" onclick="loadAdminTransparansi()"><i class="fa-solid fa-rotate-right"></i> Refresh Data</button>
+                </div>
+
+                <div class="analytics-grid" style="align-items: start;">
+                    <div class="card" style="border-top: 4px solid var(--secondary);">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-wallet"></i> Rekapitulasi Keuangan Organisasi</h3>
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                            <div style="font-size: 0.85rem; color: #64748b;">Total Rencana Anggaran (RAB)</div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);" id="adm-fin-rab">Rp 0</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: rgba(46, 204, 113, 0.1); padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.8rem; color: #27ae60; font-weight: bold;">Telah Terealisasi</div>
+                                <div style="font-size: 1.3rem; font-weight: 800; color: var(--green);" id="adm-fin-real">Rp 0</div>
+                            </div>
+                            <div style="background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 10px;">
+                                <div style="font-size: 0.8rem; color: var(--blue); font-weight: bold;">Sisa / Saldo</div>
+                                <div style="font-size: 1.3rem; font-weight: 800; color: var(--blue);" id="adm-fin-sisa">Rp 0</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; text-align: center;">
+                            <span style="font-size: 0.85rem; color: #666;">Persentase Serapan Dana:</span>
+                            <span style="font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-left: 5px;" id="adm-fin-persen">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-top: 4px solid var(--green);">
+                        <h3 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-bullseye"></i> Indikator Pencapaian (KPI) Detail</h3>
+                        <div id="adm-kpi-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px; display: flex; flex-direction: column; gap: 10px;">
+                            <p style="color: #aaa; font-style: italic;">Memuat data KPI internal...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-premium" class="menu-content">
+                <div class="card pricing-card">
+                    <div class="badge">PRO</div>
+                    <h2 style="color: var(--primary); font-size: 2rem; margin-bottom: 10px; font-weight: 800;">Custom Domain Instansi</h2>
+                    <p style="color: #666; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">Ubah URL publikasi menjadi lebih profesional (contoh: <b>www.bem-fakultas.or.id</b>).</p>
+                    <div style="background: white; border: 1px solid #eee; padding: 20px; border-radius: 10px; max-width: 550px; margin: 0 auto 30px; text-align: left;">
+                        <div class="prop-group" style="margin-bottom: 0;">
+                            <label>Cek Ketersediaan Nama Domain</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="domain-input" placeholder="contoh: uninus" style="flex: 1;">
+                                <select id="domain-ext" style="width: 100px;">
+                                    <option value=".com">.com</option>
+                                    <option value=".id">.id</option>
+                                    <option value=".or.id">.or.id</option>
+                                    <option value=".ac.id">.ac.id</option>
+                                    <option value=".my.id">.my.id</option>
+                                </select>
+                                <button id="btn-check-domain" class="btn-primary" style="padding: 10px 15px;" onclick="checkDomainAvailability()">Periksa</button>
+                            </div>
+                        </div>
+                        <div id="domain-result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-users" class="menu-content">
+                <div class="live-counter">
+                    <i class="fa-solid fa-tower-broadcast" style="color: var(--green);"></i> Pengguna Sedang Online: <span class="count" id="online-count-badge">0</span>
+                </div>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="margin: 0; color: var(--primary); font-weight: 800;"><i class="fa-solid fa-users"></i> Manajemen Daftar Pengurus</h2>
+                            <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0;">Pantau keberadaan anggota dan kapan terakhir aktif (Sistem Real-time).</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-primary" style="background: var(--green); color: white; padding: 10px 20px;" onclick="openModal('modalDirectCreateMember')"><i class="fa-solid fa-user-plus"></i> Tambah Pengurus</button>
+                            <button class="btn-primary" style="padding: 10px 20px;" onclick="showInviteCode()"><i class="fa-solid fa-link"></i> Kode Undangan</button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width:100%; text-align:left;">
+                            <thead><tr><th>Identitas Anggota</th><th>Peran / Role</th><th>Status Saat Ini</th><th>Terakhir Terlihat (Last Seen)</th></tr></thead>
+                            <tbody id="member-list"><tr><td colspan="4" style="text-align: center; padding: 20px;">Memuat data anggota...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="menu-analytics" class="menu-content">
+                <h2 style="color: var(--primary); margin-bottom: 15px; font-weight: 800;"><i class="fa-solid fa-chart-line"></i> Dashboard Analitik Interaksi</h2>
+                <div style="background: #e9f7ef; padding: 15px; border-radius: 8px; border: 1px solid #2ecc71; margin-bottom: 20px; font-size: 0.85rem; color: #27ae60;">
+                    <i class="fa-solid fa-circle-check"></i> <b>Data Asli Terhubung:</b> Grafik ini membaca data kunjungan *live* dari database "Attendances" selama 7 hari terakhir, dan total objek dokumen per modul (Keuangan, Proker, Surat DO, dsb).
+                </div>
+                <div class="analytics-grid">
+                    <div class="chart-box">
+                        <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; font-weight: 800;">Traffic Login User (7 Hari Terakhir)</h3>
+                        <div class="chart-container-wrapper"><canvas id="publicTrafficChart"></canvas></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 15px; font-weight: 800;">Volume Data per Modul</h3>
+                        <div class="chart-container-wrapper"><canvas id="userActivityChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wnhftesxaicqffnyrdkn.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_i2-_17x_KOh0HxNw4DaaNA_vqXMBO2R'; 
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Secondary client untuk bypass registrasi tanpa me-logout admin yang sedang login
+        const supabaseSecondary = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        });
+
+        let currentAdminSession = null; let currentWorkspaceId = null;
+        let layoutBlocks = []; let activeBlockId = null;
+        
+        let onlineUsers = {}; 
+        let allMembersData = [];
+        let chartTraffic = null; let chartActivity = null;
+
+        // GLOBAL CONFIG DATA FOR PUBLIC WEB
+        let globalOrgName = 'Campus Innovate';
+        let globalLogoUrl = '';
+        let globalIg = '';
+        let globalTiktok = '';
+        let globalEmail = '';
+        let globalOrgStructure = [];
+        let globalNewsList = [];
+        let globalAnnouncement = { title: '', content: '', active: 'false' };
+        
+        // DRAG AND DROP GLOBALS
+        let draggedOrgId = null;
+
+        const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+
+        const escapeHtml = (unsafe) => {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        };
+
+        function toggleSidebar() {
+            document.getElementById('appSidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+        
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div'); t.className = `toast ${type}`;
+            t.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':'fa-circle-exclamation'}" style="color:${type==='success'?'var(--green)':'var(--red)'}; font-size:1.2rem;"></i> <span>${msg}</span>`; 
+            container.appendChild(t); setTimeout(() => t.remove(), 3000);
+        }
+        
+        function switchMenu(menu) {
+            document.querySelectorAll('.menu-content').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            document.getElementById(`menu-${menu}`).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(window.innerWidth <= 768) toggleSidebar();
+            
+            if (menu === 'analytics') initChartsSafe();
+            if (menu === 'builder') renderCanvas();
+            if (menu === 'transparansi') loadAdminTransparansi();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        
+        function goToUserDashboard() { if (currentWorkspaceId) window.open(`user.html?workspace=${currentWorkspaceId}`, '_blank'); }
+        async function handleLogout() { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; }
+
+        function showInviteCode() {
+            if(currentWorkspaceId) {
+                navigator.clipboard.writeText(currentWorkspaceId)
+                    .then(() => showToast("Kode Undangan berhasil disalin! Bagikan ke anggota.", 'success'))
+                    .catch(() => prompt("Copy manual kode ini:", currentWorkspaceId));
+            }
+        }
+
+        async function createWorkspace(e) {
+            e.preventDefault();
+            const orgName = document.getElementById('orgName').value;
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Membangun...';
+            btn.disabled = true;
+
+            try {
+                // 1. Insert Workspace
+                const { data: newWs, error: wsError } = await supabaseClient.from('workspaces')
+                    .insert([{ nama_organisasi: orgName, admin_id: currentAdminSession.id }])
+                    .select()
+                    .single();
+
+                if (wsError) throw wsError;
+
+                // 2. Insert Admin as member
+                await supabaseClient.from('workspace_members').insert([{
+                    workspace_id: newWs.id,
+                    user_id: currentAdminSession.id,
+                    nama_user: currentAdminSession.user_metadata?.full_name || 'Admin Master',
+                    role: 'Admin'
+                }]);
+
+                showToast("Berhasil!", "Ruang Kerja (Workspace) berhasil dibuat.", "success");
+                
+                // Reload page to enter dashboard mode
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal Membuat Workspace", err.message, "error");
+                btn.innerHTML = 'Bangun Ruang Kerja';
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // FITUR TAMBAH PENGURUS BARU (BYPASS AUTH)
+        // ==========================================
+        async function handleDirectMemberCreate(e) {
+            e.preventDefault();
+            const email = document.getElementById('create-member-email').value;
+            const password = document.getElementById('create-member-password').value;
+            const name = document.getElementById('create-member-name').value;
+            const role = document.getElementById('create-member-role').value;
+            
+            const btn = document.getElementById('btn-submit-create-member');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            btn.disabled = true;
+
+            try {
+                // 1. Buat user di Auth Supabase
+                const { data: newAuthData, error: authError } = await supabaseSecondary.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: { full_name: name }
+                    }
+                });
+
+                if(authError) throw authError;
+                
+                if (!newAuthData || !newAuthData.user) {
+                    throw new Error("Gagal membuat user. Email mungkin sudah terdaftar.");
+                }
+
+                // 2. Masukkan ke tabel user_roles
+                const { error: roleError } = await supabaseClient.from('user_roles').insert([{ 
+                    user_id: newAuthData.user.id, 
+                    role: role 
+                }]);
+                if (roleError) throw roleError;
+
+                // 3. Masukkan ke tabel workspace_members untuk mengikat ke organisasi ini
+                const { error: memberError } = await supabaseClient.from('workspace_members').insert([{
+                    workspace_id: currentWorkspaceId,
+                    user_id: newAuthData.user.id,
+                    nama_user: name,
+                    role: role === 'admin' ? 'Admin' : 'Member',
+                    last_seen: new Date().toISOString()
+                }]);
+                if (memberError) throw memberError;
+
+                showToast("Pengurus Berhasil Ditambahkan!", `Akun ${email} telah berhasil digabungkan ke workspace.`, "success");
+                closeModal('modalDirectCreateMember');
+                e.target.reset();
+                loadMembers(); // Refresh daftar member
+                
+            } catch(err) {
+                console.error(err);
+                showToast("Gagal menambahkan", err.message, "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Tambahkan Pengurus';
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteLandingPage() {
+            if(confirm("Yakin ingin menghapus seluruh website publik ini beserta desainnya?")) {
+                const { error } = await supabaseClient.from('landing_pages').delete().eq('workspace_id', currentWorkspaceId);
+                if (!error) { showToast("Website berhasil dihapus.", 'success'); loadLandingPageData(); } 
+                else { showToast("Gagal menghapus: " + error.message, 'error'); }
+            }
+        }
+
+        async function saveLandingPage() {
+            // Get data from RTE
+            const annTitle = document.getElementById('ann-title').value;
+            const annContent = document.getElementById('ann-content').innerHTML;
+            const annStatus = document.getElementById('ann-status').value;
+            const orgNameInput = document.getElementById('config-org-name').value || globalOrgName;
+            const orgLogoInput = document.getElementById('config-org-logo').value || '';
+            const igInput = document.getElementById('config-org-ig').value || '';
+            const tiktokInput = document.getElementById('config-org-tiktok').value || '';
+            const emailInput = document.getElementById('config-org-email').value || '';
+
+            if(layoutBlocks.length === 0 && globalOrgStructure.length === 0 && globalNewsList.length === 0) {
+                return showToast("Data Kosong! Tambahkan setidaknya 1 blok desain/data.", "error");
+            }
+            
+            const btns = document.querySelectorAll('button[onclick="saveLandingPage()"]');
+            btns.forEach(btn => {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+                btn.disabled = true;
+            });
+
+            // Update Org Name in workspace table securely if changed
+            if (orgNameInput !== globalOrgName) {
+                await supabaseClient.from('workspaces').update({ nama_organisasi: orgNameInput }).eq('id', currentWorkspaceId);
+                globalOrgName = orgNameInput;
+                document.getElementById('header-workspace-name').innerText = orgNameInput;
+                document.getElementById('sidebar-workspace-name').innerText = orgNameInput;
+            }
+            globalLogoUrl = orgLogoInput;
+            globalIg = igInput;
+            globalTiktok = tiktokInput;
+            globalEmail = emailInput;
+
+            // Bundle Global Config Data into Layout Blocks payload safely
+            const configBlock = {
+                id: 'global_config_data',
+                type: 'global_data_config',
+                orgName: globalOrgName,
+                logoUrl: globalLogoUrl,
+                orgStructure: globalOrgStructure,
+                newsData: globalNewsList,
+                announcementData: { title: annTitle, content: annContent, active: annStatus },
+                footerData: { ig: globalIg, tiktok: globalTiktok, email: globalEmail }
+            };
+            
+            let cleanLayout = layoutBlocks.filter(b => b.type !== 'global_data_config');
+            cleanLayout.push(configBlock);
+
+            const payload = { workspace_id: currentWorkspaceId, layout_data: cleanLayout, is_published: true, updated_at: new Date().toISOString() };
+            const { error } = await supabaseClient.from('landing_pages').upsert(payload, { onConflict: 'workspace_id' });
+            
+            if (error) { 
+                showToast("Gagal menyimpan: " + error.message, 'error'); 
+            } else { 
+                showToast("Berhasil! Konfigurasi tersimpan & tersinkronisasi ke Website Publik.", 'success'); 
+                loadLandingPageData(); 
+            }
+            
+            btns.forEach(btn => {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Simpan Ke Publik';
+                btn.disabled = false;
+            });
+        }
+
+        function toggleFullscreenBuilder() {
+            const wrapper = document.getElementById('builder-main-wrapper');
+            wrapper.classList.toggle('builder-fullscreen');
+            if(wrapper.classList.contains('builder-fullscreen')) {
+                document.body.style.overflow = 'hidden'; 
+            } else {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function checkDomainAvailability() {
+            let inputName = document.getElementById('domain-input').value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+            const ext = document.getElementById('domain-ext').value;
+            const resultContainer = document.getElementById('domain-result');
+
+            if(inputName.length < 3) {
+                showToast("Nama domain minimal 3 karakter!", "error"); return;
+            }
+
+            const btn = document.getElementById('btn-check-domain');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.disabled = true;
+
+            setTimeout(() => {
+                let basePrice = 0;
+                if(ext === '.com') basePrice = 315000;
+                else if(ext === '.id') basePrice = 350000;
+                else if(ext === '.ac.id') basePrice = 320000;
+                else if(ext === '.or.id') basePrice = 150000;
+                else if(ext === '.my.id') basePrice = 50000;
+
+                let lengthModifier = Math.max(0, 15 - inputName.length) * 5000;
+                let finalPrice = basePrice + lengthModifier;
+
+                const commonNames = ['bem', 'dema', 'kampus', 'univ', 'organisasi'];
+                const isTaken = commonNames.includes(inputName) && (ext === '.com' || ext === '.id');
+
+                if(isTaken) {
+                    resultContainer.innerHTML = `<div style="background: #fef2f2; border: 1px solid #f87171; padding: 15px; border-radius: 8px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.3s ease;">
+                        <div><strong style="color: #b91c1c; font-size: 1.1rem;">${inputName}${ext}</strong><div style="font-size: 0.85rem; color: #7f1d1d; margin-top: 5px;">Domain sudah tidak tersedia (Digunakan).</div></div>
+                        <i class="fa-solid fa-circle-xmark" style="color: #ef4444; font-size: 1.5rem;"></i></div>`;
+                } else {
+                    resultContainer.innerHTML = `<div style="background: #f0fdf4; border: 1px solid #4ade80; padding: 15px; border-radius: 8px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.3s ease; flex-wrap:wrap; gap:10px;">
+                        <div><strong style="color: #166534; font-size: 1.1rem;">${inputName}${ext}</strong><div style="font-size: 0.85rem; color: #15803d; margin-top: 5px;">Tersedia! Est. Harga: <b>${formatRp(finalPrice)}</b> / thn</div></div>
+                        <div style="font-size: 0.85rem; color: #166534; background: #dcfce7; padding: 8px 12px; border-radius: 5px; font-weight: bold;"><i class="fa-solid fa-headset"></i> Silakan hubungi Tim Support Sales untuk klaim</div></div>`;
+                }
+                btn.innerHTML = 'Periksa'; btn.disabled = false;
+            }, 800);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initResizers();
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'index.html'; return; }
+            currentAdminSession = session.user;
+            
+            const { data: wsData } = await supabaseClient.from('workspaces').select('*').eq('admin_id', currentAdminSession.id).maybeSingle(); 
+            if (wsData) {
+                currentWorkspaceId = wsData.id;
+                globalOrgName = wsData.nama_organisasi;
+                
+                document.getElementById('setup-workspace-section').style.display = 'none';
+                document.getElementById('active-workspace-section').style.display = 'block';
+                document.getElementById('header-workspace-name').innerText = globalOrgName;
+                document.getElementById('sidebar-workspace-name').innerText = globalOrgName;
+                document.getElementById('config-org-name').value = globalOrgName;
+                
+                await loadLandingPageData();
+                await loadMembers();
+                
+                updateAdminPresenceToDB();
+                setInterval(updateAdminPresenceToDB, 60000);
+                window.addEventListener('beforeunload', () => updateAdminPresenceToDB());
+
+                setupRealtimePresence();
+            } else {
+                document.getElementById('setup-workspace-section').style.display = 'block';
+            }
+        });
+
+        function initResizers() {
+            const resizerLeft = document.getElementById('resizer-left');
+            const resizerRight = document.getElementById('resizer-right');
+            const toolsPanel = document.getElementById('builder-tools-panel');
+            const propPanel = document.getElementById('properties-panel');
+
+            let x, leftWidth, rightWidth;
+            let currentResizer = null;
+
+            const mouseDownHandler = function(e) {
+                currentResizer = e.target.closest('.resizer');
+                if(!currentResizer) return;
+                
+                x = e.clientX || e.touches[0].clientX;
+                
+                if (currentResizer === resizerLeft) {
+                    leftWidth = toolsPanel.getBoundingClientRect().width;
+                } else if (currentResizer === resizerRight) {
+                    rightWidth = propPanel.getBoundingClientRect().width;
+                }
+                
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('touchmove', mouseMoveHandler, {passive: false});
+                document.addEventListener('mouseup', mouseUpHandler);
+                document.addEventListener('touchend', mouseUpHandler);
+                
+                currentResizer.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault();
+            };
+
+            const mouseMoveHandler = function(e) {
+                if (!currentResizer) return;
+                const clientX = e.clientX || e.touches[0].clientX;
+                const dx = clientX - x;
+
+                if (currentResizer === resizerLeft) {
+                    const newLeftWidth = leftWidth + dx;
+                    if (newLeftWidth > 150 && newLeftWidth < 450) {
+                        toolsPanel.style.width = `${newLeftWidth}px`;
+                    }
+                } else if (currentResizer === resizerRight) {
+                    const newRightWidth = rightWidth - dx; 
+                    if (newRightWidth > 200 && newRightWidth < 600) {
+                        propPanel.style.width = `${newRightWidth}px`;
+                    }
+                }
+            };
+
+            const mouseUpHandler = function() {
+                if(currentResizer) currentResizer.classList.remove('resizing');
+                currentResizer = null;
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('touchmove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+                document.removeEventListener('touchend', mouseUpHandler);
+                document.body.style.cursor = '';
+            };
+
+            resizerLeft.addEventListener('mousedown', mouseDownHandler);
+            resizerLeft.addEventListener('touchstart', mouseDownHandler, {passive: false});
+            
+            resizerRight.addEventListener('mousedown', mouseDownHandler);
+            resizerRight.addEventListener('touchstart', mouseDownHandler, {passive: false});
+        }
+
+        function closePropertiesPanel() {
+            document.getElementById('properties-panel').classList.remove('active');
+            document.getElementById('resizer-right').style.display = 'none';
+            activeBlockId = null;
+            renderCanvas();
+        }
+
+        async function updateAdminPresenceToDB() {
+            if (currentAdminSession && currentWorkspaceId) {
+                await supabaseClient.from('workspace_members').update({
+                    last_seen: new Date().toISOString()
+                }).eq('user_id', currentAdminSession.id).eq('workspace_id', currentWorkspaceId);
+            }
+        }
+
+        async function loadMembers() {
+            const { data, error } = await supabaseClient.from('workspace_members').select('*').eq('workspace_id', currentWorkspaceId);
+            const tbody = document.getElementById('member-list'); tbody.innerHTML = '';
+            if (error || !data || data.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 30px;">Belum ada anggota yang bergabung.</td></tr>`; return; 
+            }
+            allMembersData = data; 
+            renderMembersTable();
+            populateOrgUserDropdown();
+        }
+
+        function populateOrgUserDropdown() {
+            const selectEl = document.getElementById('org-user-select');
+            selectEl.innerHTML = '<option value="">-- Pilih Anggota Pengurus --</option>';
+            allMembersData.forEach(user => {
+                selectEl.innerHTML += `<option value="${user.user_id}">${user.nama_user || 'User Tanpa Nama'}</option>`;
+            });
+        }
+
+        function renderMembersTable() {
+            const tbody = document.getElementById('member-list');
+            if (allMembersData.length === 0) return; 
+            tbody.innerHTML = '';
+            
+            const sortedMembers = [...allMembersData].sort((a, b) => {
+                const aOnline = onlineUsers[a.user_id] ? 1 : 0;
+                const bOnline = onlineUsers[b.user_id] ? 1 : 0;
+                if(aOnline !== bOnline) return bOnline - aOnline;
+                return new Date(b.last_seen || 0) - new Date(a.last_seen || 0);
+            });
+
+            sortedMembers.forEach(member => {
+                const isOnline = onlineUsers[member.user_id] ? true : false;
+                const statusBadge = isOnline ? '<span class="badge-status badge-online"><i class="fa-solid fa-circle"></i> Online</span>' : '<span class="badge-status badge-offline"><i class="fa-regular fa-circle"></i> Offline</span>';
+                let lastSeenText = isOnline ? '<span style="color: #2ecc71; font-weight: 700;">Sedang Aktif</span>' : (member.last_seen ? new Date(member.last_seen).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : "Belum aktif");
+                
+                tbody.innerHTML += `<tr><td><strong style="color: var(--primary); display: block;">${member.nama_user || 'User Tanpa Nama'}</strong><span style="font-size: 0.75rem; color: #aaa;">ID: ${member.user_id.substring(0,8)}...</span></td><td><span class="badge-role">${member.role || 'Member'}</span></td><td>${statusBadge}</td><td style="font-size: 0.85rem; color: #555;">${lastSeenText}</td></tr>`;
+            });
+        }
+
+        function setupRealtimePresence() {
+            const presenceChannel = supabaseClient.channel(`room_${currentWorkspaceId}`);
+            presenceChannel.on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState(); onlineUsers = {}; let count = 0;
+                for (const key in state) { state[key].forEach(p => { if(p.user_id !== currentAdminSession.id) { onlineUsers[p.user_id] = true; count++; } }); }
+                document.getElementById('online-count-badge').innerText = count; renderMembersTable();
+            }).on('presence', { event: 'join' }, ({ newPresences }) => { 
+                newPresences.forEach(p => { if(p.user_id !== currentAdminSession.id) showToast(`${p.nama_user || 'Seseorang'} Online!`, 'success'); }); 
+            }).on('presence', { event: 'leave' }, ({ leftPresences }) => { 
+                const nowIso = new Date().toISOString();
+                leftPresences.forEach(p => {
+                    const idx = allMembersData.findIndex(m => m.user_id === p.user_id);
+                    if(idx !== -1) {
+                        allMembersData[idx].last_seen = nowIso;
+                    }
+                });
+                renderMembersTable();
+                setTimeout(loadMembers, 2500); 
+            })
+            .subscribe(async (status) => { if (status === 'SUBSCRIBED') await presenceChannel.track({ user_id: currentAdminSession.id, nama_user: 'Admin', online_at: new Date().toISOString() }); });
+
+            supabaseClient.channel('db-changes')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'workspace_members', filter: `workspace_id=eq.${currentWorkspaceId}` }, payload => {
+                    const updatedMember = payload.new;
+                    const idx = allMembersData.findIndex(m => m.user_id === updatedMember.user_id);
+                    if(idx !== -1) {
+                        allMembersData[idx] = updatedMember;
+                        renderMembersTable();
+                    }
+                }).subscribe();
+        }
+
+        // ==========================================
+        // ADVANCED BUILDER & DATA SYNC LOGIC
+        // ==========================================
+        async function loadLandingPageData() {
+            const { data } = await supabaseClient.from('landing_pages').select('*').eq('workspace_id', currentWorkspaceId).maybeSingle();
+            const statusTxt = document.getElementById('ws-status-text');
+            const linkBtn = document.getElementById('link-public');
+            const delBtn = document.getElementById('btn-hapus-web');
+
+            if (data) {
+                let rawBlocks = data.layout_data || [];
+                
+                const configBlock = rawBlocks.find(b => b.type === 'global_data_config');
+                if (configBlock) {
+                    globalOrgName = configBlock.orgName || globalOrgName;
+                    globalLogoUrl = configBlock.logoUrl || '';
+                    globalOrgStructure = configBlock.orgStructure || [];
+                    globalNewsList = configBlock.newsData || [];
+                    globalAnnouncement = configBlock.announcementData || { title: '', content: '', active: 'false' };
+                    globalIg = configBlock.footerData?.ig || '';
+                    globalTiktok = configBlock.footerData?.tiktok || '';
+                    globalEmail = configBlock.footerData?.email || '';
+                    
+                    document.getElementById('config-org-name').value = globalOrgName;
+                    document.getElementById('config-org-logo').value = globalLogoUrl;
+                    document.getElementById('config-org-ig').value = globalIg;
+                    document.getElementById('config-org-tiktok').value = globalTiktok;
+                    document.getElementById('config-org-email').value = globalEmail;
+                    document.getElementById('ann-title').value = globalAnnouncement.title;
+                    document.getElementById('ann-content').innerHTML = globalAnnouncement.content;
+                    document.getElementById('ann-status').value = globalAnnouncement.active;
+                }
+                
+                layoutBlocks = rawBlocks.filter(b => b.type !== 'global_data_config').map(b => {
+                    if (!b.styles) b.styles = { bg: '#ffffff', padding: '40px', borderRadius: '15px' };
+                    if (!b.data) b.data = {};
+                    return b;
+                });
+                
+                if(data.is_published) {
+                    statusTxt.innerHTML = `<span style="color:var(--green); font-weight:bold;"><i class="fa-solid fa-check"></i> Website Telah Terpublikasi</span>`;
+                    linkBtn.href = `public.html?workspace=${currentWorkspaceId}`;
+                    linkBtn.style.display = 'inline-flex'; delBtn.style.display = 'inline-flex';
+                }
+            } else {
+                layoutBlocks = []; globalOrgStructure = []; globalNewsList = [];
+                statusTxt.innerHTML = `<span style="color:#aaa;"><i class="fa-solid fa-circle-exclamation"></i> Belum ada website yang dibuat.</span>`;
+                linkBtn.style.display = 'none'; delBtn.style.display = 'none';
+            }
+            renderCanvas();
+            renderOrgTable();
+            renderNewsList();
+        }
+
+        // --- ORG STRUCTURE LOGIC (HIERARCHY WITH DRAG AND DROP) ---
+        function dragOrg(e, id) {
+            draggedOrgId = id;
+            e.dataTransfer.effectAllowed = "move";
+        }
+        function allowDropOrg(e) { e.preventDefault(); }
+        function dropOrg(e, targetId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over-org');
+            if(draggedOrgId === targetId) return;
+
+            const draggedNode = globalOrgStructure.find(o => o.id === draggedOrgId);
+            if(draggedNode) {
+                if (isDescendant(draggedOrgId, targetId)) {
+                    showToast("Tidak bisa memindahkan atasan ke bawahannya sendiri!", "error");
+                    return;
+                }
+                draggedNode.parentId = targetId;
+                renderOrgTable();
+                showToast("Struktur diubah! Klik Simpan Ke Publik untuk menyimpan.", "info");
+            }
+        }
+        function dropToRoot(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over-org');
+            if(!draggedOrgId) return;
+            const draggedNode = globalOrgStructure.find(o => o.id === draggedOrgId);
+            if(draggedNode) {
+                draggedNode.parentId = null;
+                renderOrgTable();
+                showToast("Dipindah ke tingkat Pimpinan Tertinggi.", "info");
+            }
+        }
+        function isDescendant(parentId, childId) {
+            if(!childId) return false;
+            let current = globalOrgStructure.find(o => o.id === childId);
+            while(current && current.parentId) {
+                if(current.parentId === parentId) return true;
+                current = globalOrgStructure.find(o => o.id === current.parentId);
+            }
+            return false;
+        }
+
+        function addOrgMember(e) {
+            e.preventDefault();
+            const uId = document.getElementById('org-user-select').value;
+            const userObj = allMembersData.find(u => u.user_id === uId);
+            if(!userObj) return showToast("Pilih anggota yang valid", "error");
+            
+            const newItem = {
+                id: 'org_' + Date.now(),
+                userId: uId,
+                name: userObj.nama_user || 'Tanpa Nama',
+                role: document.getElementById('org-role-input').value,
+                parentId: document.getElementById('org-parent-select').value || null
+            };
+            
+            globalOrgStructure.push(newItem);
+            document.getElementById('form-org').reset();
+            renderOrgTable();
+            showToast("Berhasil ditambahkan ke hierarki (Belum tersimpan ke Publik)", "success");
+        }
+
+        function deleteOrgMember(id) {
+            if(confirm("Hapus jabatan ini dari hierarki?")) {
+                globalOrgStructure = globalOrgStructure.filter(o => o.id !== id);
+                globalOrgStructure.forEach(o => { if(o.parentId === id) o.parentId = null; });
+                renderOrgTable();
+            }
+        }
+
+        function populateParentSelect(parentId, level = 0) {
+            let options = '';
+            const children = globalOrgStructure.filter(o => o.parentId === parentId);
+            children.forEach(child => {
+                const prefix = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(level) + (level > 0 ? '↳ ' : '');
+                options += `<option value="${child.id}">${prefix}${child.name} (${child.role})</option>`;
+                options += populateParentSelect(child.id, level + 1);
+            });
+            return options;
+        }
+
+        function buildOrgTreeHTML(parentId, level = 0) {
+            let html = '';
+            const children = globalOrgStructure.filter(o => o.parentId === parentId);
+            children.forEach(child => {
+                const indent = level * 25;
+                html += `
+                    <tr draggable="true" ondragstart="dragOrg(event, '${child.id}')" ondragover="allowDropOrg(event)" ondrop="dropOrg(event, '${child.id}')" ondragenter="this.classList.add('drag-over-org')" ondragleave="this.classList.remove('drag-over-org')" style="transition:0.2s;">
+                        <td style="padding-left: ${15 + indent}px; border-bottom: 1px solid #eee; cursor: grab;">
+                            <i class="fa-solid fa-grip-vertical" style="color:#cbd5e1; margin-right:10px;"></i>
+                            ${level > 0 ? '<i class="fa-solid fa-arrow-turn-up fa-rotate-90" style="color:#cbd5e1; margin-right:8px;"></i>' : ''}
+                            <strong style="color:var(--primary);">${escapeHtml(child.name)}</strong>
+                            <div style="font-size:0.8rem; color:#666; margin-top:3px; padding-left:${level > 0 ? 35 : 20}px;">${escapeHtml(child.role)}</div>
+                        </td>
+                        <td style="text-align: right; border-bottom: 1px solid #eee;">
+                            <button class="btn-danger btn-sm" onclick="deleteOrgMember('${child.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                html += buildOrgTreeHTML(child.id, level + 1);
+            });
+            return html;
+        }
+
+        function renderOrgTable() {
+            const tbody = document.getElementById('org-table-body');
+            const pSelect = document.getElementById('org-parent-select');
+            pSelect.innerHTML = '<option value="">-- Tanpa Atasan (Posisi Tertinggi/BPH) --</option>' + populateParentSelect(null, 0);
+
+            if(globalOrgStructure.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 20px; color: #aaa;">Belum ada hierarki yang disusun.</td></tr>';
+            } else {
+                tbody.innerHTML = buildOrgTreeHTML(null, 0);
+            }
+        }
+
+        // ==========================================
+        // FIX: RENDER STRUKTUR ORGANISASI PREVIEW DENGAN AESTHETIC NOTION (SEMPURNA)
+        // ==========================================
+        function buildPublicOrgTreeHTML(parentId, level = 0) {
+            const children = globalOrgStructure.filter(o => o.parentId === parentId);
+            if(children.length === 0) return '';
+            
+            let html = `<div class="tree-children-preview">`;
+            children.forEach(m => {
+                let badge = level === 0 ? `<div class="bph-badge-preview">BPH / Pimpinan</div>` : '';
+                html += `
+                <div class="tree-node-preview">
+                    <div class="tree-card-preview">
+                        ${badge}
+                        <div class="tree-avatar-preview"><i class="fa-solid fa-user"></i></div>
+                        <div class="tree-name-preview">${escapeHtml(m.name)}</div>
+                        <div class="tree-role-preview">${escapeHtml(m.role)}</div>
+                    </div>
+                    ${buildPublicOrgTreeHTML(m.id, level + 1)}
+                </div>`;
+            });
+            html += `</div>`;
+            return html;
+        }
+
+
+        // --- NEWS LOGIC ---
+        function addNewsItem(e) {
+            e.preventDefault();
+            const descHtml = document.getElementById('news-desc').innerHTML;
+            if(!descHtml.trim()) return showToast("Ringkasan berita tidak boleh kosong", "error");
+
+            const newItem = {
+                id: 'news_' + Date.now(),
+                img: document.getElementById('news-img').value,
+                date: document.getElementById('news-date').value,
+                title: document.getElementById('news-title').value,
+                desc: descHtml
+            };
+            globalNewsList.unshift(newItem); 
+            
+            document.getElementById('news-img').value = '';
+            document.getElementById('news-date').value = '';
+            document.getElementById('news-title').value = '';
+            document.getElementById('news-desc').innerHTML = '';
+            
+            renderNewsList();
+            showToast("Berita ditambahkan! (Klik Simpan Publik untuk memperbarui web)", "success");
+        }
+
+        function deleteNewsItem(id) {
+            if(confirm("Hapus berita ini?")) {
+                globalNewsList = globalNewsList.filter(n => n.id !== id);
+                renderNewsList();
+            }
+        }
+
+        function renderNewsList() {
+            const container = document.getElementById('news-list-container');
+            container.innerHTML = '';
+            if(globalNewsList.length === 0) {
+                container.innerHTML = '<p style="color: #aaa; text-align: center;">Belum ada berita diterbitkan.</p>';
+                return;
+            }
+            
+            globalNewsList.forEach(news => {
+                container.innerHTML += `
+                    <div style="display:flex; gap:15px; border:1px solid #eee; padding:15px; border-radius:10px; background:#f8fafc; align-items:center;">
+                        <img src="${escapeHtml(news.img)}" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
+                        <div style="flex:1;">
+                            <div style="font-size:0.7rem; color:var(--secondary); font-weight:bold;">${escapeHtml(news.date)}</div>
+                            <h4 style="margin:5px 0; color:var(--primary); font-size:1rem;">${escapeHtml(news.title)}</h4>
+                            <div style="font-size:0.8rem; color:#666; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${news.desc}</div>
+                        </div>
+                        <button class="btn-danger btn-sm" onclick="deleteNewsItem('${news.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        // --- TRANSPARANSI & KPI ADMIN DASHBOARD LOGIC ---
+        async function loadAdminTransparansi() {
+            const { data: finData } = await supabaseClient.from('finance_summaries').select('*').eq('workspace_id', currentWorkspaceId).maybeSingle(); 
+            let t = 0; let r = 0; 
+            if (finData) { t = parseFloat(finData.total_rab); r = parseFloat(finData.realisasi_rab); } 
+            const sisa = t - r; const persentase = t > 0 ? Math.round((r/t)*100) : 0; 
+            
+            document.getElementById('adm-fin-rab').innerText = formatRp(t);
+            document.getElementById('adm-fin-real').innerText = formatRp(r);
+            document.getElementById('adm-fin-sisa').innerText = formatRp(sisa);
+            document.getElementById('adm-fin-persen').innerText = persentase + '%';
+
+            const { data: kpis } = await supabaseClient.from('kpi_items').select('*, departments(nama_departemen), programs(nama_program)').eq('workspace_id', currentWorkspaceId);
+            const kpiListContainer = document.getElementById('adm-kpi-list');
+            kpiListContainer.innerHTML = '';
+            
+            if(kpis && kpis.length > 0) {
+                kpis.forEach(k => {
+                    let persen = k.target > 0 ? (k.capaian / k.target) * 100 : 0;
+                    let colorCode = persen >= 100 ? 'var(--green)' : (persen > 0 ? 'var(--secondary)' : 'var(--red)');
+                    
+                    kpiListContainer.innerHTML += `
+                        <div style="border: 1px solid #eee; padding: 15px; border-radius:10px; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                <strong style="color:var(--primary); font-size:0.95rem;">${escapeHtml(k.nama_kpi)}</strong>
+                                <span style="color: white; background: ${colorCode}; font-weight:bold; font-size:0.75rem; padding: 3px 8px; border-radius:10px;">${persen.toFixed(1)}%</span>
+                            </div>
+                            <div style="font-size:0.8rem; color:#666; margin-bottom: 8px;">
+                                <i class="fa-solid fa-sitemap"></i> ${escapeHtml(k.departments?.nama_departemen || 'Umum')} | 
+                                <i class="fa-solid fa-star"></i> ${escapeHtml(k.programs?.nama_program || '-')}
+                            </div>
+                            <div style="font-size:0.8rem; display:flex; justify-content:space-between; background:#f8fafc; padding:8px; border-radius:5px;">
+                                <span>Target: <b>${k.target} ${k.satuan}</b></span>
+                                <span style="color:var(--primary);">Capaian: <b>${k.capaian} ${k.satuan}</b></span>
+                            </div>
+                        </div>`;
+                });
+            } else {
+                kpiListContainer.innerHTML = '<p style="color:#aaa; text-align:center;">Belum ada data indikator KPI.</p>';
+            }
+        }
+
+
+        // --- UI BUILDER CANVAS ---
+        function dragStartTool(e, type) { e.dataTransfer.setData('blockType', type); }
+        function allowDrop(e) { e.preventDefault(); document.getElementById('canvas-dropzone').classList.add('drag-over'); }
+        function dropToCanvas(e) {
+            e.preventDefault(); e.stopPropagation();
+            document.getElementById('canvas-dropzone').classList.remove('drag-over');
+            const type = e.dataTransfer.getData('blockType');
+            if(!type) return;
+
+            let newBlock = { id: 'block_' + Date.now(), type: type, styles: { bg: '#ffffff', padding: '40px', borderRadius: '15px' }, data: {} };
+
+            if(type === 'hero') { newBlock.data = { title: "Visi Misi Organisasi", subtitle: "Membangun masa depan bersama", url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&q=80" }; newBlock.styles.bg = '#0A3055'; }
+            else if(type === 'text') { newBlock.data = { content: "Tulis narasi atau informasi Anda di sini. Berikan deskripsi yang jelas dan menarik untuk pengunjung." }; }
+            else if(type === 'image') { newBlock.data = { url: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=80", width: "100%", align: "center" }; }
+            else if(type === 'video') { newBlock.data = { url: "https://www.youtube.com/embed/dQw4w9WgXcQ" }; }
+            else if(type === 'newsletter') { newBlock.data = { title: "Pengumuman Live Terhubung", content: "Widget ini akan otomatis membaca Pengumuman dari Tab Berita." }; }
+            else if(type === 'divider') { newBlock.data = { style: "solid" }; newBlock.styles.padding = '20px'; }
+            else if(type === 'grid-news') { newBlock.data = { title: "Berita & Agenda Terkini", columns: "3", items: [] }; }
+            else if(type === 'struktur') { newBlock.data = { title: "Struktur Organisasi BEM" }; }
+            else if(['finance','kpi','program'].includes(type)) { newBlock.data = {}; }
+            
+            layoutBlocks.push(newBlock);
+            renderCanvas(); selectBlock(newBlock.id);
+            setTimeout(() => { document.getElementById('preview-window').scrollTop = document.getElementById('preview-window').scrollHeight; }, 100);
+        }
+
+        // FUNGSI RENDER CANVAS (FIX FULL WIDTH LAYOUT)
+        function renderCanvas() {
+            const previewWindow = document.getElementById('preview-window');
+            const currentScroll = previewWindow.scrollTop;
+            
+            if(layoutBlocks.length === 0) {
+                previewWindow.innerHTML = `<div id="canvas-placeholder" style="text-align: center; color: #aaa; margin-top: 150px;"><i class="fa-solid fa-hand-pointer" style="font-size: 3rem; margin-bottom: 15px; color: #cbd5e1;"></i><br>Drop elemen desain ke area website ini</div>`;
+                return;
+            }
+
+            previewWindow.innerHTML = ''; 
+            let htmlString = '';
+
+            let navLinks = '';
+            layoutBlocks.forEach(b => {
+                let linkTitle = b.data?.title || '';
+                if(b.type === 'hero') linkTitle = 'Beranda';
+                else if(b.type === 'struktur') linkTitle = 'Pengurus';
+                else if(b.type === 'finance') linkTitle = 'Keuangan';
+                else if(b.type === 'kpi') linkTitle = 'KPI Target';
+                else if(b.type === 'program') linkTitle = 'Program Kerja';
+                else if(b.type === 'grid-news') linkTitle = 'Berita';
+                if(linkTitle) navLinks += `<a href="#section-${b.id}" onclick="event.preventDefault()">${escapeHtml(linkTitle)}</a>`;
+            });
+            
+            let navBrandContent = globalLogoUrl ? `<img src="${escapeHtml(globalLogoUrl)}" style="height:30px; object-fit:contain;"> ${escapeHtml(globalOrgName)}` : `<i class="fa-solid fa-layer-group" style="color: var(--secondary);"></i> ${escapeHtml(globalOrgName)}`;
+            
+            htmlString += `<div class="preview-navbar"><div class="brand">${navBrandContent}</div><div class="preview-nav-links">${navLinks}</div></div>`;
+
+            layoutBlocks.forEach((block, index) => {
+                const isSelected = activeBlockId === block.id ? 'selected' : '';
+                let bgStyle = block.styles.bg !== '#ffffff' ? block.styles.bg : 'transparent';
+                
+                // Menerapkan Full-Width Wrapper untuk semua elemen
+                let wrapperStyle = `background-color: ${bgStyle}; padding: ${block.styles.padding} 0; margin-bottom: 10px; width: 100%;`;
+                
+                let blockContent = '';
+                
+                if (block.type === 'hero') {
+                    let bgImg = block.data.url ? `background-image: url('${escapeHtml(block.data.url)}');` : `background-color: var(--primary);`;
+                    blockContent = `
+                        <div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;">
+                            <div style="position: relative; border-radius: ${block.styles.borderRadius}; ${bgImg} background-size: cover; background-position: center; min-height: 350px; display: flex; align-items: center; justify-content: center; text-align: center; color: white;">
+                                <div style="position: absolute; inset:0; background: linear-gradient(135deg, rgba(10,48,85,0.85), rgba(0,0,0,0.5)); border-radius: inherit;"></div>
+                                <div style="position: relative; z-index: 2; padding: 20px; max-width: 600px;">
+                                    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 15px; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">${escapeHtml(block.data.title)}</h1>
+                                    <p style="font-size: 1.1rem; opacity: 0.9;">${escapeHtml(block.data.subtitle)}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                } 
+                else if (block.type === 'text') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><div style="font-size:1rem; line-height:1.8; color:#334155;">${block.data.content || ''}</div></div>`; 
+                }
+                else if (block.type === 'image') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><div style="text-align:${escapeHtml(block.data.align) || 'center'};"><img src="${escapeHtml(block.data.url)}" style="width:${escapeHtml(block.data.width) || '100%'}; border-radius:${block.styles.borderRadius}; box-shadow:0 10px 30px rgba(0,0,0,0.1); max-height:400px; object-fit:cover;"></div></div>`; 
+                }
+                else if (block.type === 'video') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><div><iframe src="${escapeHtml(block.data.url)}" style="width:100%; height:300px; border-radius:${block.styles.borderRadius}; border:none; box-shadow:0 5px 20px rgba(0,0,0,0.1); pointer-events:none;"></iframe></div></div>`; 
+                }
+                else if (block.type === 'newsletter') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><div style="background: white; padding: 20px; border-left: 5px solid #e67e22; border-radius: ${block.styles.borderRadius}; box-shadow: 0 4px 15px rgba(0,0,0,0.05);"><h3 style="margin-bottom:8px; color:#e67e22; font-weight:800;"><i class="fa-solid fa-bullhorn"></i> WIDGET: Banner Pengumuman Terhubung Live</h3><p style="color:#64748b; font-size:0.9rem;">(Akan di-override dengan data dari Menu Berita & Pengumuman)</p></div></div>`; 
+                }
+                else if (block.type === 'divider') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><hr style="border:0; border-top: 3px ${escapeHtml(block.data.style) || 'solid'} #cbd5e1; margin: 0;"></div>`; 
+                }
+                else if (block.type === 'grid-news') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; border-bottom: 2px solid rgba(10,48,85,0.1); padding-bottom: 10px;">${escapeHtml(block.data.title)}</h2><div style="background: #e2e8f0; padding: 30px; text-align: center; border-radius:10px; color:#64748b;"><i class="fa-solid fa-newspaper" style="font-size:2rem; margin-bottom:10px;"></i><br><b>WIDGET: Berita Terhubung Live</b><br>Jumlah dan isi berita akan langsung mengambil dari database Menu Berita di Admin HTML.</div></div>`; 
+                }
+                else if (block.type === 'struktur') {
+                    let treeHtml = '';
+                    if (globalOrgStructure.length > 0) { treeHtml = buildPublicOrgTreeHTML(null, 0); } 
+                    else { treeHtml = `<p style="color:#777; width:100%; text-align:center;">Data struktur belum diatur oleh admin.</p>`; }
+                    
+                    // FIX: IMPLEMENTASI FULL WIDTH WRAPPER UNTUK STRUKTUR ORGANISASI PREVIEW
+                    blockContent = `
+                        <div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;">
+                            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 30px; text-align: center; color:var(--text);">${escapeHtml(block.data.title)}</h2>
+                        </div>
+                        <div class="tree-preview-wrapper">
+                            <div class="tree-container-inner">
+                                ${treeHtml}
+                            </div>
+                        </div>`;
+                }
+                else if (block.type === 'finance') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px;"><i class="fa-solid fa-wallet"></i> Transparansi Keuangan</h2><div style="background: #e2e8f0; padding: 30px; text-align: center; border-radius:10px; color:#64748b;">(Widget Transparansi Keuangan Auto-Sync)</div></div>`; 
+                }
+                else if (block.type === 'kpi') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px;"><i class="fa-solid fa-bullseye"></i> Capaian KPI Target</h2><div style="background: #e2e8f0; padding: 30px; text-align: center; border-radius:10px; color:#64748b;">(Widget KPI Organisasi Auto-Sync)</div></div>`; 
+                }
+                else if (block.type === 'program') { 
+                    blockContent = `<div style="max-width: 1150px; margin: 0 auto; padding: 0 20px;"><h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px;"><i class="fa-solid fa-list-check"></i> Status Program Kerja</h2><div style="background: #e2e8f0; padding: 30px; text-align: center; border-radius:10px; color:#64748b;">(Widget Update Jadwal/Timeline Auto-Sync)</div></div>`; 
+                }
+
+                htmlString += `
+                    <div id="section-${block.id}" class="preview-section ${isSelected}" onclick="event.stopPropagation(); selectBlock('${block.id}')" style="${wrapperStyle}">
+                        ${blockContent}
+                        <div class="preview-actions">
+                            <button onclick="event.stopPropagation(); moveBlock(${index}, -1)" title="Pindah Ke Atas"><i class="fa-solid fa-arrow-up"></i></button>
+                            <button onclick="event.stopPropagation(); moveBlock(${index}, 1)" title="Pindah Ke Bawah"><i class="fa-solid fa-arrow-down"></i></button>
+                            <button class="del-btn" onclick="event.stopPropagation(); removeBlock('${block.id}')" title="Hapus Bagian"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>`;
+            });
+
+            // Container menggunakan lebar penuh (100%) agar padding bekerja dengan benar
+            previewWindow.innerHTML = `<div style="width: 100%; margin: 0;">${htmlString}</div>`;
+            previewWindow.scrollTop = currentScroll;
+        }
+
+        function selectBlock(id) {
+            if (activeBlockId === id) return; 
+            
+            activeBlockId = id; renderCanvas(); 
+            const block = layoutBlocks.find(b => b.id === id); if (!block) return;
+            
+            document.getElementById('properties-panel').classList.add('active');
+            document.getElementById('resizer-right').style.display = 'flex';
+            document.getElementById('prop-empty').style.display = 'none';
+            const propForm = document.getElementById('prop-form'); propForm.style.display = 'block';
+            
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f1f5f9; padding:10px; border-radius:8px;">
+                    <span style="font-weight:bold; font-size:0.8rem; color:var(--primary);"><i class="fa-solid fa-cube"></i> Tipe: ${block.type.toUpperCase()}</span>
+                </div>
+                <div class="prop-group"><label>Warna Background (Latar)</label><input type="color" value="${block.styles.bg}" onchange="updateBlockStyle('${id}', 'bg', this.value)" style="height: 40px; cursor: pointer; padding: 2px;"></div>
+                <div class="prop-group"><label>Jarak Internal / Padding</label><select onchange="updateBlockStyle('${id}', 'padding', this.value)"><option value="10px" ${block.styles.padding==='10px'?'selected':''}>Sangat Rapat (10px)</option><option value="20px" ${block.styles.padding==='20px'?'selected':''}>Normal (20px)</option><option value="40px" ${block.styles.padding==='40px'?'selected':''}>Luas Berjarak (40px)</option><option value="80px" ${block.styles.padding==='80px'?'selected':''}>Hero / Banner (80px)</option></select></div>
+                <div class="prop-group"><label>Bentuk Sudut Bingkai (Border Radius)</label><select onchange="updateBlockStyle('${id}', 'borderRadius', this.value)"><option value="0px" ${block.styles.borderRadius==='0px'?'selected':''}>Kotak Kaku (0px)</option><option value="15px" ${block.styles.borderRadius==='15px'?'selected':''}>Melengkung Halus (15px)</option><option value="30px" ${block.styles.borderRadius==='30px'?'selected':''}>Sangat Bulat (30px)</option></select></div>
+                <hr style="border:1px dashed #e2e8f0; margin:20px 0;"><h4 style="margin-bottom:15px; color:var(--primary); font-size:0.9rem; font-weight:800;">📝 Isi Konten (Auto-Update)</h4>
+            `;
+
+            if(block.type === 'hero') { html += `<div class="prop-group"><label>Judul Utama (Heading Besar)</label><input type="text" value="${block.data.title || ''}" oninput="updateBlockData('${id}', 'title', this.value)"></div><div class="prop-group"><label>Sub Judul / Slogan</label><textarea rows="3" oninput="updateBlockData('${id}', 'subtitle', this.value)">${block.data.subtitle || ''}</textarea></div><div class="prop-group"><label>URL Gambar Banner Background</label><input type="text" placeholder="https://..." value="${block.data.url || ''}" oninput="updateBlockData('${id}', 'url', this.value)"></div>`; } 
+            else if (block.type === 'text') { html += `<div class="prop-group"><label>Teks Paragraf Panjang</label><div class="mini-rte-container"><div class="mini-rte-toolbar"><button type="button" onclick="document.execCommand('bold',false,null)"><i class="fa-solid fa-bold"></i></button><button type="button" onclick="document.execCommand('italic',false,null)"><i class="fa-solid fa-italic"></i></button><button type="button" onclick="document.execCommand('underline',false,null)"><i class="fa-solid fa-underline"></i></button><button type="button" onclick="document.execCommand('insertUnorderedList',false,null)"><i class="fa-solid fa-list-ul"></i></button><button type="button" onclick="document.execCommand('insertOrderedList',false,null)"><i class="fa-solid fa-list-ol"></i></button></div><div class="mini-rte-editor" contenteditable="true" oninput="updateBlockData('${id}', 'content', this.innerHTML)">${block.data.content || ''}</div></div></div>`; } 
+            else if (block.type === 'image') { html += `<div class="prop-group"><label>URL Link Gambar</label><input type="text" value="${block.data.url || ''}" oninput="updateBlockData('${id}', 'url', this.value)"></div><div class="prop-group"><label>Lebar Gambar (%)</label><input type="number" min="10" max="100" value="${parseInt(block.data.width) || 100}" onchange="updateBlockData('${id}', 'width', this.value + '%')"></div><div class="prop-group"><label>Posisi Peletakan</label><select onchange="updateBlockData('${id}', 'align', this.value)"><option value="left" ${block.data.align==='left'?'selected':''}>Kiri</option><option value="center" ${block.data.align==='center'?'selected':''}>Tengah</option><option value="right" ${block.data.align==='right'?'selected':''}>Kanan</option></select></div>`; }
+            else if (block.type === 'video') { html += `<div class="prop-group"><label>Link Embed YouTube Khusus</label><input type="text" value="${block.data.url || ''}" oninput="updateBlockData('${id}', 'url', this.value)"></div>`; }
+            else if (block.type === 'newsletter') { html += `<div style="background:#e9f7ef; padding:15px; border-radius:8px; font-size:0.8rem; color:#27ae60; border:1px solid #2ecc71;"><b>Widget Sinkronisasi:</b> Untuk mengubah teks/isi pengumuman, silakan tuju Menu "Berita & Pengumuman".</div>`; }
+            else if (block.type === 'divider') { html += `<div class="prop-group"><label>Tipe Pola Garis</label><select onchange="updateBlockData('${id}', 'style', this.value)"><option value="solid" ${block.data.style==='solid'?'selected':''}>Garis Lurus Penuh</option><option value="dashed" ${block.data.style==='dashed'?'selected':''}>Garis Putus-putus</option><option value="dotted" ${block.data.style==='dotted'?'selected':''}>Titik-titik</option></select></div>`; }
+            else if (block.type === 'grid-news') { html += `<div class="prop-group"><label>Judul Section Grid</label><input type="text" value="${block.data.title || ''}" oninput="updateBlockData('${id}', 'title', this.value)"></div><div class="prop-group"><label>Jumlah Kolom (Grid Display)</label><select onchange="updateBlockData('${id}', 'columns', this.value)"><option value="2" ${block.data.columns==='2'?'selected':''}>2 Kolom</option><option value="3" ${block.data.columns==='3'?'selected':''}>3 Kolom</option><option value="4" ${block.data.columns==='4'?'selected':''}>4 Kolom</option></select></div><div style="background:#e9f7ef; padding:15px; border-radius:8px; font-size:0.8rem; color:#27ae60; border:1px solid #2ecc71;"><b>Widget Live:</b> Jumlah item berita akan ditarik secara otomatis dari daftar Menu "Berita & Pengumuman" tanpa batasan.</div>`; } 
+            else if (block.type === 'struktur') { html += `<div class="prop-group"><label>Sematkan Judul Blok</label><input type="text" value="${block.data.title || ''}" oninput="updateBlockData('${id}', 'title', this.value)"></div><div style="background:#e9f7ef; padding:15px; border-radius:8px; font-size:0.8rem; color:#27ae60; border:1px solid #2ecc71;"><b>Sinkronisasi Aktif:</b> Data profil dan jabatan anggota akan ditarik otomatis dari konfigurasi di menu "Struktur Organisasi".</div>`; } 
+            else { html += `<div style="background:#e9f7ef; padding:15px; border-radius:8px; font-size:0.8rem; color:#27ae60; border:1px solid #2ecc71;"><b>Sistem Otomatis (Live):</b> Widget ini otomatis menyesuaikan datanya sesuai dengan rekapitulasi data asli di Dashboard Internal Workspace.</div>`; }
+
+            propForm.innerHTML = html;
+        }
+
+        function updateBlockStyle(id, key, val) { const b = layoutBlocks.find(x => x.id === id); if(b) { b.styles[key] = val; renderCanvas(); } }
+        function updateBlockData(id, key, val) { const b = layoutBlocks.find(x => x.id === id); if(b) { b.data[key] = val; renderCanvas(); } }
+        function moveBlock(idx, dir) { if(idx + dir < 0 || idx + dir >= layoutBlocks.length) return; const temp = layoutBlocks[idx]; layoutBlocks[idx] = layoutBlocks[idx + dir]; layoutBlocks[idx + dir] = temp; renderCanvas(); }
+        function removeBlock(id) { layoutBlocks = layoutBlocks.filter(b => b.id !== id); if(activeBlockId === id) { document.getElementById('prop-form').style.display='none'; document.getElementById('prop-empty').style.display='block'; activeBlockId = null; document.getElementById('resizer-right').style.display = 'none'; } renderCanvas(); }
+
+        async function initChartsSafe() {
+            const canvas1 = document.getElementById('publicTrafficChart');
+            const canvas2 = document.getElementById('userActivityChart');
+            
+            if(canvas1 && canvas2) {
+                let existingChart1 = Chart.getChart(canvas1);
+                if (existingChart1) existingChart1.destroy();
+                let existingChart2 = Chart.getChart(canvas2);
+                if (existingChart2) existingChart2.destroy();
+
+                const today = new Date();
+                const past7Days = new Date(today);
+                past7Days.setDate(today.getDate() - 6);
+                const startDateStr = past7Days.toISOString().split('T')[0];
+
+                const { data: trafficData } = await supabaseClient.from('attendances').select('tanggal, user_id').eq('workspace_id', currentWorkspaceId).gte('tanggal', startDateStr);
+                const dateCountsMap = {};
+                for(let i=6; i>=0; i--) { let d = new Date(today); d.setDate(today.getDate() - i); dateCountsMap[d.toISOString().split('T')[0]] = new Set(); }
+
+                if(trafficData) { trafficData.forEach(row => { if(dateCountsMap[row.tanggal]) { dateCountsMap[row.tanggal].add(row.user_id); } }); }
+
+                const labelsTraffic = Object.keys(dateCountsMap).map(d => { let p = d.split('-'); return `${p[2]}/${p[1]}`; });
+                const dataTraffic = Object.values(dateCountsMap).map(set => set.size);
+
+                chartTraffic = new Chart(canvas1.getContext('2d'), { 
+                    type: 'line', 
+                    data: { labels: labelsTraffic, datasets: [{ label: 'Pengurus Aktif (Unik)', data: dataTraffic, borderColor: '#F6B23B', backgroundColor: 'rgba(246, 178, 59, 0.15)', fill: true, tension: 0.4 }] },
+                    options: { maintainAspectRatio: false }
+                });
+
+                const { count: countKpi } = await supabaseClient.from('kpi_items').select('*', {count: 'exact', head: true}).eq('workspace_id', currentWorkspaceId);
+                const { count: countProg } = await supabaseClient.from('programs').select('*', {count: 'exact', head: true}).eq('workspace_id', currentWorkspaceId);
+                const { count: countRab } = await supabaseClient.from('rab_items').select('*', {count: 'exact', head: true}).eq('workspace_id', currentWorkspaceId);
+                const { count: countDO } = await supabaseClient.from('digital_office').select('*', {count: 'exact', head: true}).eq('workspace_id', currentWorkspaceId);
+
+                chartActivity = new Chart(canvas2.getContext('2d'), { 
+                    type: 'bar', 
+                    data: { labels: ['KPI Target', 'Keuangan (RAB)', 'Program Kerja', 'Surat Digital'], datasets: [{ label: 'Total Dokumen Tersimpan', data: [countKpi||0, countRab||0, countProg||0, countDO||0], backgroundColor: '#0A3055', borderRadius: 6 }] },
+                    options: { maintainAspectRatio: false }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

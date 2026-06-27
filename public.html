@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Generator - Campus Innovate</title>
+    <link rel="icon" type="image/png" href="coreva_logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --theme-color: #0A3055; --bg-body: #f8fafc; --text: #1e293b; --secondary: #F6B23B; --green: #2ecc71; --red: #e74c3c;}
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* ============================================
+           FIX BUG UTAMA: overflow-x: hidden dipindah
+           dari body ke html agar 100vw trick bekerja
+           dan position sticky navbar tidak rusak
+           ============================================ */
+        html { overflow-x: hidden; scroll-behavior: smooth; scroll-padding-top: 80px; }
+        body { background: var(--bg-body); color: var(--text); }
+
+        /* CUSTOM TOAST NOTIFICATION */
+        #toast-container { position: fixed; top: 90px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; font-weight: 600; font-size: 0.95rem; border-left: 5px solid var(--theme-color); transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast.show { transform: translateX(0); }
+        .toast i { font-size: 1.3rem; }
+        .toast.success { border-color: var(--green); color: #166534; }
+        .toast.success i { color: var(--green); }
+        .toast.error { border-color: var(--red); color: #991b1b; }
+        .toast.error i { color: var(--red); }
+        .toast.info { border-color: var(--theme-color); color: var(--theme-color); }
+        .toast.info i { color: var(--theme-color); }
+
+        /* BANNER PENGUMUMAN */
+        #global-announcement { display: none; background: linear-gradient(90deg, #e67e22, #d35400); color: white; padding: 12px 40px; text-align: center; position: relative; z-index: 1001; animation: slideDown 0.5s ease; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);}
+        #global-announcement strong { font-weight: 800; font-size: 1.05rem; display: block; margin-bottom: 2px;}
+        #global-announcement p { font-size: 0.9rem; margin: 0; opacity: 0.95;}
+        #global-announcement p ul, #global-announcement p ol { text-align: left; padding-left: 20px; margin-top: 5px; }
+        #close-ann { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        #close-ann:hover { background: rgba(255,255,255,0.4); transform: translateY(-50%) rotate(90deg); }
+
+        /* NAVBAR PUBLIK */
+        .public-navbar { position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 30px rgba(0,0,0,0.03); transition: all 0.3s ease;}
+        .public-navbar .brand { font-weight: 800; color: var(--theme-color); font-size: 1.5rem; display: flex; align-items: center; gap: 12px;}
+        .public-nav-links { display: flex; gap: 30px; align-items: center; }
+        .public-nav-links a { text-decoration: none; color: #475569; font-size: 0.95rem; font-weight: 700; transition: 0.3s; position: relative; padding: 5px 0;}
+        .public-nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: var(--secondary); transition: 0.3s; border-radius: 5px;}
+        .public-nav-links a:hover { color: var(--theme-color); }
+        .public-nav-links a:hover::after { width: 100%; }
+        
+        .mobile-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; color: var(--theme-color); cursor: pointer; transition: 0.2s;}
+
+        /* LAYOUT & UTILITIES */
+        .page-container { max-width: 1150px; margin: 0 auto; padding: 0 20px; }
+        .dynamic-block { margin: 30px auto; position: relative; }
+        
+        /* SCROLL ANIMATION CLASS */
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* HERO SECTION */
+        .hero-layout { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; position: relative; background-size: cover; background-position: center; min-height: 550px; margin-top: 0; }
+        .hero-layout::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,48,85,0.92), rgba(0,0,0,0.7)); z-index: 1;}
+        .hero-content { position: relative; z-index: 2; max-width: 850px; padding: 20px; animation: scaleIn 1s ease-out forwards;}
+        .hero-content h1 { font-size: 4rem; font-weight: 800; margin-bottom: 25px; line-height: 1.15; text-shadow: 0 10px 25px rgba(0,0,0,0.4); letter-spacing: -1px;}
+        .hero-content p { font-size: 1.3rem; opacity: 0.9; line-height: 1.6; }
+
+        /* TYPOGRAPHY */
+        .section-heading { font-size: 2.2rem; font-weight: 800; color: var(--theme-color); margin-bottom: 40px; display: flex; align-items: center; gap: 15px; text-transform: capitalize; letter-spacing: -0.5px;}
+        .section-heading::after { content: ''; flex: 1; height: 3px; background: linear-gradient(90deg, var(--theme-color), transparent); opacity: 0.15; border-radius: 5px;}
+
+        /* ==========================================
+           FIX BUG STRUKTUR ORGANISASI
+           - Full width bleed (100vw) agar tidak terpotong
+           - Garis connector tetap rapi
+           ========================================== */
+
+        /* Section struktur: padding kiri-kanan 0 agar tree bisa full-width */
+        .section-struktur-wrap {
+            width: 100%;
+            overflow: visible;
+        }
+
+        /* Heading struktur tetap ikut page-container */
+        .section-struktur-heading {
+            max-width: 1150px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Full-bleed wrapper: keluar dari page-container, mentok kiri-kanan viewport */
+        .tree-preview-wrapper { 
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            margin-left: -50vw;
+            overflow-x: auto; 
+            padding: 20px 60px 40px 60px;
+            display: block; 
+            text-align: center; 
+            white-space: nowrap;
+            box-sizing: border-box;
+            /* Background biar ada feel section tersendiri */
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+        }
+        
+        .tree-preview-wrapper::-webkit-scrollbar { height: 8px; }
+        .tree-preview-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .tree-preview-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+
+        .tree-container-inner {
+            display: inline-flex; 
+            flex-direction: column; 
+            align-items: center;
+            min-width: min-content; 
+            margin: 0 auto; 
+            padding: 10px 60px 10px 60px;
+        }
+
+        .tree-children-preview { 
+            display: flex; 
+            justify-content: center; 
+            position: relative; 
+            padding-top: 20px; 
+        }
+        
+        /* Garis vertikal turun dari parent ke row anak */
+        .tree-children-preview::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 50%; 
+            border-left: 2px solid #cbd5e1; 
+            width: 0; 
+            height: 20px; 
+            transform: translateX(-50%); 
+        }
+
+        .tree-node-preview { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            position: relative; 
+            padding: 20px 12px 0 12px; 
+            transition: 0.3s;
+        }
+
+        /* Garis horizontal penghubung antar sibling */
+        .tree-node-preview::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; right: 0; 
+            border-top: 2px solid #cbd5e1; 
+        }
+
+        /* Garis vertikal turun ke card anak */
+        .tree-node-preview::after { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 50%; 
+            border-left: 2px solid #cbd5e1; 
+            width: 0; 
+            height: 20px; 
+            transform: translateX(-50%); 
+        }
+
+        /* Potong garis horizontal di ujung kiri (anak pertama) dan kanan (anak terakhir) */
+        .tree-node-preview:first-child::before { left: 50%; }
+        .tree-node-preview:last-child::before { right: 50%; }
+        
+        /* Kalau hanya 1 anak, hilangkan garis horizontal */
+        .tree-node-preview:first-child:last-child::before { display: none; }
+
+        /* Root node: bersihkan semua garis connector atas */
+        .tree-container-inner > .tree-children-preview > .tree-node-preview::before,
+        .tree-container-inner > .tree-children-preview > .tree-node-preview::after { display: none; }
+        .tree-container-inner > .tree-children-preview > .tree-node-preview { padding-top: 0; }
+        .tree-container-inner > .tree-children-preview::before { display: none; }
+        .tree-container-inner > .tree-children-preview { padding-top: 0; }
+        
+        /* Kartu anggota */
+        .tree-card-preview { 
+            background: white; 
+            padding: 22px 18px; 
+            border-radius: 14px; 
+            border: 1px solid #e2e8f0; 
+            text-align: center; 
+            min-width: 200px;
+            max-width: 220px;
+            position: relative; 
+            z-index: 2; 
+            transition: 0.25s ease; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        }
+        .tree-card-preview:hover { 
+            box-shadow: 0 12px 30px rgba(10,48,85,0.12); 
+            transform: translateY(-4px); 
+            border-color: var(--secondary);
+        }
+        .tree-avatar-preview { 
+            width: 56px; height: 56px; 
+            background: linear-gradient(135deg, #eef2f7, #dde3ec); 
+            border-radius: 50%; 
+            margin: 0 auto 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.4rem; color: #94a3b8; 
+            border: 2px solid #e2e8f0;
+        }
+        .tree-name-preview { font-weight: 800; font-size: 0.95rem; color: var(--theme-color); margin-bottom: 4px; line-height: 1.3;}
+        .tree-role-preview { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; background: #f1f5f9; padding: 3px 10px; border-radius: 20px; display: inline-block;}
+        .bph-badge-preview { 
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%); 
+            background: var(--theme-color); color: white; 
+            padding: 4px 15px; border-radius: 20px; 
+            font-weight: 700; font-size: 0.68rem; white-space: nowrap; letter-spacing: 0.5px; 
+            box-shadow: 0 4px 12px rgba(10,48,85,0.25);
+        }
+
+        /* WIDGETS KEUANGAN & KPI */
+        .data-grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; }
+        .stat-card { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; transition: 0.3s;}
+        .stat-card:hover { transform: scale(1.02); }
+        .stat-card .amount { font-size: 2.8rem; font-weight: 800; color: var(--theme-color); letter-spacing: -1px; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .kpi-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: 0.3s; border: 1px solid transparent;}
+        .kpi-card:hover { transform: translateY(-5px); border-color: var(--secondary); }
+        .kpi-bar-bg { width: 100%; background: #f1f5f9; height: 14px; border-radius: 10px; margin-top: 15px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
+        .kpi-bar-fill { height: 100%; background: linear-gradient(90deg, var(--theme-color), var(--secondary)); border-radius: 10px; transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;}
+        .kpi-bar-fill::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shimmer 2s infinite; }
+
+        /* WIDGET STATUS PROGRAM (COMPACT UI) */
+        .prog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;}
+        .prog-item { background: white; padding: 22px; border-radius: 16px; border-left: 5px solid var(--secondary); box-shadow: 0 8px 25px rgba(0,0,0,0.03); transition: 0.3s; display: flex; flex-direction: column; justify-content: center;}
+        .prog-item:hover { transform: translateX(8px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+        .prog-item h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--theme-color); line-height: 1.3; font-weight: 800;}
+        .prog-item p { font-size: 0.85rem; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;}
+        .badge-status { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; text-transform: uppercase; align-self: flex-start;}
+
+        .widget-newsletter { background: white; padding: 35px; border-left: 6px solid #e67e22; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.05); position: relative; overflow: hidden;}
+        .widget-newsletter::after { content: '\f0a1'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: -20px; bottom: -20px; font-size: 8rem; color: #e67e22; opacity: 0.05; pointer-events: none;}
+
+        /* GRID NEWS */
+        .news-grid { display: grid; gap: 30px; }
+        .news-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.04); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; height: 100%; display: flex; flex-direction: column; border: 1px solid transparent;}
+        .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border-color: var(--secondary); }
+        .news-image { height: 240px; background-color: #e2e8f0; background-size: cover; background-position: center; transition: 0.5s; position: relative;}
+        .news-image::after { content: '\f06e  Baca Selengkapnya'; font-family: 'Font Awesome 6 Free', 'Plus Jakarta Sans'; font-weight: 900; position: absolute; inset: 0; background: rgba(10,48,85,0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; opacity: 0; transition: 0.3s; }
+        .news-card:hover .news-image { transform: scale(1.05); }
+        .news-card:hover .news-image::after { opacity: 1; }
+        .news-img-wrapper { overflow: hidden; }
+        .news-body { padding: 30px; display: flex; flex-direction: column; flex-grow: 1; background: white; position: relative; z-index: 2;}
+        .news-meta { font-size: 0.75rem; color: var(--theme-color); background: rgba(10,48,85,0.08); padding: 6px 15px; border-radius: 20px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; display: inline-block; align-self: flex-start; letter-spacing: 0.5px;}
+        .news-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 12px; line-height: 1.4; color: var(--theme-color); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: 0.3s;}
+        .news-card:hover .news-title { color: var(--secondary); }
+        .news-desc { font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;}
+        .news-desc ul, .news-desc ol { padding-left: 20px; margin-top: 5px;}
+
+        /* NEWS MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(10,48,85,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.4s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: white; width: 95%; max-width: 900px; max-height: 90vh; border-radius: 25px; overflow: hidden; display: flex; flex-direction: column; transform: scale(0.9) translateY(30px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px rgba(0,0,0,0.3); }
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+        
+        .modal-header { position: relative; width: 100%; height: 250px; background: #e2e8f0; background-size: cover; background-position: center; display: flex; align-items: flex-end;}
+        .modal-header::before { content: ''; position: absolute; inset:0; background: linear-gradient(0deg, rgba(10,48,85,0.9), transparent); }
+        .modal-header-content { position: relative; z-index: 1; padding: 40px; color: white;}
+        .modal-header-content .badge { background: var(--secondary); color: var(--theme-color); font-size: 0.8rem; padding: 6px 15px; border-radius: 20px; font-weight: 800; margin-bottom: 15px; display: inline-block; letter-spacing: 0.5px;}
+        .modal-header-content h2 { font-size: 2rem; font-weight: 800; line-height: 1.3; text-shadow: 0 4px 10px rgba(0,0,0,0.3);}
+        
+        .modal-close { position: absolute; top: 20px; right: 20px; width: 45px; height: 45px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; border: none; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: 0.3s; z-index: 2; display: flex; align-items: center; justify-content: center;}
+        .modal-close:hover { background: var(--red); transform: rotate(90deg) scale(1.1);}
+        
+        .modal-body { padding: 40px 50px; overflow-y: auto; flex-grow: 1; font-size: 1.1rem; line-height: 1.9; color: #334155;}
+        .modal-body p { margin-bottom: 15px; }
+        .modal-body ul, .modal-body ol { padding-left: 20px; margin-bottom: 15px; }
+
+        /* LOADING & FOOTER */
+        .loader-screen { position: fixed; inset:0; background:var(--bg-body); z-index: 99999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: 0.5s ease; }
+        .spinner { border: 4px solid rgba(10,48,85,0.1); border-top: 4px solid var(--theme-color); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 25px;}
+        footer { background: var(--theme-color); color: #cbd5e1; padding: 70px 20px 40px; text-align: center; margin-top: 80px; position: relative;}
+        footer::before { content:''; position:absolute; top:0; left:0; width:100%; height:5px; background:var(--secondary); }
+        
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        /* MOBILE RESPONSIF */
+        @media (max-width: 992px) {
+            .hero-content h1 { font-size: 2.8rem; }
+            .data-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 2.2rem; }
+            .section-heading { font-size: 1.6rem; }
+            .stat-card { flex-direction: column; text-align: center; gap: 15px; padding: 25px; }
+            .modal-header { height: 250px; }
+            .modal-header-content h2 { font-size: 1.5rem; }
+            .modal-body { padding: 25px 20px; font-size: 1rem; }
+            
+            /* Tree: padding lebih kecil di mobile */
+            .tree-preview-wrapper { padding: 20px 20px 30px 20px; }
+            .tree-container-inner { padding: 10px 20px; }
+            .tree-card-preview { min-width: 150px; max-width: 170px; padding: 16px 12px; }
+            .tree-name-preview { font-size: 0.85rem; }
+            
+            /* Navbar Mobile Style */
+            .public-navbar { padding: 15px 20px; }
+            .mobile-menu-btn { display: block; }
+            .public-nav-links { 
+                position: absolute; top: 70px; left: 0; width: 100%; 
+                background: white; flex-direction: column; align-items: flex-start;
+                padding: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.1); 
+                clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+                transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                opacity: 0; pointer-events: none;
+            }
+            .public-nav-links.active { 
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); 
+                opacity: 1; pointer-events: all; padding: 20px;
+            }
+            .public-nav-links a { width: 100%; border-bottom: 1px solid #f1f5f9; padding: 15px 5px; }
+            .public-nav-links a::after { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div id="loader" class="loader-screen">
+        <div class="spinner"></div>
+        <h3 style="color: var(--theme-color); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">Menyiapkan Ruang Publik...</h3>
+        <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">Mengambil data langsung dari Dashboard Internal</p>
+    </div>
+
+    <div id="global-announcement">
+        <strong id="ann-title">Pengumuman</strong>
+        <div id="ann-desc">Deskripsi pengumuman.</div>
+        <button id="close-ann" onclick="document.getElementById('global-announcement').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div id="main-content"></div>
+
+    <footer id="footer" style="display:none;">
+        <div class="page-container">
+            <h3 style="color: white; margin-bottom: 15px; font-weight: 800; font-size: 1.8rem;" id="footer-org-name">Campus Innovate</h3>
+            <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">Mendukung digitalisasi dan transparansi sistem informasi organisasi kampus secara real-time.</p>
+            
+            <div id="footer-social-links" style="margin-top: 30px; display: flex; justify-content: center; gap: 20px; font-size: 1.5rem;"></div>
+            
+            <p style="margin-top: 40px; font-size: 0.85rem; opacity: 0.5;">&copy; <span id="year"></span> Hak Cipta Dilindungi. Powered by Campus Innovate Workspace.</p>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="newsModal" onclick="closeNewsModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeNewsModal(event)"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-header" id="modal-img">
+                <div class="modal-header-content">
+                    <div class="badge" id="modal-date">Date</div>
+                    <h2 id="modal-title">Judul Berita</h2>
+                </div>
+            </div>
+            <div class="modal-body" id="modal-desc">
+                Isi berita akan dimuat di sini...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wnhftesxaicqffnyrdkn.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_i2-_17x_KOh0HxNw4DaaNA_vqXMBO2R'; 
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+        document.getElementById('year').innerText = new Date().getFullYear();
+
+        const escapeHtml = (unsafe) => {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe)
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        };
+
+        let globalNewsData = [];
+        let currentWorkspaceId = null;
+
+        // TOAST ALERT SYSTEM
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let iconClass = 'fa-circle-info';
+            if(type === 'success') iconClass = 'fa-circle-check';
+            if(type === 'error') iconClass = 'fa-circle-xmark';
+
+            toast.innerHTML = `<i class="fa-solid ${iconClass}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        function toggleMobileNav() {
+            const nav = document.getElementById('public-nav-links');
+            const btnIcon = document.querySelector('.mobile-menu-btn i');
+            
+            if(nav) {
+                nav.classList.toggle('active');
+                if(nav.classList.contains('active')) {
+                    btnIcon.classList.remove('fa-bars');
+                    btnIcon.classList.add('fa-xmark');
+                } else {
+                    btnIcon.classList.remove('fa-xmark');
+                    btnIcon.classList.add('fa-bars');
+                }
+            }
+        }
+
+        function initScrollAnimations() {
+            const reveals = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.05 });
+            
+            reveals.forEach(el => observer.observe(el));
+        }
+
+        function openNewsModal(index) {
+            const news = globalNewsData[index];
+            if(!news) return;
+
+            document.getElementById('modal-img').style.backgroundImage = `url('${escapeHtml(news.img)}')`;
+            document.getElementById('modal-date').innerText = news.date;
+            document.getElementById('modal-title').innerText = news.title;
+            document.getElementById('modal-desc').innerHTML = news.desc;
+            
+            document.getElementById('newsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeNewsModal(e) {
+            if(e) e.stopPropagation();
+            document.getElementById('newsModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // ============================================================
+        // FUNGSI REKURSIF UNTUK TREE ORGANISASI
+        // ============================================================
+        function buildPublicOrgTreeHTML(parentId, orgStructureData, level = 0) {
+            const children = orgStructureData.filter(o => o.parentId === parentId);
+            if(children.length === 0) return '';
+            
+            let html = `<div class="tree-children-preview">`;
+            children.forEach(m => {
+                let badge = level === 0 ? `<div class="bph-badge-preview">BPH / Pimpinan</div>` : '';
+                html += `
+                <div class="tree-node-preview">
+                    <div class="tree-card-preview">
+                        ${badge}
+                        <div class="tree-avatar-preview"><i class="fa-solid fa-user"></i></div>
+                        <div class="tree-name-preview">${escapeHtml(m.name)}</div>
+                        <div class="tree-role-preview">${escapeHtml(m.role)}</div>
+                    </div>
+                    ${buildPublicOrgTreeHTML(m.id, orgStructureData, level + 1)}
+                </div>`;
+            });
+            html += `</div>`;
+            return html;
+        }
+
+        // ============================================================
+        // MAIN INIT DENGAN URL ROUTING LOGIC
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orgNameParam = urlParams.get('org');
+            const workspaceIdParam = urlParams.get('workspace');
+            const currentDomain = window.location.hostname;
+
+            let queryKey = '';
+            let queryValue = '';
+
+            if (workspaceIdParam) {
+                queryKey = 'id';
+                queryValue = workspaceIdParam;
+            } else if (orgNameParam) {
+                queryKey = 'nama_organisasi';
+                queryValue = orgNameParam.replace(/-/g, ' '); 
+            } else if (currentDomain !== 'corevacampusinnovate.com' && currentDomain !== 'localhost' && currentDomain !== '127.0.0.1' && !currentDomain.includes('github.io') && !currentDomain.includes('github.dev')) {
+                queryKey = 'custom_domain';
+                queryValue = currentDomain;
+            } else {
+                document.getElementById('loader').innerHTML = `<h2 style="color:var(--red);">Akses Ditolak: Parameter URL (org / workspace) Tidak Ditemukan!</h2><p style="color:#666; margin-top:10px;">Gunakan ?workspace=[ID] atau ?org=[Nama_Organisasi].</p>`; 
+                return;
+            }
+
+            try {
+                let wsData;
+                
+                if (queryKey === 'custom_domain') {
+                    const { data } = await supabaseClient.from('workspaces').select('id, nama_organisasi').eq('custom_domain', queryValue).single();
+                    wsData = data;
+                } else if (queryKey === 'nama_organisasi') {
+                    const { data } = await supabaseClient.from('workspaces').select('id, nama_organisasi').ilike('nama_organisasi', queryValue).single();
+                    wsData = data;
+                } else {
+                    const { data } = await supabaseClient.from('workspaces').select('id, nama_organisasi').eq('id', queryValue).single();
+                    wsData = data;
+                }
+                
+                if (!wsData) {
+                    document.getElementById('loader').innerHTML = `<h2 style="color:var(--red);">Akses Ditolak: Organisasi tidak ditemukan di server!</h2><p style="color:#666; margin-top:10px;">Domain atau link belum terdaftar.</p>`; 
+                    return;
+                }
+                
+                currentWorkspaceId = wsData.id;
+                let orgName = wsData.nama_organisasi;
+                
+                document.title = `${orgName} - Portal Publik Campus Innovate`;
+
+                const { data: config } = await supabaseClient.from('landing_pages').select('*').eq('workspace_id', currentWorkspaceId).single();
+                
+                if (!config || !config.is_published) {
+                    document.getElementById('loader').innerHTML = `<h2>Mohon Maaf, halaman ${orgName} belum dipublikasikan oleh Admin mereka.</h2>`; 
+                    return;
+                }
+
+                const containerHtml = document.getElementById('main-content');
+                let rawBlocks = config.layout_data || [];
+                
+                let orgStructureData = [];
+                let announcementData = null;
+                let logoUrl = '';
+                let globalIg = ''; let globalTiktok = ''; let globalEmail = '';
+
+                const configBlock = rawBlocks.find(b => b.type === 'global_data_config');
+                if (configBlock) {
+                    orgName = configBlock.orgName || orgName;
+                    logoUrl = configBlock.logoUrl || '';
+                    orgStructureData = configBlock.orgStructure || [];
+                    globalNewsData = configBlock.newsData || [];
+                    announcementData = configBlock.announcementData;
+                    
+                    globalIg = configBlock.footerData?.ig || '';
+                    globalTiktok = configBlock.footerData?.tiktok || '';
+                    globalEmail = configBlock.footerData?.email || '';
+                }
+
+                document.getElementById('footer-org-name').innerText = orgName;
+                
+                let socialHtml = '';
+                if (globalIg) socialHtml += `<a href="${escapeHtml(globalIg)}" target="_blank" style="color: #cbd5e1; transition: 0.3s;"><i class="fa-brands fa-instagram"></i></a>`;
+                if (globalTiktok) socialHtml += `<a href="${escapeHtml(globalTiktok)}" target="_blank" style="color: #cbd5e1; transition: 0.3s;"><i class="fa-brands fa-tiktok"></i></a>`;
+                if (globalEmail) socialHtml += `<a href="mailto:${escapeHtml(globalEmail)}" style="color: #cbd5e1; transition: 0.3s;"><i class="fa-solid fa-envelope"></i></a>`;
+                
+                const socialContainer = document.getElementById('footer-social-links');
+                if(socialContainer) {
+                    if(socialHtml) {
+                        socialContainer.innerHTML = socialHtml;
+                        socialContainer.style.display = 'flex';
+                    } else {
+                        socialContainer.style.display = 'none';
+                    }
+                }
+
+                let blocks = rawBlocks.filter(b => b.type !== 'global_data_config').map(b => {
+                    if (!b.styles) b.styles = { bg: 'transparent', padding: '40px', borderRadius: '15px' };
+                    if (!b.data) b.data = {};
+                    return b;
+                });
+                
+                // 1. BANNER DARURAT
+                if (announcementData && announcementData.active === 'true' && announcementData.title) {
+                    const annBanner = document.getElementById('global-announcement');
+                    document.getElementById('ann-title').innerText = announcementData.title;
+                    document.getElementById('ann-desc').innerHTML = announcementData.content; 
+                    annBanner.style.display = 'block';
+                }
+
+                // 2. GENERATE NAV HEADER
+                let navLinks = '';
+                blocks.forEach(b => {
+                    let linkTitle = b.data?.title || '';
+                    if(b.type === 'hero') linkTitle = 'Beranda';
+                    else if(b.type === 'struktur') linkTitle = 'Pengurus';
+                    else if(b.type === 'finance') linkTitle = 'Keuangan';
+                    else if(b.type === 'kpi') linkTitle = 'Target KPI';
+                    else if(b.type === 'program') linkTitle = 'Program';
+                    else if(b.type === 'grid-news') linkTitle = 'Berita';
+                    
+                    if(linkTitle && b.type !== 'divider' && b.type !== 'image' && b.type !== 'video' && b.type !== 'text' && b.type !== 'newsletter') {
+                        navLinks += `<a href="#section-${b.id}" onclick="toggleMobileNav()">${escapeHtml(linkTitle)}</a>`;
+                    }
+                });
+
+                let navBrandContent = logoUrl 
+                    ? `<img src="${escapeHtml(logoUrl)}" style="height:35px; object-fit:contain;"> ${escapeHtml(orgName)}` 
+                    : `<i class="fa-solid fa-layer-group" style="color: var(--secondary);"></i> ${escapeHtml(orgName)}`;
+
+                let blocksHTMLString = `
+                    <div class="public-navbar">
+                        <div class="brand">${navBrandContent}</div>
+                        <button class="mobile-menu-btn" onclick="toggleMobileNav()"><i class="fa-solid fa-bars"></i></button>
+                        <div class="public-nav-links" id="public-nav-links">${navLinks}</div>
+                    </div>
+                `;
+
+                // 3. GENERATE UI BLOCKS
+                for (let i = 0; i < blocks.length; i++) {
+                    let b = blocks[i];
+                    let bBg = b.styles.bg !== '#ffffff' ? b.styles.bg : 'transparent';
+
+                    // ============================================================
+                    // FIX BUG: Block "struktur" pakai padding 0 di sisi kiri-kanan
+                    // agar tree-preview-wrapper bisa full-width 100vw dengan benar
+                    // ============================================================
+                    let inlineStyle;
+                    if (b.type === 'struktur') {
+                        // Padding atas-bawah tetap dari config, kiri-kanan 0
+                        inlineStyle = `background-color: ${bBg}; padding: ${b.styles.padding} 0; border-radius: ${b.styles.borderRadius}; overflow: visible;`;
+                    } else {
+                        inlineStyle = `background-color: ${bBg}; padding: ${b.styles.padding} 20px; border-radius: ${b.styles.borderRadius};`;
+                    }
+                    
+                    let htmlChunk = '';
+
+                    if (b.type === 'hero') {
+                        let bgImg = b.data.url ? `background-image: url('${escapeHtml(b.data.url)}');` : `background-color: var(--theme-color);`;
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block hero-layout reveal" style="border-radius: ${b.styles.borderRadius}; ${bgImg}">
+                            <div class="hero-content">
+                                <h1>${escapeHtml(b.data.title) || 'Judul Organisasi'}</h1>
+                                <p>${escapeHtml(b.data.subtitle) || ''}</p>
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'struktur') {
+                        // ============================================================
+                        // FIX BUG STRUKTUR:
+                        // - Heading tetap di dalam page-container (max-width 1150px)
+                        // - Tree wrapper di LUAR page-container → full width 100vw
+                        // - Section tidak punya padding kiri-kanan (sudah di-override atas)
+                        // ============================================================
+                        let treeHtml = '';
+                        if (orgStructureData.length > 0) {
+                            treeHtml = buildPublicOrgTreeHTML(null, orgStructureData, 0); 
+                        } else {
+                            treeHtml = `<p style="color:#777; width:100%; text-align:center; padding: 40px 0;">Data struktur belum diatur oleh admin.</p>`;
+                        }
+                        
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <h2 class="section-heading">${escapeHtml(b.data.title) || 'Struktur Organisasi'}</h2>
+                            </div>
+                            <div class="tree-preview-wrapper">
+                                <div class="tree-container-inner">
+                                    ${treeHtml}
+                                </div>
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'text') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <div style="font-size:1.15rem; line-height:1.8; color:#334155;">${b.data.content || ''}</div>
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'image') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <div style="text-align:${escapeHtml(b.data.align) || 'center'};">
+                                    <img src="${escapeHtml(b.data.url)}" style="width:${escapeHtml(b.data.width) || '100%'}; border-radius:${b.styles.borderRadius}; box-shadow:0 15px 40px rgba(0,0,0,0.1); max-height:600px; object-fit:cover; transition: transform 0.5s ease;">
+                                </div>
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'video') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <iframe src="${escapeHtml(b.data.url)}" style="width:100%; height:450px; border-radius:${b.styles.borderRadius}; border:none; box-shadow:0 10px 30px rgba(0,0,0,0.1);"></iframe>
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'divider') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block" style="${inlineStyle}">
+                            <div class="page-container">
+                                <hr style="border:0; border-top: 3px ${escapeHtml(b.data.style) || 'solid'} #e2e8f0; margin: 10px 0;">
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'grid-news') {
+                        let cols = b.data.columns || '3';
+                        let newsCardsHtml = '';
+                        
+                        if (globalNewsData.length > 0) {
+                            globalNewsData.forEach((it, index) => {
+                                newsCardsHtml += `
+                                <div class="news-card" style="border-radius: ${b.styles.borderRadius};" onclick="openNewsModal(${index})">
+                                    <div class="news-img-wrapper">
+                                        <div class="news-image" style="background-image: url('${escapeHtml(it.img)}');"></div>
+                                    </div>
+                                    <div class="news-body">
+                                        <div class="news-meta"><i class="fa-solid fa-clock"></i> ${escapeHtml(it.date)}</div>
+                                        <h3 class="news-title">${escapeHtml(it.title)}</h3>
+                                        <div class="news-desc">${it.desc}</div>
+                                    </div>
+                                </div>`;
+                            });
+                        } else {
+                            newsCardsHtml = `<p style="color: #aaa;">Belum ada berita diterbitkan.</p>`;
+                        }
+
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <h2 class="section-heading">${escapeHtml(b.data.title) || 'Berita Terkini'}</h2>
+                                <div class="news-grid" style="grid-template-columns: repeat(auto-fit, minmax(${cols==='4'?'230px':'300px'}, 1fr));">
+                                    ${newsCardsHtml}
+                                </div>
+                            </div>
+                        </section>`;
+
+                    } else if (b.type === 'finance') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <h2 class="section-heading"><i class="fa-solid fa-wallet"></i> Transparansi Keuangan</h2>
+                                <div class="data-grid-2">
+                                    <div>
+                                        <div class="stat-card" style="border-radius: ${b.styles.borderRadius}; border-left: 6px solid #e2e8f0;">
+                                            <div>
+                                                <h3 style="color:#64748b; font-size:1.1rem; margin-bottom:5px;">Total Anggaran Induk</h3>
+                                                <div class="amount" style="color:#1e293b;" id="fin-rab-${i}">...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card" style="border-radius: ${b.styles.borderRadius}; border-left: 6px solid var(--green);">
+                                            <div>
+                                                <h3 style="color:#64748b; font-size:1.1rem; margin-bottom:5px;">Realisasi / Terserap</h3>
+                                                <div class="amount" style="color:var(--green);" id="fin-real-${i}">...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-card" style="justify-content:center; border-radius: ${b.styles.borderRadius}; flex-direction: column;">
+                                        <h3 style="font-size:1rem; color:#64748b; margin-bottom:15px; text-align:center;">Grafik Serapan Dana</h3>
+                                        <div style="position: relative; height: 220px; width: 100%;">
+                                            <canvas id="chart-fin-${i}"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>`;
+                        
+                        // Load finance data async
+                        (function(blockIndex) {
+                            supabaseClient.from('finance_summaries').select('*').eq('workspace_id', currentWorkspaceId).single().then(({data: fData}) => {
+                                let total = fData ? parseFloat(fData.total_rab) : 0; 
+                                let real = fData ? parseFloat(fData.realisasi_rab) : 0;
+                                
+                                let v1 = document.getElementById(`fin-rab-${blockIndex}`); 
+                                if(v1) v1.innerText = formatRp(total);
+                                
+                                let v2 = document.getElementById(`fin-real-${blockIndex}`); 
+                                if(v2) v2.innerText = formatRp(real);
+                                
+                                let ctx = document.getElementById(`chart-fin-${blockIndex}`);
+                                if(ctx) {
+                                    new Chart(ctx.getContext('2d'), {
+                                        type: 'doughnut', 
+                                        data: { labels: ['Terpakai', 'Tersisa'], datasets: [{ data: [real, total-real<0?0:total-real], backgroundColor: ['#2ecc71', '#e2e8f0'], borderWidth: 0 }] },
+                                        options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom'}, datalabels: { display: false } } }
+                                    });
+                                }
+                            });
+                        })(i);
+
+                    } else if (b.type === 'kpi') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <h2 class="section-heading"><i class="fa-solid fa-bullseye"></i> Indikator Kinerja (KPI)</h2>
+                                <div class="kpi-grid" id="kpi-container-${i}">Memuat KPI...</div>
+                            </div>
+                        </section>`;
+                        
+                        // Load KPI data async
+                        (function(blockIndex, blockStyles) {
+                            supabaseClient.from('kpi_items').select('*').eq('workspace_id', currentWorkspaceId).then(({data: kData}) => {
+                                let kpiHtml = '';
+                                if(!kData || kData.length === 0) {
+                                    kpiHtml = '<p style="color:#aaa; grid-column: 1 / -1;">Belum ada target KPI yang ditetapkan.</p>';
+                                } else {
+                                    kData.forEach(kpi => {
+                                        let persen = kpi.target > 0 ? (kpi.capaian / kpi.target) * 100 : 0;
+                                        if(persen > 100) persen = 100;
+                                        let colorClass = persen >= 100 ? '#2ecc71' : 'var(--theme-color)';
+                                        
+                                        kpiHtml += `
+                                        <div class="kpi-card" style="border-radius: ${blockStyles.borderRadius};">
+                                            <strong style="color: #1e293b; font-size:1.15rem;">${escapeHtml(kpi.nama_kpi)}</strong>
+                                            <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:15px; color:#64748b;">
+                                                <span>Target: <b>${escapeHtml(kpi.target)} ${escapeHtml(kpi.satuan)}</b></span>
+                                                <span style="color:${colorClass}; font-weight:800;">${escapeHtml(kpi.capaian)} ${escapeHtml(kpi.satuan)} (${persen.toFixed(1)}%)</span>
+                                            </div>
+                                            <div class="kpi-bar-bg">
+                                                <div class="kpi-bar-fill" style="width: ${persen}%; background: ${colorClass};"></div>
+                                            </div>
+                                        </div>`;
+                                    });
+                                }
+                                let kc = document.getElementById(`kpi-container-${blockIndex}`); 
+                                if(kc) kc.innerHTML = kpiHtml;
+                            });
+                        })(i, b.styles);
+
+                    } else if (b.type === 'program') {
+                        htmlChunk = `
+                        <section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}">
+                            <div class="page-container">
+                                <h2 class="section-heading"><i class="fa-solid fa-list-check"></i> Status Program Kerja</h2>
+                                <div class="prog-grid" id="prog-container-${i}">Memuat Program...</div>
+                            </div>
+                        </section>`;
+                        
+                        // Load program data async
+                        (function(blockIndex, blockStyles) {
+                            supabaseClient.from('programs').select('*').eq('workspace_id', currentWorkspaceId).then(({data: pData}) => {
+                                let pHtml = '';
+                                if(pData && pData.length > 0) {
+                                    pData.forEach(p => {
+                                        let bg = p.status==='Selesai'?'rgba(46, 204, 113, 0.15)':(p.status==='Progress'?'rgba(246, 178, 59, 0.15)':'#f1f5f9');
+                                        let col = p.status==='Selesai'?'#166534':(p.status==='Progress'?'#92400e':'#475569');
+                                        pHtml += `
+                                        <div class="prog-item" style="border-radius: ${blockStyles.borderRadius};">
+                                            <h3 style="font-size:1.1rem; margin-bottom:8px; color:var(--theme-color);">${escapeHtml(p.nama_program)}</h3>
+                                            <p style="font-size:0.85rem; color:#64748b; margin-bottom: 12px; display:flex; align-items:center; gap:6px;"><i class="fa-regular fa-calendar"></i> ${escapeHtml(p.tanggal_pelaksanaan) || 'Belum diatur'}</p>
+                                            <span class="badge-status" style="background:${bg}; color:${col};">${escapeHtml(p.status)}</span>
+                                        </div>`;
+                                    });
+                                } else { 
+                                    pHtml = `<p style="color:#777; grid-column: 1 / -1;">Belum ada rekapitulasi data program kerja.</p>`; 
+                                }
+                                let pc = document.getElementById(`prog-container-${blockIndex}`); 
+                                if(pc) pc.innerHTML = pHtml;
+                            });
+                        })(i, b.styles);
+
+                    } else {
+                        // Fallback untuk block type yang tidak dikenal
+                        htmlChunk = `<section id="section-${b.id}" class="dynamic-block reveal" style="${inlineStyle}"><div class="page-container"></div></section>`;
+                    }
+
+                    blocksHTMLString += htmlChunk;
+                }
+
+                containerHtml.innerHTML = blocksHTMLString;
+
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('footer').style.display = 'block';
+                    initScrollAnimations();
+                    showToast(`Selamat datang di portal ${orgName}`, 'success');
+                }, 500);
+
+            } catch(e) {
+                document.getElementById('loader').innerHTML = `<h2 style="color:var(--red); text-align:center;">Error saat merender halaman.<br>Terjadi kesalahan koneksi database.</h2>`;
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+</html>

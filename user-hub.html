@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby Anggota - Campus Innovate</title>
+    <link rel="icon" type="image/png" href="coreva_logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #0A3055; --secondary: #F6B23B; --bg: #f4f7fa; --white: #fff; --text: #333; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Navigasi */
+        .hub-nav { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; background: var(--white); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .logo span { color: var(--secondary); }
+        .btn-logout { background: none; border: 2px solid var(--primary); color: var(--primary); padding: 8px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn-logout:hover { background: var(--primary); color: var(--white); }
+
+        /* Konten */
+        .hub-container { flex: 1; padding: 50px 5%; max-width: 1000px; margin: 0 auto; width: 100%; text-align: center; }
+        .hub-header h1 { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
+        .hub-header p { color: #777; margin-bottom: 40px; }
+
+        /* Form Gabung */
+        .join-box { background: var(--white); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 500px; margin: 0 auto 40px; }
+        .input-group { display: flex; gap: 10px; }
+        .input-group input { flex: 1; padding: 15px; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; outline: none; }
+        .input-group input:focus { border-color: var(--secondary); }
+        .btn-join { background: var(--secondary); color: var(--primary); padding: 0 25px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-join:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(246, 178, 59, 0.3); }
+
+        /* Grid Workspace Aktif */
+        .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; text-align: left; }
+        .project-card { background: var(--white); border-radius: 15px; padding: 25px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid transparent; }
+        .project-card:hover { transform: translateY(-5px); border-color: var(--secondary); box-shadow: 0 10px 25px rgba(246, 178, 59, 0.2); }
+        .p-icon { width: 50px; height: 50px; background: rgba(10, 48, 85, 0.1); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 15px; }
+        .project-card h3 { color: var(--primary); margin-bottom: 5px; }
+        .project-card p { color: #777; font-size: 0.9rem; margin-bottom: 15px; }
+        .p-action { color: var(--secondary); font-weight: 600; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="hub-nav">
+        <div class="logo"><i class="fa-solid fa-chart-pie"></i> Campus <span>Innovate</span></div>
+        <button class="btn-logout" onclick="handleLogout()">Keluar</button>
+    </nav>
+
+    <main class="hub-container">
+        <div class="hub-header">
+            <h1 id="userGreeting">Hai, Memuat... 👋</h1>
+            <p>Pilih ruang kerja yang ingin Anda akses, atau masukkan kode undangan dari Admin Anda.</p>
+        </div>
+
+        <div class="join-box">
+            <h3 style="color: var(--primary); margin-bottom: 15px; text-align: left;"><i class="fa-solid fa-link"></i> Gabung Ruang Kerja Baru</h3>
+            <div class="input-group">
+                <input type="text" id="inviteCode" placeholder="Masukkan Kode Workspace (Contoh: 550e8400...)" required>
+                <button class="btn-join" onclick="joinWorkspace()" id="btn-join-ws">Gabung</button>
+            </div>
+        </div>
+
+        <h3 style="text-align: left; color: #777; margin-bottom: 15px; font-size: 1rem;">Organisasi Anda:</h3>
+        <div class="projects-grid" id="workspace-list">
+            <p style="color: #aaa; font-style: italic; width: 100%; text-align: center;">Memuat data organisasi Anda...</p>
+        </div>
+    </main>
+
+    <script>
+        // 1. KONEKSI SUPABASE
+        const SUPABASE_URL = 'https://wnhftesxaicqffnyrdkn.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_i2-_17x_KOh0HxNw4DaaNA_vqXMBO2R'; 
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'index.html'; return; }
+            
+            currentUser = session.user;
+            const userName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+            document.getElementById('userGreeting').innerText = `Hai, ${userName}! 👋`;
+
+            loadMyWorkspaces();
+        });
+
+        // 2. FUNGSI GABUNG WORKSPACE DENGAN KODE
+        async function joinWorkspace() {
+            const code = document.getElementById('inviteCode').value.trim();
+            if (!code) { alert("Masukkan kode terlebih dahulu!"); return; }
+
+            const btn = document.getElementById('btn-join-ws');
+            btn.innerText = "..."; btn.disabled = true;
+
+            try {
+                // Cek apakah kode workspace valid
+                const { data: wsData, error: wsError } = await supabaseClient
+                    .from('workspaces')
+                    .select('id, nama_organisasi')
+                    .eq('id', code)
+                    .single();
+
+                if (wsError || !wsData) {
+                    alert("Kode tidak valid atau Ruang Kerja tidak ditemukan!");
+                    btn.innerText = "Gabung"; btn.disabled = false;
+                    return;
+                }
+
+                // Masukkan user ke tabel workspace_members
+                const { error: joinError } = await supabaseClient
+                    .from('workspace_members')
+                    .insert([{ workspace_id: wsData.id, user_id: currentUser.id }]);
+
+                // Error code 23505 adalah kode standar database untuk "Unique Violation" (Sudah pernah gabung)
+                if (joinError && joinError.code === '23505') {
+                    alert("Anda sudah tergabung dalam Ruang Kerja ini.");
+                } else if (joinError) {
+                    alert("Gagal bergabung: " + joinError.message);
+                } else {
+                    alert(`Berhasil bergabung dengan ${wsData.nama_organisasi}!`);
+                    document.getElementById('inviteCode').value = '';
+                    loadMyWorkspaces(); // Refresh daftar
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Terjadi kesalahan sistem.");
+            }
+
+            btn.innerText = "Gabung"; btn.disabled = false;
+        }
+
+        // 3. FUNGSI MUAT DAFTAR WORKSPACE YANG SUDAH DIIKUTI
+        async function loadMyWorkspaces() {
+            const grid = document.getElementById('workspace-list');
+            
+            // Ambil data relasi: Cari di workspace_members, lalu ambil detail dari tabel workspaces
+            const { data, error } = await supabaseClient
+                .from('workspace_members')
+                .select(`
+                    workspace_id,
+                    joined_at,
+                    workspaces ( nama_organisasi )
+                `)
+                .eq('user_id', currentUser.id);
+
+            if (error) {
+                grid.innerHTML = `<p style="color: red;">Gagal memuat data: ${error.message}</p>`;
+                return;
+            }
+
+            grid.innerHTML = ''; // Bersihkan loading
+
+            if (data.length === 0) {
+                grid.innerHTML = '<p style="color: #aaa; text-align: center; width: 100%;">Anda belum bergabung dengan Ruang Kerja mana pun.</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                grid.innerHTML += `
+                    <div class="project-card" onclick="goToDashboard('${item.workspace_id}')">
+                        <div class="p-icon"><i class="fa-solid fa-building-columns"></i></div>
+                        <h3>${item.workspaces.nama_organisasi}</h3>
+                        <p>Bergabung pada: ${new Date(item.joined_at).toLocaleDateString('id-ID')}</p>
+                        <div class="p-action">Masuk Dashboard <i class="fa-solid fa-arrow-right"></i></div>
+                    </div>
+                `;
+            });
+        }
+
+        function goToDashboard(workspaceId) {
+            window.location.href = `user.html?workspace=${workspaceId}`;
+        }
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

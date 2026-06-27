@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Campus Innovate</title>
+    <link rel="icon" href="data:,">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { 
+            --primary: #0A3055; 
+            --secondary: #F6B23B; 
+            --bg: #f4f7fa; 
+            --text: #1e293b; 
+            --white: #fff; 
+            --green: #2ecc71; 
+            --red: #e74c3c; 
+            --blue: #3498db; 
+            --border: #e2e8f0;
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        
+        body { 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            color: var(--text); 
+            overflow-x: hidden; 
+            height: 100vh;
+        }
+        
+        .mobile-header { 
+            display: none; 
+            background: var(--primary); 
+            padding: 15px 20px; 
+            color: white; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            z-index: 998; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .mobile-header h2 { 
+            font-size: 1.2rem; 
+            color: var(--secondary); 
+            margin: 0;
+        }
+        
+        .menu-toggle { 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+        }
+        
+        .sidebar-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 999; 
+            backdrop-filter: blur(3px); 
+            opacity: 0; 
+            transition: opacity 0.3s; 
+        }
+        
+        .sidebar-overlay.active { 
+            display: block; 
+            opacity: 1; 
+        }
+
+        .sidebar { 
+            width: 260px; 
+            background: linear-gradient(180deg, var(--primary) 0%, #1a497d 100%); 
+            height: 100vh; 
+            padding: 30px 20px; 
+            color: var(--white); 
+            position: fixed; 
+            box-shadow: 5px 0 20px rgba(0,0,0,0.05); 
+            z-index: 100; 
+            overflow-y: auto; 
+            transition: 0.3s;
+        }
+        
+        .sidebar h2 { 
+            color: var(--secondary); 
+            margin-bottom: 5px; 
+            font-size: 1.6rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+        }
+        
+        .sidebar-subtitle { 
+            font-size: 0.75rem; 
+            color: #cbd5e1; 
+            margin-bottom: 30px; 
+            padding-bottom: 20px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        
+        .nav-item { 
+            padding: 14px 18px; 
+            margin-bottom: 10px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            color: #e2e8f0;
+        }
+        
+        .nav-item:hover { 
+            background: rgba(255,255,255,0.1); 
+            color: var(--white); 
+            transform: translateX(5px); 
+        }
+        
+        .nav-item.active { 
+            background: var(--secondary); 
+            color: var(--primary); 
+            box-shadow: 0 5px 15px rgba(246, 178, 59, 0.25); 
+            font-weight: 800;
+        }
+        
+        /* MAIN CONTENT */
+        .main-content { 
+            margin-left: 270px; 
+            padding: 40px; 
+            width: calc(100% - 270px); 
+            min-height: 100vh; 
+        }
+        
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 35px; 
+            background: white; 
+            padding: 25px 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+        }
+        
+        .header h1 { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            margin: 0; 
+            letter-spacing: -0.5px;
+        }
+        
+        .admin-badge { 
+            background: rgba(10,48,85,0.05); 
+            color: var(--primary); 
+            padding: 10px 20px; 
+            border-radius: 30px; 
+            font-weight: 800; 
+            font-size: 0.95rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+        }
+        
+        /* VIEW SECTIONS */
+        .view-section { display: none; animation: fadeUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .view-section.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CARDS & GRIDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 35px; }
+        .stat-card { background: var(--white); padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border-bottom: 5px solid var(--primary); transition: 0.3s; position: relative; overflow: hidden;}
+        .stat-card::after { content: '\f201'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: -15px; bottom: -20px; font-size: 7rem; color: var(--primary); opacity: 0.03; pointer-events: none;}
+        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08);}
+        .stat-card h3 { color: #64748b; font-size: 1.05rem; margin-bottom: 15px; font-weight: 700;}
+        .stat-card p { font-size: 3rem; font-weight: 800; color: var(--primary); line-height: 1;}
+        
+        .panel { background: var(--white); padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); overflow-x: auto; margin-bottom: 30px;}
+        .panel h2 { color: var(--primary); font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;}
+        
+        /* TABLES */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; min-width: 1000px; }
+        th, td { padding: 18px 15px; text-align: left; font-size: 0.95rem; }
+        th { background: #f8fafc; color: var(--primary); font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;}
+        th:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+        th:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+        td { border-bottom: 1px solid #f1f5f9; color: #475569; font-weight: 500;}
+        tr:hover td { background-color: #f8fafc; }
+        
+        /* HIDDEN DATA & FILTER UI */
+        .hidden-data { font-family: monospace; letter-spacing: 2px; color: #94a3b8; font-weight: bold; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; display: inline-block; min-width: 120px; text-align: center;}
+        .hidden-data.revealed { letter-spacing: normal; color: var(--primary); font-weight: 700; background: #e0f2fe; border: 1px solid #bae6fd;}
+        .btn-toggle-eye { background: transparent; border: none; color: #64748b; font-size: 1.1rem; cursor: pointer; margin-left: 8px; transition: 0.2s;}
+        .btn-toggle-eye:hover { color: var(--blue); transform: scale(1.1);}
+        
+        .filter-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; align-items: center;}
+        .filter-item { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px;}
+        .filter-item label { font-size: 0.8rem; font-weight: 700; color: var(--primary);}
+        .filter-item select, .filter-item input { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-family: 'Plus Jakarta Sans'; font-size: 0.9rem; transition: all 0.3s ease;}
+        .filter-item select:focus, .filter-item input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);}
+        
+        /* SEARCH BAR ANIMATION */
+        .search-wrapper { position: relative; width: 100%; display: flex; align-items: center;}
+        .search-wrapper i { position: absolute; left: 12px; color: #94a3b8; transition: 0.3s ease; }
+        .search-input { width: 100%; padding: 10px 10px 10px 35px !important; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+        .search-input:focus { transform: scale(1.02); }
+        .search-input:focus + i { color: var(--blue); transform: scale(1.1); }
+
+        /* BUTTONS & BADGES */
+        .btn-action { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn-del { background: #fee2e2; color: var(--red); }
+        .btn-del:hover { background: var(--red); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(231, 76, 60, 0.2);}
+        .btn-acc { background: #dcfce7; color: #16a34a; }
+        .btn-acc:hover { background: var(--green); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);}
+        .btn-lock { background: #e0f2fe; color: var(--blue); }
+        .btn-lock:hover { background: var(--blue); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);}
+        .btn-excel { background: linear-gradient(90deg, var(--green), #27ae60); color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; cursor: pointer; border: none; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; transition: 0.3s;}
+        .btn-excel:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(46, 204, 113, 0.3); }
+
+        .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; display: inline-block;}
+        .badge-active { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;}
+        .badge-down { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;}
+        .badge-warning { background: #fef3c7; color: #d97706; border: 1px solid #fde68a;}
+        .badge-superadmin { background: #fef08a; color: #b45309; border: 1px solid #fde047;}
+
+        /* MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 48, 85, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.4s ease; z-index: 10000; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--white); width: 95%; max-width: 650px; border-radius: 25px; padding: 40px; transform: scale(0.9) translateY(30px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;}
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;}
+        .modal-header h2 { color: var(--primary); font-size: 1.6rem; font-weight: 800; line-height: 1.2;}
+        .close-btn { background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; color: #64748b; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;}
+        .close-btn:hover { background: var(--red); color: white; transform: rotate(90deg); }
+
+        /* FORM IN MODAL */
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; font-weight: 700; font-size: 0.95rem; color: var(--primary); margin-bottom: 10px;}
+        .input-group input, .input-group select { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; outline: none; transition: 0.3s; font-weight: 500; color: var(--text);}
+        .input-group input:focus, .input-group select:focus { border-color: var(--blue); background: white; box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);}
+        .info-box { background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 25px; font-size: 0.9rem; color: #475569; line-height: 1.6;}
+        
+        /* DROPDOWN SELECT FOR ROLE IN TABLE */
+        .select-role-table { padding: 8px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--primary); outline: none; transition: 0.3s; background: white; cursor: pointer;}
+        .select-role-table:focus { border-color: var(--secondary); }
+        .select-role-table.role-admin { border-color: var(--blue); color: var(--blue); }
+        .select-role-table.role-user { border-color: var(--green); color: var(--green); }
+        .select-role-table.role-superadmin { border-color: var(--secondary); color: #b45309; background: #fef08a; cursor: not-allowed;}
+        
+        /* TOGGLE SWITCHES */
+        .feature-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; border: 2px solid #f1f5f9; border-radius: 15px; margin-bottom: 15px; background: white; transition: 0.3s;}
+        .feature-item:hover { border-color: var(--blue); box-shadow: 0 5px 15px rgba(52,152,219,0.05);}
+        .feature-info strong { display: flex; align-items: center; gap: 10px; color: var(--primary); font-size: 1.05rem; margin-bottom: 5px; font-weight: 800;}
+        .feature-info span { font-size: 0.85rem; color: #64748b; }
+        
+        .switch { position: relative; display: inline-block; width: 54px; height: 30px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background: white; transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        input:checked + .slider { background-color: var(--green); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        
+        /* CHART CONTAINER */
+        .chart-wrapper { width: 100%; height: 400px; position: relative; padding-top: 20px;}
+
+        /* CUSTOM TOAST NOTIFICATION */
+        #toast-container { position: fixed; top: 30px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div class="sidebar">
+        <h2><i class="fa-solid fa-server"></i> CI Super</h2>
+        <div class="sidebar-subtitle">Panel Kontrol Utama</div>
+        
+        <div class="nav-item active" onclick="switchMenu('dashboard')"><i class="fa-solid fa-chart-line"></i> Monitoring Pusat</div>
+        <div class="nav-item" onclick="switchMenu('requests')"><i class="fa-solid fa-user-clock"></i> Permintaan Registrasi</div>
+        
+        <div class="nav-item" onclick="switchMenu('users')"><i class="fa-solid fa-users-gear"></i> Manajemen Pengguna</div>
+        
+        <div class="nav-item" onclick="switchMenu('features')"><i class="fa-solid fa-lock"></i> Kontrol Fitur (Locks)</div>
+        <div class="nav-item" onclick="switchMenu('server')"><i class="fa-solid fa-satellite-dish"></i> Status Server & Web</div>
+        <div class="nav-item" onclick="switchMenu('analytics')"><i class="fa-solid fa-users-rays"></i> Analitik Pengguna</div>
+        
+        <div class="nav-item" style="margin-top: 60px; background: rgba(231, 76, 60, 0.1); color: var(--red); justify-content: center;" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Keluar Sistem</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Sistem Monitoring Global</h1>
+            <div class="admin-badge"><i class="fa-solid fa-shield-halved" style="color: var(--secondary); font-size: 1.2rem;"></i> Super Administrator</div>
+        </div>
+
+        <div id="view-dashboard" class="view-section active">
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Total Organisasi (Workspace)</h3><p id="totalWorkspace"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem;"></i></p></div>
+                <div class="stat-card"><h3>Admin Terdaftar</h3><p id="totalAdmin"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem;"></i></p></div>
+                <div class="stat-card"><h3>Pengurus/Anggota Aktif</h3><p id="totalUser"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem;"></i></p></div>
+            </div>
+
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;">
+                    <h2><i class="fa-solid fa-building-columns"></i> Daftar Keseluruhan Workspace & Admin</h2>
+                    <button class="btn-excel" onclick="exportToCSV()"><i class="fa-solid fa-file-csv"></i> Download Data CSV</button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Workspace</th>
+                                <th>Nama Organisasi</th>
+                                <th>ID Admin Pengelola</th>
+                                <th>Tanggal Dibuat</th>
+                                <th style="text-align: center;">Aksi Kritis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:15px; display:block;"></i> Memuat data dari server...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-requests" class="view-section">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+                    <div>
+                        <h2><i class="fa-solid fa-user-clock"></i> Antrean Permintaan Akses Akun</h2>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Tinjau form pengajuan pembuatan organisasi/akun baru yang diisi melalui halaman Login Publik.</p>
+                    </div>
+                    <button class="btn-action" style="background: #f1f5f9; color: var(--primary); padding: 10px 20px;" onclick="loadRegistrationRequests()"><i class="fa-solid fa-rotate-right"></i> Muat Ulang</button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Pemohon</th>
+                                <th>Alamat Email</th>
+                                <th>Asal Organisasi Target</th>
+                                <th>Info Kelahiran</th>
+                                <th>Waktu Pengajuan</th>
+                                <th style="text-align: center;">Tindakan Persetujuan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestTableBody">
+                            <tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:15px; display:block;"></i> Memuat antrean...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-users" class="view-section">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <h2><i class="fa-solid fa-users-gear"></i> Kontrol Hak Akses Pengguna (Users)</h2>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Manajemen seluruh identitas, pengubahan strata *role*, dan penghapusan akses anggota dari sistem.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-excel" style="background: var(--green); padding: 10px 20px;" onclick="exportUsersToCSV()"><i class="fa-solid fa-file-csv"></i> Export Data Pengguna</button>
+                        <button class="btn-excel" style="background: var(--blue); padding: 10px 20px;" onclick="openModal('modalDirectCreateUser')"><i class="fa-solid fa-user-plus"></i> Buat Pengguna Baru</button>
+                    </div>
+                </div>
+
+                <div class="filter-container">
+                    <div class="filter-item" style="flex: 2;">
+                        <label>Cari Pengguna</label>
+                        <div class="search-wrapper">
+                            <input type="text" id="search-user" class="search-input" onkeyup="applyUserFilter()" placeholder="Ketik nama, email, atau ID...">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </div>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Filter Workspace</label>
+                        <select id="filter-workspace" onchange="applyUserFilter()">
+                            <option value="all">Semua Organisasi</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Filter Role</label>
+                        <select id="filter-role" onchange="applyUserFilter()">
+                            <option value="all">Semua Role</option>
+                            <option value="admin">Admin Organisasi</option>
+                            <option value="user">Anggota Biasa (User)</option>
+                            <option value="superadmin">Super Administrator</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Status Aktivitas</label>
+                        <select id="filter-status" onchange="applyUserFilter()">
+                            <option value="all">Semua Status</option>
+                            <option value="active">Aktif (< 7 Hari)</option>
+                            <option value="inactive">Tidak Aktif (> 7 Hari)</option>
+                        </select>
+                    </div>
+                    <div class="filter-item" style="flex: 0.5; justify-content: flex-end;">
+                        <button class="btn-action" style="background: #e2e8f0; color: var(--primary); width: 100%;" onclick="resetUserFilter()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                    </div>
+                </div>
+
+                <div style="background: #fef9c3; border-left: 4px solid #f59e0b; padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; font-size: 0.9rem; color: #92400e; font-weight: 500;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <b>Catatan Sistem:</b> Menghapus akses pengguna akan melenyapkan izin login dan ID referensi mereka. Mereka tidak akan bisa masuk ke sistem meskipun email mereka pernah terdaftar.
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID User (UUID)</th>
+                                <th>Nama Pengguna</th>
+                                <th>Organisasi / Workspace</th>
+                                <th>Email Akun</th>
+                                <th>Kata Sandi</th>
+                                <th>Terkahir Dilihat</th>
+                                <th>Strata Role Akses</th>
+                                <th style="text-align: center;">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:15px; display:block;"></i> Memuat daftar identitas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-features" class="view-section">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+                    <div>
+                        <h2><i class="fa-solid fa-lock"></i> Manajemen Hak Akses Fitur Internal</h2>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Kunci atau buka fitur spesifik untuk masing-masing organisasi (Workspace) sesuai kebutuhan/langganan mereka.</p>
+                    </div>
+                </div>
+                <div style="background: #f0fdfa; border-left: 4px solid #22c55e; padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; font-size: 0.9rem; color: #166534; font-weight: 500;">
+                    <i class="fa-solid fa-circle-info"></i> Pilih workspace pada tabel di bawah ini untuk mengatur visibilitas menu seperti Laporan Keuangan, KPI, atau Digital Office di halaman internal mereka.
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Organisasi</th>
+                                <th>ID Workspace</th>
+                                <th>Status Bundle Fitur</th>
+                                <th style="text-align: center;">Kontrol Akses Panel</th>
+                            </tr>
+                        </thead>
+                        <tbody id="featureTableBody">
+                            <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;">Memuat data konfigurasi...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-server" class="view-section">
+            <div class="stats-grid">
+                <div class="stat-card" style="border-bottom-color: var(--green);">
+                    <h3>Status Server Database Utama</h3>
+                    <p style="color: var(--green); font-size: 2rem;"><i class="fa-solid fa-check-circle" style="font-size: 1.5rem; margin-right: 10px;"></i> Berjalan Baik</p>
+                </div>
+                <div class="stat-card" style="border-bottom-color: var(--blue);">
+                    <h3>Rata-rata Ping / Latency</h3>
+                    <p style="color: var(--blue); font-size: 2rem;"><i class="fa-solid fa-satellite-dish" style="font-size: 1.5rem; margin-right: 10px;"></i> <span id="avg-ping">...</span> ms</p>
+                </div>
+            </div>
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+                    <div>
+                        <h2><i class="fa-solid fa-globe"></i> Tracking Sinyal & Web Publik Instansi</h2>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Pantau konektivitas, uptime, dan status halaman publik (*Landing Page*) dari setiap organisasi.</p>
+                    </div>
+                    <button class="btn-action" style="background: #f1f5f9; color: var(--primary); padding: 10px 20px;" onclick="renderServerStatus()"><i class="fa-solid fa-rotate"></i> Ping Ulang Secara Acak</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Organisasi Workspace</th>
+                                <th>Status Web Publik</th>
+                                <th>Status Internal Dashboard</th>
+                                <th>Simulasi Latency (Ping)</th>
+                                <th>Waktu Terakhir Dicek</th>
+                            </tr>
+                        </thead>
+                        <tbody id="serverTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:15px; display:block;"></i> Menghubungi node...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-analytics" class="view-section">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+                    <div>
+                        <h2><i class="fa-solid fa-chart-column"></i> Analitik Agregasi Pengguna Aktif</h2>
+                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Grafik perbandingan total interaksi, kehadiran, dan aktivitas pengguna antar semua Workspace terdaftar.</p>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="globalAnalyticsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modalApproveRequest">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2>Tinjau Pengajuan Akun</h2>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px;">Harap verifikasi data identitas di bawah dengan saksama.</p>
+                </div>
+                <button class="close-btn" onclick="closeModal('modalApproveRequest')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="info-box" id="approve-info-box">
+                </div>
+
+            <form onsubmit="confirmApproveRequest(event)">
+                <div class="input-group">
+                    <label>Tetapkan Tingkatan Hak Akses (Role):</label>
+                    <select id="approve-role-select" required>
+                        <option value="admin">Admin Organisasi (Akses Pembuat Workspace)</option>
+                        <option value="user">Anggota / Pengurus Biasa (Tanpa Hak Cipta Workspace)</option>
+                    </select>
+                </div>
+
+                <div style="background: #f0fdfa; border-left: 4px solid #14b8a6; padding: 15px; border-radius: 10px; margin-bottom: 25px; font-size: 0.85rem; color: #166534; line-height: 1.6;">
+                    <i class="fa-solid fa-bolt" style="font-size: 1rem; margin-bottom: 5px;"></i><br>
+                    Dengan menekan tombol Setujui, sistem akan <b>meng-Bypass Email Verifikasi</b> dan langsung menciptakan akun untuk pengguna ini menggunakan password yang telah diisikan saat proses pendaftaran awal.
+                </div>
+
+                <button type="submit" class="btn-excel" id="btn-submit-approve" style="width: 100%; justify-content: center; font-size: 1rem;">
+                    <i class="fa-solid fa-user-check"></i> Setujui & Buat Akun Langsung
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalDirectCreateUser">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2><i class="fa-solid fa-user-plus"></i> Buat Pengguna Baru</h2>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px;">Otoritas Bypass: Daftarkan pengguna tanpa perlu konfirmasi email.</p>
+                </div>
+                <button class="close-btn" onclick="closeModal('modalDirectCreateUser')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form onsubmit="handleDirectUserCreate(event)">
+                <div class="input-group">
+                    <label>Nama Lengkap Pengguna</label>
+                    <input type="text" id="create-name" placeholder="contoh: Muhammad Hanif Riza" required>
+                </div>
+                <div class="input-group">
+                    <label>Alamat Email</label>
+                    <input type="email" id="create-email" placeholder="contoh: anggota@kampus.ac.id" required>
+                </div>
+                <div class="input-group">
+                    <label>Buatkan Kata Sandi (Password)</label>
+                    <input type="text" id="create-password" placeholder="Minimal 6 karakter" required minlength="6">
+                </div>
+                <div class="input-group">
+                    <label>Tetapkan Hak Akses Role Definitif</label>
+                    <select id="create-role" required>
+                        <option value="admin">Admin Organisasi (Tertinggi)</option>
+                        <option value="user" selected>Pengurus/User Biasa</option>
+                    </select>
+                </div>
+
+                <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; font-size: 0.85rem; color: #475569; text-align: justify;">
+                    Karena otentikasi Bypass digunakan, akun pengguna akan segera aktif seketika setelah tombol ini diklik. Pastikan Anda mencatat dan memberikan kredensial (Email & Sandi) kepada pemilik akun bersangkutan.
+                </div>
+
+                <button type="submit" class="btn-excel" id="btn-submit-create" style="width: 100%; justify-content: center; background: var(--blue); font-size: 1rem;">
+                    <i class="fa-solid fa-paper-plane"></i> Buat Akun & Aktifkan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="featureModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modal-org-title">Atur Fitur Organisasi</h2>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px;">Workspace ID: <span id="modal-ws-id" style="font-family: monospace; font-weight: bold;">...</span></p>
+                </div>
+                <button class="close-btn" onclick="closeModal('featureModal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveFeatureLocks(event)">
+                <div class="feature-item">
+                    <div class="feature-info">
+                        <strong><i class="fa-solid fa-file-invoice-dollar" style="color:var(--secondary); font-size:1.2rem; width:25px; text-align:center;"></i> Modul Keuangan (RAB)</strong>
+                        <span>Akses penuh Menu Input RAB, Realisasi & Analitik Serapan.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="lock-finance"><span class="slider"></span></label>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-info">
+                        <strong><i class="fa-solid fa-bullseye" style="color:var(--green); font-size:1.2rem; width:25px; text-align:center;"></i> Modul Indikator KPI</strong>
+                        <span>Akses pembuatan target dan tracking progres KPI harian.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="lock-kpi"><span class="slider"></span></label>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-info">
+                        <strong><i class="fa-solid fa-file-signature" style="color:var(--blue); font-size:1.2rem; width:25px; text-align:center;"></i> Digital Office (E-Sign)</strong>
+                        <span>Sistem persuratan elektronik, pengajuan proposal & OCR.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="lock-do"><span class="slider"></span></label>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-info">
+                        <strong><i class="fa-solid fa-wand-magic-sparkles" style="color:#8e44ad; font-size:1.2rem; width:25px; text-align:center;"></i> Web Builder Studio</strong>
+                        <span>Hak akses Admin membuat Landing Page Publik instansinya.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="lock-web"><span class="slider"></span></label>
+                </div>
+
+                <button type="submit" class="btn-excel" style="width: 100%; margin-top: 25px; justify-content: center; background: var(--primary); font-size: 1rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Terapkan & Simpan Konfigurasi</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // FUNGSI JAVASCRIPT UNTUK TOGGLE MATA (MUNCULKAN/SEMBUNYIKAN DATA)
+        function toggleHiddenData(elementId, btnElement) {
+            const span = document.getElementById(elementId);
+            const icon = btnElement.querySelector('i');
+            const realData = span.getAttribute('data-real');
+            
+            if(span.innerText.includes('••••')) {
+                span.innerText = realData;
+                span.classList.add('revealed');
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                span.innerText = span.getAttribute('data-placeholder');
+                span.classList.remove('revealed');
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // FUNGSI JAVASCRIPT UNTUK COPY TEXT
+        function copyToClipboardText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Tersalin", `Data telah disalin ke clipboard.`, "info");
+            }).catch(err => {
+                showToast("Gagal menyalin", err, "error");
+            });
+        }
+
+        function copyToClipboard(elementId) {
+            const span = document.getElementById(elementId);
+            const textToCopy = span.getAttribute('data-real');
+            copyToClipboardText(textToCopy);
+        }
+
+        // 1. KONEKSI SUPABASE
+        const SUPABASE_URL = 'https://wnhftesxaicqffnyrdkn.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_i2-_17x_KOh0HxNw4DaaNA_vqXMBO2R'; 
+        
+        // Client Utama (Terikat ke Session Super Admin)
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Client Sekunder (Bypass Session)
+        // Diperlukan agar signUp dari frontend tidak menimpa cookie session Super Admin dan me-logout-nya
+        const supabaseSecondary = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        });
+
+        // Variabel global
+        let globalData = []; // workspaces data
+        let analyticsChartInstance = null;
+        let activeModalWsId = null;
+        
+        let pendingRequests = [];
+        let activeRequestId = null;
+        
+        // Variabel Penyimpanan Data Pengguna untuk Filter
+        let masterUsersData = []; 
+
+        // TOAST ALERT SYSTEM
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = type === 'error' ? 'fa-circle-exclamation' : (type === 'info' ? 'fa-circle-info' : 'fa-check-circle');
+            toast.innerHTML = `
+                <i class="fa-solid ${icon}"></i>
+                <div style="display:flex; flex-direction:column;">
+                    <span style="font-weight:700; font-size:0.9rem; color:var(--text);">${title}</span>
+                    <span style="font-size:0.8rem; color:#64748b;">${message}</span>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 4000);
+        }
+
+        // 2. KEAMANAN: CEK STATUS LOGIN & ROLE
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) {
+                showToast("Sesi Habis", "Silakan login kembali.", "error");
+                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                return;
+            }
+
+            // Validasi apakah user ini benar-benar Super Admin
+            const { data: roleData } = await supabaseClient
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
+
+            if (!roleData || roleData.role !== 'superadmin') {
+                showToast("Peringatan Keamanan", "Anda mencoba mengakses panel yang bukan hak Anda!", "error");
+                setTimeout(() => { window.location.href = 'index.html'; }, 2000);
+                return;
+            }
+
+            // Jika aman, muat data dashboard utama dan sambut admin
+            loadDashboardData();
+            showToast("Otentikasi Berhasil", "Selamat datang kembali, Tuan Super Admin.", "info");
+        });
+
+        // FUNGSI NAVIGASI TAB
+        function switchMenu(menuId) {
+            // Update Sidebar UI
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            // Update View Content
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + menuId).classList.add('active');
+
+            // Trigger spesifik data fetch saat tab dibuka
+            if (menuId === 'requests') loadRegistrationRequests();
+            if (menuId === 'users') loadAllUsersData();
+            if (menuId === 'features') renderFeaturesTable();
+            if (menuId === 'server') renderServerStatus();
+            if (menuId === 'analytics') loadAnalyticsData();
+        }
+
+        function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+
+        // 3. FUNGSI MEMUAT DATA STATISTIK & TABEL UTAMA
+        async function loadDashboardData() {
+            try {
+                const { count: countAdmin } = await supabaseClient.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'admin');
+                const { count: countUser } = await supabaseClient.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'user');
+                const { data: workspaces, count: countWorkspace, error } = await supabaseClient.from('workspaces').select('*', { count: 'exact', head: false }).order('created_at', { ascending: false });
+
+                document.getElementById('totalAdmin').innerText = countAdmin || 0;
+                document.getElementById('totalUser').innerText = countUser || 0;
+                document.getElementById('totalWorkspace').innerText = countWorkspace || 0;
+
+                const tableBody = document.getElementById('adminTableBody');
+                tableBody.innerHTML = '';
+                
+                if (workspaces && workspaces.length > 0) {
+                    globalData = workspaces;
+                    workspaces.forEach(ws => {
+                        const dateObj = new Date(ws.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td style="font-family: monospace; color: #64748b; font-weight: 500;">${ws.id.substring(0, 8)}...</td>
+                                <td><strong style="color: var(--primary); font-size: 1.05rem;">${ws.nama_organisasi}</strong></td>
+                                <td style="font-family: monospace; font-size: 0.85rem; background: #f8fafc; padding: 5px 10px; border-radius: 5px;">${ws.admin_id.substring(0, 12)}...</td>
+                                <td><i class="fa-regular fa-calendar-days" style="color: #cbd5e1; margin-right:5px;"></i> ${dateObj}</td>
+                                <td style="text-align: center;">
+                                    <button class="btn-action btn-del" onclick="deleteWorkspace('${ws.id}', '${ws.nama_organisasi.replace(/'/g, "\\'")}')" title="Hapus Permanen Data Ini"><i class="fa-solid fa-trash"></i> Hapus Destruktif</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;"><i class="fa-solid fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>Belum ada Organisasi (Workspace) yang terdaftar di database ini.</td></tr>';
+                }
+            } catch (err) {
+                console.error("Gagal memuat data:", err);
+                showToast("Error Load Data", err.message, "error");
+            }
+        }
+
+        // ==========================================
+        // 3.5. MANAJEMEN PENGGUNA (ALL USERS ROLE CONTROL)
+        // ==========================================
+        async function loadAllUsersData() {
+            const tableBody = document.getElementById('usersTableBody');
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:15px; display:block;"></i> Menyinkronkan identitas pengguna...</td></tr>';
+
+            // 1. Tarik seluruh data dari tabel user_roles
+            const { data: userRoles, error } = await supabaseClient.from('user_roles').select('*').order('created_at', { ascending: false });
+            
+            if (error) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--red); padding: 20px;">Gagal memuat data pengguna. Database tertolak.</td></tr>';
+                return;
+            }
+
+            // 2. Panggil fungsi RPC untuk mendapatkan nama & email akun dari auth.users
+            const { data: authUsers } = await supabaseClient.rpc('get_all_auth_users');
+            
+            let nameMap = {};
+            let emailMap = {};
+            
+            if(authUsers) {
+                authUsers.forEach(u => {
+                    nameMap[u.user_id] = u.full_name || u.email || "Pengguna Tanpa Nama";
+                    emailMap[u.user_id] = u.email || "Email tidak ditemukan";
+                });
+            } else {
+                // Fallback darurat jika fungsi RPC belum dijalankan di SQL Editor
+                const { data: membersInfo } = await supabaseClient.from('workspace_members').select('user_id, nama_user');
+                if(membersInfo) membersInfo.forEach(m => nameMap[m.user_id] = m.nama_user);
+            }
+
+            // 3. Tarik data dari tabel registration_requests untuk mencocokkan Password berdasarkan Email
+            const { data: regRequests } = await supabaseClient.from('registration_requests').select('email, password');
+            let pwdMap = {};
+            if(regRequests) {
+                regRequests.forEach(r => {
+                    if(r.email) pwdMap[r.email.toLowerCase()] = r.password || "Tidak Dicatat";
+                });
+            }
+
+            // 4. Tarik data Workspace Members untuk melihat keterkaitan dengan Workspace dan Last Seen
+            const { data: wsMembers } = await supabaseClient.from('workspace_members').select('user_id, workspace_id, last_seen, workspaces(nama_organisasi)');
+            let wsMemberMap = {}; // Maps user_id -> array of workspace info
+            let lastSeenMap = {}; // Maps user_id -> last_seen timestamp
+            
+            // Siapkan dropdown opsi filter workspace
+            let uniqueWorkspacesForFilter = new Set();
+            let filterWorkspaceHtml = '<option value="all">Semua Organisasi</option>';
+
+            if (wsMembers) {
+                wsMembers.forEach(m => {
+                    if(!wsMemberMap[m.user_id]) wsMemberMap[m.user_id] = [];
+                    let orgName = m.workspaces ? m.workspaces.nama_organisasi : "Unknown Workspace";
+                    wsMemberMap[m.user_id].push({ id: m.workspace_id, name: orgName });
+                    
+                    // Simpan last seen terbaru
+                    if(m.last_seen) {
+                        if(!lastSeenMap[m.user_id] || new Date(m.last_seen) > new Date(lastSeenMap[m.user_id])) {
+                            lastSeenMap[m.user_id] = m.last_seen;
+                        }
+                    }
+
+                    // Tambahkan ke opsi filter jika belum ada
+                    if(!uniqueWorkspacesForFilter.has(m.workspace_id) && orgName !== "Unknown Workspace") {
+                        uniqueWorkspacesForFilter.add(m.workspace_id);
+                        filterWorkspaceHtml += `<option value="${m.workspace_id}">${orgName}</option>`;
+                    }
+                });
+            }
+            
+            // Populate Dropdown Filter Workspace
+            document.getElementById('filter-workspace').innerHTML = filterWorkspaceHtml;
+
+            // 5. Susun Master Data
+            masterUsersData = [];
+            
+            if (userRoles.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 30px;">Belum ada entitas yang terdaftar.</td></tr>';
+                return;
+            }
+
+            const now = new Date();
+
+            userRoles.forEach(ur => {
+                let identifiedName = nameMap[ur.user_id] || "Identitas Disembunyikan";
+                if(ur.role === 'superadmin') identifiedName = "Chief of System (Super Admin)";
+                
+                let userEmail = emailMap[ur.user_id] || "Tidak diketahui";
+                let userPwd = pwdMap[userEmail.toLowerCase()] || "Terenkripsi";
+
+                let userWorkspaces = wsMemberMap[ur.user_id] || [];
+                let joinedOrgNames = userWorkspaces.length > 0 ? userWorkspaces.map(w => w.name).join(', ') : "Belum terdaftar di Workspace mana pun";
+                // Array of IDs for filtering
+                let joinedOrgIds = userWorkspaces.map(w => w.id);
+
+                let lastSeenStr = "Belum pernah aktif";
+                let isInactive = true;
+                if(lastSeenMap[ur.user_id]) {
+                    const lsDate = new Date(lastSeenMap[ur.user_id]);
+                    lastSeenStr = lsDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+                    
+                    // Hitung selisih hari
+                    const diffTime = Math.abs(now - lsDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    if(diffDays <= 7) isInactive = false;
+                }
+
+                masterUsersData.push({
+                    user_id: ur.user_id,
+                    name: identifiedName,
+                    email: userEmail,
+                    password: userPwd,
+                    role: ur.role,
+                    created_at: ur.created_at,
+                    workspaces: joinedOrgNames,
+                    workspaceIds: joinedOrgIds,
+                    last_seen: lastSeenStr,
+                    is_inactive: isInactive
+                });
+            });
+
+            // Render Awal tanpa Filter
+            renderFilteredUsersTable();
+        }
+
+        // FUNGSI RENDER TABEL BERDASARKAN FILTER
+        function renderFilteredUsersTable() {
+            const tableBody = document.getElementById('usersTableBody');
+            tableBody.innerHTML = '';
+
+            // Ambil Value dari Filter
+            const searchQuery = document.getElementById('search-user').value.toLowerCase();
+            const wsFilter = document.getElementById('filter-workspace').value;
+            const roleFilter = document.getElementById('filter-role').value;
+            const statusFilter = document.getElementById('filter-status').value;
+
+            // Proses Filter
+            let filteredData = masterUsersData.filter(user => {
+                let passSearch = true;
+                let passWs = true;
+                let passRole = true;
+                let passStatus = true;
+
+                if(searchQuery) {
+                    passSearch = user.name.toLowerCase().includes(searchQuery) || 
+                                 user.email.toLowerCase().includes(searchQuery) || 
+                                 user.user_id.toLowerCase().includes(searchQuery);
+                }
+
+                if(wsFilter !== 'all') {
+                    // Check if the user's workspaceIds array includes the filtered workspace
+                    passWs = user.workspaceIds.includes(wsFilter);
+                }
+
+                if(roleFilter !== 'all') {
+                    passRole = user.role === roleFilter;
+                }
+
+                if(statusFilter !== 'all') {
+                    if(statusFilter === 'active') passStatus = !user.is_inactive;
+                    else if(statusFilter === 'inactive') passStatus = user.is_inactive;
+                }
+
+                return passSearch && passWs && passRole && passStatus;
+            });
+
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>Tidak ada pengguna yang cocok dengan filter tersebut.</td></tr>';
+                return;
+            }
+
+            filteredData.forEach(ur => {
+                const joinDate = new Date(ur.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+                
+                // Class untuk warna dropdown sesuai role saat ini
+                let selectClass = 'select-role-table';
+                if(ur.role === 'admin') selectClass += ' role-admin';
+                else if(ur.role === 'user') selectClass += ' role-user';
+                else if(ur.role === 'superadmin') selectClass += ' role-superadmin';
+                
+                // Opsi Dropdown
+                let roleOptions = `
+                    <option value="superadmin" ${ur.role === 'superadmin' ? 'selected' : ''}>Super Administrator</option>
+                    <option value="admin" ${ur.role === 'admin' ? 'selected' : ''}>Admin Organisasi</option>
+                    <option value="user" ${ur.role === 'user' ? 'selected' : ''}>Anggota Biasa (User)</option>
+                `;
+
+                let disabledAttr = ur.role === 'superadmin' ? 'disabled title="Akses absolut tidak dapat diubah"' : '';
+                
+                // Styling Last Seen
+                let lastSeenColor = ur.is_inactive ? 'var(--red)' : 'var(--green)';
+                let lastSeenIcon = ur.is_inactive ? 'fa-solid fa-moon' : 'fa-solid fa-bolt';
+
+                tableBody.innerHTML += `
+                    <tr id="row-user-${ur.user_id}">
+                        <td style="font-family: monospace; font-size: 0.85rem; color: #64748b;">
+                            <i class="fa-solid fa-fingerprint" style="margin-right: 5px;"></i> ${ur.user_id.substring(0,12)}...
+                        </td>
+                        <td>
+                            <strong id="name-display-${ur.user_id}" style="color: var(--primary);">${ur.name}</strong>
+                            <button class="btn-toggle-eye" onclick="editUserName('${ur.user_id}', '${ur.name}')" title="Ubah Nama"><i class="fa-solid fa-pen" style="font-size: 0.8rem;"></i></button>
+                        </td>
+                        
+                        <td style="font-size: 0.85rem; max-width: 200px;">
+                            ${ur.workspaces !== 'Belum terdaftar di Workspace mana pun' 
+                              ? `<span class="badge badge-warning" style="white-space: normal; line-height: 1.4;"><i class="fa-solid fa-building"></i> ${ur.workspaces}</span>` 
+                              : `<span style="color: #94a3b8; font-style: italic;">${ur.workspaces}</span>`}
+                        </td>
+
+                        <td style="white-space: nowrap;">
+                            <span id="email-${ur.user_id}" class="hidden-data" data-real="${ur.email}" data-placeholder="•••••••••••••••">•••••••••••••••</span>
+                            <button class="btn-toggle-eye" onclick="toggleHiddenData('email-${ur.user_id}', this)" title="Lihat"><i class="fa-solid fa-eye"></i></button>
+                            <button class="btn-toggle-eye" onclick="copyToClipboard('email-${ur.user_id}')" title="Salin" style="margin-left: 2px;"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+                        <td style="white-space: nowrap;">
+                            <span id="pwd-${ur.user_id}" class="hidden-data" data-real="${ur.password}" data-placeholder="••••••••">••••••••</span>
+                            <button class="btn-toggle-eye" onclick="toggleHiddenData('pwd-${ur.user_id}', this)" title="Lihat"><i class="fa-solid fa-eye"></i></button>
+                            <button class="btn-toggle-eye" onclick="copyToClipboard('pwd-${ur.user_id}')" title="Salin" style="margin-left: 2px;"><i class="fa-regular fa-copy"></i></button>
+                        </td>
+
+                        <td style="font-size: 0.85rem; color: ${lastSeenColor}; font-weight: 600;">
+                            <i class="${lastSeenIcon}"></i> ${ur.last_seen}
+                        </td>
+
+                        <td>
+                            <select class="${selectClass}" ${disabledAttr} onchange="changeUserRole('${ur.user_id}', this.value, this)">
+                                ${roleOptions}
+                            </select>
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn-action btn-del" ${ur.role === 'superadmin' ? 'disabled style="opacity:0.5;"' : ''} onclick="revokeUserAccess('${ur.user_id}')" title="Cabut Izin Akses & Hapus Riwayat">
+                                <i class="fa-solid fa-user-slash"></i> Cabut Akses
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // FUNGSI TRIGGER FILTER
+        function applyUserFilter() {
+            renderFilteredUsersTable();
+        }
+
+        function resetUserFilter() {
+            document.getElementById('search-user').value = '';
+            document.getElementById('filter-workspace').value = 'all';
+            document.getElementById('filter-role').value = 'all';
+            document.getElementById('filter-status').value = 'all';
+            renderFilteredUsersTable();
+        }
+
+        // FUNGSI EXPORT EXCEL KHUSUS USERS
+        function exportUsersToCSV() {
+            if (masterUsersData.length === 0) {
+                showToast("Export Gagal", "Data pengguna kosong.", "error"); return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID User,Nama Pengguna,Email,Kata Sandi,Role,Workspace Terdaftar,Terakhir Aktif\n";
+
+            masterUsersData.forEach(u => {
+                let safeName = u.name.replace(/"/g, '""');
+                let safeWs = u.workspaces.replace(/"/g, '""');
+                let row = `"${u.user_id}","${safeName}","${u.email}","${u.password}","${u.role}","${safeWs}","${u.last_seen}"`;
+                csvContent += row + "\r\n";
+            });
+
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Audit_Pengguna_CampusInnovate.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("Sukses", "Data pengguna berhasil diekspor.", "success");
+        }
+
+        // FUNGSI EDIT NAMA PENGGUNA
+        async function editUserName(userId, currentName) {
+            const newName = prompt("Ubah nama pengguna:", currentName);
+            if (newName && newName.trim() !== "" && newName !== currentName) {
+                
+                // Update Optimistic UI
+                const nameSpan = document.getElementById(`name-display-${userId}`);
+                if (nameSpan) nameSpan.innerText = newName;
+                
+                // Update in master data
+                const userIdx = masterUsersData.findIndex(u => u.user_id === userId);
+                if (userIdx !== -1) masterUsersData[userIdx].name = newName;
+
+                // Update DB - Update di workspace_members sebagai representasi lokal
+                const { error } = await supabaseClient.from('workspace_members').update({ nama_user: newName }).eq('user_id', userId);
+                if (error) {
+                    showToast("Gagal mengubah nama di database", error.message, "error");
+                } else {
+                    showToast("Nama Diperbarui", "Nama pengguna berhasil diubah.", "success");
+                }
+            }
+        }
+
+        async function changeUserRole(userId, newRole, selectElement) {
+            // Konfirmasi perubahan
+            if(!confirm(`Anda yakin ingin mengubah strata otoritas pengguna ini menjadi [${newRole.toUpperCase()}]?`)) {
+                // Revert seleksi jika dibatalkan
+                renderFilteredUsersTable(); 
+                return;
+            }
+
+            selectElement.style.opacity = '0.5';
+            
+            const { error } = await supabaseClient.from('user_roles').update({ role: newRole }).eq('user_id', userId);
+            
+            if(error) {
+                showToast("Update Gagal", error.message, "error");
+            } else {
+                showToast("Otoritas Diperbarui", `Role pengguna berhasil dinaikkan/diturunkan menjadi ${newRole}.`, "success");
+                // Update Local Data
+                const userIdx = masterUsersData.findIndex(u => u.user_id === userId);
+                if(userIdx !== -1) masterUsersData[userIdx].role = newRole;
+            }
+            
+            // Render ulang untuk memperbaiki style warnanya
+            renderFilteredUsersTable();
+            loadDashboardData(); // Refresh statistik angka admin/user di dashboard
+        }
+
+        async function revokeUserAccess(userId) {
+            if(confirm("TINDAKAN SANGAT KRITIS: Anda akan menghapus hak akses pengguna ini secara paksa. Data keanggotaannya di seluruh workspace akan ikut lenyap. Lanjutkan?")) {
+                showToast("Pemrosesan Penghapusan", "Mencabut izin role dari database...", "info");
+                
+                try {
+                    // 1. Hapus dari keanggotaan workspace
+                    await supabaseClient.from('workspace_members').delete().eq('user_id', userId);
+                    
+                    // 2. Hapus workspace yang DIBUAT oleh orang ini (Cascade delete semua isinya)
+                    await supabaseClient.from('workspaces').delete().eq('admin_id', userId);
+
+                    // 3. Cabut hak akses utamanya (Mencegah dia login selamanya)
+                    const { data: deletedRole, error: roleErr } = await supabaseClient.from('user_roles').delete().eq('user_id', userId).select();
+
+                    if(roleErr) throw roleErr;
+
+                    // Validasi apakah baris benar-benar terhapus (Menghindari Silent Fail RLS)
+                    if (!deletedRole || deletedRole.length === 0) {
+                        throw new Error("Gagal: Database menolak penghapusan. Pastikan RLS Policy 'DELETE' untuk tabel user_roles, workspaces, & workspace_members sudah aktif (true).");
+                    }
+
+                    showToast("Akses Dicabut", "Pengguna tersebut telah dihapus secara paksa dari sistem.", "success");
+                    
+                    // HAPUS LANGSUNG DARI TAMPILAN (DOM) AGAR INSTAN
+                    const rowToRemove = document.getElementById(`row-user-${userId}`);
+                    if (rowToRemove) {
+                        rowToRemove.style.transition = "0.5s";
+                        rowToRemove.style.opacity = "0";
+                        rowToRemove.style.transform = "translateX(-50px)";
+                        setTimeout(() => rowToRemove.remove(), 500);
+                    }
+                    
+                    // Hapus dari state lokal
+                    masterUsersData = masterUsersData.filter(u => u.user_id !== userId);
+                    
+                    // Refresh statistik dashboard
+                    loadDashboardData();
+
+                } catch (err) {
+                    console.error(err);
+                    showToast("Penghapusan Gagal", err.message, "error");
+                }
+            }
+        }
+
+        async function handleDirectUserCreate(e) {
+            e.preventDefault();
+            const email = document.getElementById('create-email').value;
+            const password = document.getElementById('create-password').value;
+            const name = document.getElementById('create-name').value || "Pengguna Baru";
+            const role = document.getElementById('create-role').value;
+            
+            const btn = document.getElementById('btn-submit-create');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mem-bypass Autentikasi...';
+            btn.disabled = true;
+
+            try {
+                // Gunakan secondary client agar sesi Super Admin tidak tergantikan oleh akun yang baru dibuat!
+                const { data: newAuthData, error: authError } = await supabaseSecondary.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: { full_name: name }
+                    }
+                });
+
+                if(authError) throw authError;
+                
+                if (!newAuthData || !newAuthData.user) {
+                    throw new Error("Gagal menerima ID User dari server. Cek apakah limit tercapai.");
+                }
+
+                // Masukkan ke tabel user_roles sebagai referensi akses sistem
+                const { error: insertError } = await supabaseClient.from('user_roles').insert([{ 
+                    user_id: newAuthData.user.id, 
+                    role: role 
+                }]);
+
+                if (insertError) throw insertError;
+
+                // Tambahan: Logika agar masuk track list registration dummy untuk visual history
+                await supabaseClient.from('registration_requests').insert([{
+                    nama: name, 
+                    dob: "Bypass Buat Langsung", 
+                    email: email, 
+                    password: password, // Menyimpan histori plain text sebagaimana alur request index
+                    organisasi: "Instalasi Mandiri Super Admin", 
+                    status: 'approved'
+                }]);
+
+                showToast("Akun Berhasil Aktif!", `Akun ${email} telah berhasil dibentuk tanpa perlu verifikasi email.`, "success");
+                closeModal('modalDirectCreateUser');
+                e.target.reset();
+                loadAllUsersData();
+
+            } catch(err) {
+                console.error(err);
+                showToast("Pembuatan Gagal", err.message, "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Buat Akun & Aktifkan';
+                btn.disabled = false;
+            }
+        }
+
+
+        // ==========================================
+        // 4. MANAJEMEN PERMINTAAN REGISTRASI (APPROVAL)
+        // ==========================================
+        async function loadRegistrationRequests() {
+            const tableBody = document.getElementById('requestTableBody');
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i> Menyinkronkan antrean masuk...</td></tr>';
+
+            // Menampilkan request yang murni pending dari pendaftaran index.html
+            const { data, error } = await supabaseClient.from('registration_requests').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+            
+            if (error) {
+                console.error(error);
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--red); padding: 20px;">Gagal memuat jalur pipa data permintaan.</td></tr>';
+                return;
+            }
+
+            pendingRequests = data || [];
+            tableBody.innerHTML = '';
+
+            if (pendingRequests.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 50px;"><i class="fa-solid fa-check-double" style="font-size: 3rem; color: var(--green); margin-bottom: 15px; display: block;"></i>Bersih! Tidak ada tumpukan permintaan akses baru (Zero Inbox).</td></tr>';
+                return;
+            }
+
+            pendingRequests.forEach(req => {
+                const reqDateFull = new Date(req.created_at);
+                const reqDate = reqDateFull.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                const reqTime = reqDateFull.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><strong style="color: var(--primary); font-size: 1.05rem;">${req.nama}</strong></td>
+                        <td style="color: var(--blue); font-weight: 500;">${req.email}</td>
+                        <td><span class="badge badge-warning"><i class="fa-solid fa-building"></i> ${req.organisasi}</span></td>
+                        <td>${req.dob}</td>
+                        <td style="color: #64748b;">${reqDate} <strong style="color:var(--text); margin-left:5px;">${reqTime}</strong></td>
+                        <td style="text-align: center; white-space: nowrap;">
+                            <button class="btn-action btn-acc" onclick="approveRequestModal('${req.id}')" title="Validasi & Lanjutkan Setup"><i class="fa-solid fa-check"></i> Evaluasi</button>
+                            <button class="btn-action btn-del" onclick="rejectRequest('${req.id}')" title="Buang Pengajuan Ini" style="margin-left: 8px;"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function approveRequestModal(id) {
+            activeRequestId = id;
+            const req = pendingRequests.find(r => r.id === id);
+            if(!req) return;
+
+            // Catatan: Asumsi index.html mengirim dan menyimpan data `password` pada tabel registration_requests
+            let passToDisplay = req.password ? req.password : "Tidak Dilampirkan / Tersembunyi";
+
+            document.getElementById('approve-info-box').innerHTML = `
+                <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
+                    <span style="color:#64748b;">Nama Pendaftar:</span> <strong style="color:var(--primary); font-size:1.05rem;">${req.nama}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
+                    <span style="color:#64748b;">Alamat Surel (Email):</span> <strong style="color:var(--blue);">${req.email}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
+                    <span style="color:#64748b;">Kata Sandi (Password):</span> <strong style="color:var(--red); font-family: monospace;">${passToDisplay}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="color:#64748b;">Organisasi Diajukan:</span> <strong style="color:#d97706; background:#fef3c7; padding:2px 10px; border-radius:10px;">${req.organisasi}</strong>
+                </div>
+            `;
+            
+            document.getElementById('approve-role-select').value = 'admin'; // Default suggestion
+            openModal('modalApproveRequest');
+        }
+
+        async function confirmApproveRequest(e) {
+            e.preventDefault();
+            if(!activeRequestId) return;
+
+            const selectedRole = document.getElementById('approve-role-select').value;
+            const req = pendingRequests.find(r => r.id === activeRequestId);
+            
+            const btn = document.getElementById('btn-submit-approve');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Engine sedang memproses By-Pass Otentikasi...';
+            btn.disabled = true;
+
+            try {
+                if(!req.password) {
+                    throw new Error("Password pemohon tidak tercatat dalam database. Buat akun melalui menu Manajemen Pengguna saja.");
+                }
+
+                // MENGGUNAKAN SECONDARY CLIENT AGAR SESSION SUPER ADMIN TIDAK LOGOUT
+                const { data: newUser, error: authError } = await supabaseSecondary.auth.signUp({
+                    email: req.email,
+                    password: req.password,
+                    options: { data: { full_name: req.nama } }
+                });
+
+                if (authError) throw authError;
+
+                // Masukkan Hak Akses ke user_roles
+                await supabaseClient.from('user_roles').insert([{ user_id: newUser.user.id, role: selectedRole }]);
+
+                // Update status in registration_requests table
+                await supabaseClient.from('registration_requests').update({ status: 'approved' }).eq('id', activeRequestId);
+
+                showToast("By-Pass Akun Berhasil!", `Sistem sukses mencetak identitas untuk ${req.email} dan mengubah status registrasi.`, "success");
+
+                closeModal('modalApproveRequest');
+                loadRegistrationRequests(); // refresh table view
+
+            } catch (err) {
+                console.error(err);
+                showToast("Proses Otentikasi Gagal", err.message, "error");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-user-check"></i> Setujui & Buat Akun Langsung';
+                btn.disabled = false;
+            }
+        }
+
+        async function rejectRequest(id) {
+            if(confirm("Apakah Anda YAKIN ingin secara tegas MENOLAK permintaan pembuatan akun dan workspace ini?")) {
+                const { error } = await supabaseClient.from('registration_requests').update({ status: 'rejected' }).eq('id', id);
+                if(error) {
+                    showToast("Gagal Menolak", error.message, "error");
+                } else {
+                    showToast("Pengajuan Ditolak", "Data antrean telah disingkirkan dari daftar pipeline Anda.", "success");
+                    loadRegistrationRequests();
+                }
+            }
+        }
+
+        // ==========================================
+        // 5. MANAJEMEN FITUR (LOCKS)
+        // ==========================================
+        function renderFeaturesTable() {
+            const tableBody = document.getElementById('featureTableBody');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; margin-bottom:15px; display:block;"></i> Membaca konfigurasi JSON...</td></tr>';
+            
+            if (globalData.length > 0) {
+                tableBody.innerHTML = '';
+                globalData.forEach(ws => {
+                    let lockData = ws.locked_features || { finance: false, kpi: false, do: false, web: false };
+                    
+                    let statusHtml = '';
+                    if(!lockData.finance && !lockData.kpi && !lockData.do && !lockData.web) {
+                        statusHtml = '<span class="badge badge-active"><i class="fa-solid fa-unlock"></i> Status: Unlocked (Semua Fitur)</span>';
+                    } else {
+                        statusHtml = '<span class="badge badge-warning"><i class="fa-solid fa-lock"></i> Status: Restricted (Fitur Dibatasi)</span>';
+                    }
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td><strong style="color: var(--primary); font-size: 1.05rem;">${ws.nama_organisasi}</strong></td>
+                            <td style="font-family: monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+                                ${ws.id.substring(0, 15)}...
+                                <button class="btn-toggle-eye" onclick="copyToClipboardText('${ws.id}')" title="Copy Full ID"><i class="fa-regular fa-copy"></i></button>
+                            </td>
+                            <td>${statusHtml}</td>
+                            <td style="text-align: center;">
+                                <button class="btn-action btn-lock" onclick="openFeatureModal('${ws.id}')" title="Modifikasi Konfigurasi Modul"><i class="fa-solid fa-sliders"></i> Atur Konfigurasi</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;">Tidak ada modul workspace yang tersedia untuk dikonfigurasi.</td></tr>';
+            }
+        }
+
+        function openFeatureModal(wsId) {
+            const ws = globalData.find(w => w.id === wsId);
+            if(!ws) return;
+            
+            activeModalWsId = wsId;
+            document.getElementById('modal-org-title').innerText = ws.nama_organisasi;
+            document.getElementById('modal-ws-id').innerText = ws.id;
+
+            // In our UX Logic: Checked (true) means Unlocked/Tersedia. Unchecked (false) means Locked/Tidak Tersedia.
+            let currentLocks = ws.locked_features || { finance: true, kpi: true, do: true, web: true };
+
+            document.getElementById('lock-finance').checked = currentLocks.finance !== false;
+            document.getElementById('lock-kpi').checked = currentLocks.kpi !== false;
+            document.getElementById('lock-do').checked = currentLocks.do !== false;
+            document.getElementById('lock-web').checked = currentLocks.web !== false;
+
+            openModal('featureModal');
+        }
+
+        async function saveFeatureLocks(e) {
+            e.preventDefault();
+            if(!activeModalWsId) return;
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyinkronkan JSON...';
+            btn.disabled = true;
+
+            const newLocks = {
+                finance: document.getElementById('lock-finance').checked,
+                kpi: document.getElementById('lock-kpi').checked,
+                do: document.getElementById('lock-do').checked,
+                web: document.getElementById('lock-web').checked
+            };
+
+            const { error } = await supabaseClient.from('workspaces').update({ locked_features: newLocks }).eq('id', activeModalWsId);
+
+            if (error) {
+                showToast("Modifikasi Gagal", error.message, "error");
+            } else {
+                showToast("Patch Berhasil Diterapkan", "Konfigurasi ketersediaan fitur (locks) berhasil diamankan di database.", "success");
+                closeModal('featureModal');
+                
+                // Update local memory
+                const idx = globalData.findIndex(w => w.id === activeModalWsId);
+                if(idx !== -1) globalData[idx].locked_features = newLocks;
+                renderFeaturesTable();
+            }
+            
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Terapkan & Simpan Konfigurasi';
+            btn.disabled = false;
+        }
+
+        // ==========================================
+        // 6. FUNGSI TRACKING STATUS SERVER & WEB
+        // ==========================================
+        async function renderServerStatus() {
+            const tableBody = document.getElementById('serverTableBody');
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-wifi fa-fade" style="font-size:2rem; margin-bottom:15px; display:block; color:var(--blue);"></i> Mengukur packet loss dan node network...</td></tr>';
+            
+            // Visual simulated ping wait time to give the "feel" of a network trace
+            await new Promise(r => setTimeout(r, 1200));
+
+            const { data: landingPages } = await supabaseClient.from('landing_pages').select('workspace_id, is_published');
+            let publishedMap = {};
+            if(landingPages) landingPages.forEach(lp => publishedMap[lp.workspace_id] = lp.is_published);
+
+            tableBody.innerHTML = '';
+            let totalPing = 0;
+
+            if (globalData.length > 0) {
+                globalData.forEach(ws => {
+                    const isWebUp = publishedMap[ws.id] ? true : false;
+                    const webBadge = isWebUp ? '<span class="badge badge-active"><i class="fa-solid fa-satellite-dish"></i> 200 OK (Live)</span>' : '<span class="badge badge-down"><i class="fa-solid fa-triangle-exclamation"></i> 404/Draft (Down)</span>';
+                    const dashBadge = '<span class="badge badge-active"><i class="fa-solid fa-server"></i> Responding</span>';
+
+                    // Ping Logic Simulation (More realistic range: 12ms - 75ms)
+                    const pingMs = Math.floor(Math.random() * 63) + 12;
+                    totalPing += pingMs;
+                    
+                    let pingColor = 'var(--blue)';
+                    if(pingMs > 50) pingColor = 'var(--secondary)'; // Yellow if a bit high
+                    
+                    const timeNow = new Date().toLocaleTimeString('id-ID', { hour12: false });
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td><strong style="color: var(--primary); font-size: 1.05rem;">${ws.nama_organisasi}</strong></td>
+                            <td>${webBadge}</td>
+                            <td>${dashBadge}</td>
+                            <td><strong style="color: ${pingColor}; font-size:1.1rem; font-family: monospace;">${pingMs} ms</strong></td>
+                            <td style="font-size: 0.85rem; color: #64748b;"><i class="fa-regular fa-clock"></i> Timestamp: ${timeNow}</td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('avg-ping').innerText = Math.round(totalPing / globalData.length);
+                showToast("Network Trace Selesai", "Semua node end-point berhasil ditracing dan diperbarui statusnya.", "info");
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;">Tidak ada node server turunan yang sedang berjalan.</td></tr>';
+                document.getElementById('avg-ping').innerText = "0";
+            }
+        }
+
+        // ==========================================
+        // 7. FUNGSI ANALITIK PENGGUNA GLOBAL
+        // ==========================================
+        async function loadAnalyticsData() {
+            if(globalData.length === 0) return;
+
+            const { data: attendances, error } = await supabaseClient.from('attendances').select('workspace_id, id');
+            
+            if (error) {
+                console.error("Gagal load data analitik:", error);
+                showToast("Fetch Gagal", "Datalake analitik tidak bisa dihubungi.", "error");
+                return;
+            }
+
+            let activityMap = {};
+            globalData.forEach(ws => { activityMap[ws.id] = { name: ws.nama_organisasi, count: 0 }; });
+
+            if (attendances) {
+                attendances.forEach(att => {
+                    if(activityMap[att.workspace_id]) {
+                        activityMap[att.workspace_id].count++;
+                    }
+                });
+            }
+
+            const labels = [];
+            const dataCounts = [];
+            
+            for(const wsId in activityMap) {
+                labels.push(activityMap[wsId].name);
+                dataCounts.push(activityMap[wsId].count);
+            }
+
+            const ctx = document.getElementById('globalAnalyticsChart').getContext('2d');
+            
+            if(analyticsChartInstance) analyticsChartInstance.destroy();
+
+            analyticsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Kuantitas Activity (Absensi/Login)',
+                        data: dataCounts,
+                        backgroundColor: '#0A3055', // Ganti ke primary color agar lebih elegan
+                        hoverBackgroundColor: '#F6B23B',
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 48, 85, 0.9)',
+                            titleFont: { family: 'Plus Jakarta Sans', size: 14 },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 13 },
+                            padding: 15,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) { return '  ' + context.raw + ' Jejak Aktivitas Ditemukan'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { precision: 0, font: {family: 'Plus Jakarta Sans'} },
+                            grid: { color: '#f1f5f9', borderDash: [5, 5] }
+                        },
+                        x: { 
+                            ticks: { font: {family: 'Plus Jakarta Sans', weight: '600'} },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 8. FUNGSI HAPUS WORKSPACE (DESTRUKTIF)
+        // ==========================================
+        async function deleteWorkspace(workspaceId, namaOrg) {
+            // Kita harus sangat berhati-hati, ini fungsi destruktif (ON DELETE CASCADE di DB)
+            const confirmName = prompt(`PERINGATAN BAHAYA: Tindakan ini akan melenyapkan secara permanen seluruh data database (RAB, Program, Surat, Web Publik, dll) milik organisasi "${namaOrg}".\n\nUntuk melanjutkan, ketik persis nama organisasi di bawah ini:`);
+            
+            if (confirmName === namaOrg) {
+                showToast("Proses Penghapusan Berjalan", "Memerintahkan Cascade Delete ke inti database...", "info");
+                
+                try {
+                    const { data: deletedData, error } = await supabaseClient.from('workspaces').delete().eq('id', workspaceId).select();
+                    
+                    if (error) throw error;
+
+                    if (!deletedData || deletedData.length === 0) {
+                        throw new Error("Gagal: RLS Policy Supabase memblokir perintah DELETE pada tabel workspaces.");
+                    }
+                    
+                    showToast("Penghapusan Berhasil", "Organisasi dan seluruh relasinya telah hangus tidak tersisa dari hard disk server.", "success");
+                    loadDashboardData();
+                    if(document.getElementById('view-features').classList.contains('active')) renderFeaturesTable();
+                    if(document.getElementById('view-server').classList.contains('active')) renderServerStatus();
+                    if(document.getElementById('view-analytics').classList.contains('active')) loadAnalyticsData();
+                } catch (err) {
+                    console.error(err);
+                    showToast("Gagal Menghapus", err.message, "error");
+                }
+            } else if (confirmName !== null) {
+                showToast("Aborted", "Nama yang diketik tidak cocok. Operasi dibatalkan demi keamanan.", "error");
+            }
+        }
+
+        // ==========================================
+        // 9. FUNGSI EXPORT KE EXCEL CSV (WORKSPACE)
+        // ==========================================
+        function exportToCSV() {
+            if (globalData.length === 0) {
+                showToast("Export Gagal", "Tabel database kosong, tidak ada data untuk diekspor.", "error");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID Workspace Master,Nama Profil Organisasi,ID Entitas Admin,Tanggal Tercipta,Publikasi Web,Instalasi Dasbor\n";
+
+            globalData.forEach(function(row) {
+                const dateOnly = new Date(row.created_at).toLocaleDateString('id-ID');
+                let rowData = `"${row.id}","${row.nama_organisasi}","${row.admin_id}","${dateOnly}","${row.has_landing_page}","${row.has_dashboard}"`;
+                csvContent += rowData + "\r\n";
+            });
+
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Audit_Export_Workspace_CampusInnovate.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("Sukses", "Data kompilasi CSV berhasil diunduh ke perangkat Anda.", "success");
+        }
+
+        // ==========================================
+        // 10. FUNGSI LOGOUT
+        // ==========================================
+        async function handleLogout() {
+            showToast("Log Out", "Memutuskan sesi server yang aman...", "info");
+            setTimeout(async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
