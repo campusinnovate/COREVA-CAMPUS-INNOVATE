@@ -401,7 +401,7 @@
             <div class="chat-header fade-in">
                 <div class="chat-header-info">
                     <button class="btn-back-mobile" onclick="closeChatMobile()"><i class="fa-solid fa-arrow-left"></i></button>
-                    <button class="btn-back-dashboard" onclick="window.location.href='user.html'" title="Kembali ke Dashboard"><i class="fa-solid fa-house"></i></button>
+                    <button class="btn-back-dashboard" onclick="navigateWithTransition('user.html?workspace=' + encodeURIComponent(currentWorkspaceId))" title="Kembali ke Dashboard"><i class="fa-solid fa-house"></i></button>
                     <div class="chat-header-avatar" id="active-chat-avatar" style="background: var(--primary);">G</div>
                     <div class="chat-header-text">
                         <h3 id="active-chat-name">Nama Grup / User</h3>
