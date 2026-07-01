@@ -1978,6 +1978,11 @@
                 document.getElementById('sidebar').classList.remove('active');
                 document.getElementById('mobile-overlay-bg').classList.remove('active');
             }
+
+            // Notify AI Assistant of context change
+            if (typeof AIAssistant !== 'undefined' && AIAssistant.detectContext) {
+                AIAssistant.detectContext();
+            }
         }
 
         /* ----- FUNGSI FLOATING CHAT WIDGET ----- */
@@ -2372,6 +2377,8 @@
             // ================================================
             // ================================================
             initPageTransition();
+            
+            AIAssistant.init();
         }); // <-- Ini penutup dari DOMContentLoaded
 
         async function loadDepartments() {
@@ -3767,6 +3774,888 @@
                 btnElement.disabled = false;
             }
         }
+
+        // ===== AI ASSISTANT MODULE =====
+        const AIAssistant = {
+            isOpen: false,
+            isMinimized: false,
+            isListening: false,
+            currentContext: '',
+            bulkData: null,
+            recognition: null,
+            storageKey: 'ai_chat_',
+
+            init() {
+                document.getElementById('aiFab').addEventListener('click', () => this.toggle());
+                this.storageKey = 'ai_chat_' + (globalWorkspaceId || '0') + '_' + (currentUserId || '0');
+                this.loadHistory();
+                this.showQuickActions();
+                this.detectContext();
+                setTimeout(() => {
+                    this.addMessage('Halo! Saya AI Assistant. Saya bisa membantu mengisi formulir data, memproses data dari Excel/Clipboard, dan menjawab pertanyaan seputar workspace ini. Coba ketik <b>help</b> untuk panduan lengkap.', false);
+                }, 500);
+            },
+
+            toggle() {
+                const w = document.getElementById('aiWidget');
+                const f = document.getElementById('aiFabIcon');
+                if (this.isOpen) { this.close(); }
+                else { this.open(); }
+            },
+
+            open() {
+                const w = document.getElementById('aiWidget');
+                const f = document.getElementById('aiFabIcon');
+                this.isOpen = true;
+                w.classList.add('active');
+                document.getElementById('aiFab').classList.add('active');
+                f.className = 'fa-solid fa-xmark';
+                document.getElementById('aiInput').focus();
+                this.detectContext();
+            },
+
+            close() {
+                const w = document.getElementById('aiWidget');
+                const f = document.getElementById('aiFabIcon');
+                this.isOpen = false;
+                w.classList.remove('active');
+                w.classList.remove('minimized');
+                this.isMinimized = false;
+                document.getElementById('aiFab').classList.remove('active');
+                f.className = 'fa-solid fa-robot';
+                if (this.isListening) this.stopVoice();
+            },
+
+            minimize() {
+                const w = document.getElementById('aiWidget');
+                this.isMinimized = !this.isMinimized;
+                w.classList.toggle('minimized');
+                if (this.isMinimized && this.isListening) this.stopVoice();
+            },
+
+            // --- Chat ---
+            sendMessage() {
+                const input = document.getElementById('aiInput');
+                const text = input.value.trim();
+                if (!text) return;
+                input.value = '';
+                input.style.height = 'auto';
+                this.addMessage(text, true);
+                this.processMessage(text);
+            },
+
+            addMessage(text, isUser) {
+                const container = document.getElementById('aiChatMessages');
+                const div = document.createElement('div');
+                div.className = 'ai-message ' + (isUser ? 'user' : 'ai');
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                div.innerHTML = '<div class="ai-message-avatar">' + (isUser ? 'U' : 'AI') + '</div><div class="ai-message-content"><div class="ai-message-bubble">' + (isUser ? this.escapeHtml(text) : text) + '</div><div class="ai-message-time">' + timeStr + '</div></div>';
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+                this.saveHistory();
+            },
+
+            showTyping() {
+                const container = document.getElementById('aiChatMessages');
+                const div = document.createElement('div');
+                div.className = 'ai-typing';
+                div.id = 'aiTypingIndicator';
+                div.innerHTML = '<div class="ai-message-avatar">AI</div><div class="ai-message-content"><div class="ai-message-bubble"><div class="ai-typing-dots"><span></span><span></span><span></span></div></div></div>';
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            },
+
+            hideTyping() {
+                const el = document.getElementById('aiTypingIndicator');
+                if (el) el.remove();
+            },
+
+            // --- NLP ---
+            processMessage(text) {
+                const lower = text.toLowerCase().trim();
+                this.showTyping();
+                setTimeout(() => {
+                    this.hideTyping();
+                    const reply = this.parseNLP(text);
+                    this.addMessage(reply, false);
+                    this.showQuickActions();
+                }, 400 + Math.random() * 400);
+            },
+
+            parseNLP(text) {
+                const t = text.trim();
+                const lower = t.toLowerCase();
+
+                // Help
+                if (/^(help|\b(bantuan|tolong|panduan|menu)\b)/i.test(t)) {
+                    return this.getHelpText();
+                }
+
+                // Halo / greetings
+                if (/^(halo|hai|hey|hi|pagi|siang|sore|malam|selamat|good\s*(morning|afternoon|evening))/i.test(t)) {
+                    const hour = new Date().getHours();
+                    let greet = (hour < 10) ? 'Selamat pagi' : (hour < 15) ? 'Selamat siang' : (hour < 18) ? 'Selamat sore' : 'Selamat malam';
+                    return greet + '! Ada yang bisa saya bantu? Saya bisa mengisi formulir RAB, Realisasi, KPI, maupun Absensi. Ketik <b>help</b> untuk panduan.';
+                }
+
+                // Absensi
+                if (/(?:absen|presensi|absensi|hadir|izin)\s*(?:hadir|masuk|izin|sakit|tidak|tdk)?/i.test(t) && /(?:absen|presensi|absensi)/i.test(t)) {
+                    return this.handleAbsensiIntent(t);
+                }
+
+                // RAB input
+                if (/^(?:isi|tambah|input|buat)\s*rab|rab\s*(?:divisi|dept)/i.test(t) || /^rab[\s:|]/i.test(t)) {
+                    return this.handleRABIntent(t);
+                }
+
+                // Realisasi
+                if (/^(?:isi|tambah|input|buat)\s*realisasi|realisasi\s*(?:divisi|dept)/i.test(t) || /^realisasi[\s:|]/i.test(t)) {
+                    return this.handleRealisasiIntent(t);
+                }
+
+                // KPI
+                if (/^(?:isi|tambah|input|buat)\s*kpi|kpi\s*(?:divisi|dept)/i.test(t) || /^kpi[\s:|]/i.test(t)) {
+                    return this.handleKPIIntent(t);
+                }
+
+                // Nav / switch tab
+                const navMatch = lower.match(/^(?:buka|ke|menu|tab|view|go\s*to)\s+(.+)/);
+                if (navMatch) {
+                    return this.handleNavigation(navMatch[1].trim());
+                }
+
+                // Tanya context
+                if (/^(?:lagi\s*di|current|posisi|di mana|di\s*mana|view\s*apa|halaman\s*apa)/i.test(t)) {
+                    const ctx = this.detectContext();
+                    return 'Saat ini Anda sedang di halaman <b>' + this.getContextLabel(ctx) + '</b>.';
+                }
+
+                // Siapa aku / who am I
+                if (/^(?:siapa\s*(?:aku|saya)|who\s*am\s*i|my\s*name|sapa\s*(?:saya|aku))/i.test(t)) {
+                    return currentUserName ? 'Anda adalah <b>' + currentUserName + '</b> dengan peran <b>' + currentUserRole + '</b>.' : 'Belum ada data pengguna.';
+                }
+
+                // Default: try to detect if this could be data for current form
+                const ctx = this.detectContext();
+                if (ctx === 'view-input-rab' && /^\d+\s+\S+\s+\d+/i.test(t)) {
+                    return this.handleRABIntent(t);
+                }
+                if (ctx === 'view-realisasi-anggaran' && /^\d+\s+\S+\s+\d+/i.test(t)) {
+                    return this.handleRealisasiIntent(t);
+                }
+                if (ctx === 'view-kpi' && /\d+\s+\S+\s+\d+/i.test(t)) {
+                    return this.handleKPIIntent(t);
+                }
+                if (ctx === 'view-absensi' && /^(?:hadir|izin|tidak|sakit)/i.test(t)) {
+                    return this.handleAbsensiIntent(t);
+                }
+
+                return 'Maaf, saya tidak mengerti perintah Anda. Ketik <b>help</b> untuk melihat daftar perintah yang tersedia.';
+            },
+
+            // --- Intent Handlers ---
+            handleRABIntent(t) {
+                const parts = t.replace(/^(?:isi|tambah|input|buat)\s*rab\s*/i, '').trim();
+                const fields = { dept: '', program: '', barang: '', volume: '', satuan: '', harga: '', sumber: '' };
+
+                if (/divisi/i.test(parts) || /dept/i.test(parts)) {
+                    const deptMatch = parts.match(/(?:divisi|dept|departemen)\s+(\S[\w\s]*?)(?=\s+(?:program|prog|event)\b)/i);
+                    if (deptMatch) fields.dept = deptMatch[1].trim();
+                    const progMatch = parts.match(/(?:program|prog|event)\s+(\S[\w\s]*?)(?=\s+\S+\s+\d+)/i);
+                    if (progMatch) fields.program = progMatch[1].trim();
+                    const rest = parts.replace(/(?:divisi|dept|departemen)\s+\S[\w\s]*?(?=\s+(?:program|prog|event)\b)/i, '').replace(/(?:program|prog|event)\s+\S[\w\s]*?(?=\s+\S+\s+\d+)/i, '').trim();
+                    fields.barang = rest.split(/\s+/).slice(0, -3).join(' ') || rest;
+                    const nums = rest.match(/(\d+)\s*\S*\s*(\d+)/);
+                    if (nums) { fields.volume = nums[1]; fields.harga = nums[2]; }
+                    const sat = rest.match(/(?<=\d+)\s+(\S+)(?=\s+\d+)/);
+                    if (sat) fields.satuan = sat[1];
+                } else {
+                    const partsArr = parts.split(/\s+/);
+                    if (partsArr.length >= 4) {
+                        fields.dept = partsArr[0];
+                        fields.program = partsArr[1];
+                        fields.barang = partsArr[2];
+                        fields.volume = partsArr[3] || '';
+                        fields.satuan = partsArr[4] || '';
+                        fields.harga = partsArr[5] || '';
+                        fields.sumber = partsArr.slice(6).join(' ') || '';
+                    } else {
+                        return 'Format RAB: <code>Isi RAB [divisi] [program] [barang] [volume] [satuan] [harga] [sumber_dana]</code><br>Contoh: <i>Isi RAB Kreatif Seminar Snack 50 box 15000 Sponsor Umum</i>';
+                    }
+                }
+
+                // Fill form
+                const mapping = {
+                    'rab-select-dept': fields.dept,
+                    'rab-select-prog': fields.program,
+                    'rab-nama-barang': fields.barang,
+                    'rab-volume': fields.volume,
+                    'rab-satuan': fields.satuan,
+                    'rab-harga': fields.harga,
+                    'rab-sumber-dana': fields.sumber,
+                };
+
+                let filled = [];
+                for (const [id, val] of Object.entries(mapping)) {
+                    if (val) { this.fillForm(id, val); filled.push(id); }
+                }
+
+                if (filled.length > 0) {
+                    // Try matching select dropdowns
+                    return '✅ Form RAB diisi! Silakan periksa dan klik <b>Simpan</b>.<br><small>Terisi: ' + filled.join(', ') + '</small>';
+                }
+                return 'Gagal mengisi form. Gunakan format: <code>Isi RAB [divisi] [program] [barang] [volume] [satuan] [harga]</code>';
+            },
+
+            handleRealisasiIntent(t) {
+                const parts = t.replace(/^(?:isi|tambah|input|buat)\s*realisasi\s*/i, '').trim();
+                const fields = { dept: '', program: '', barang: '', nominal: '', sumber: '', rincian: '' };
+
+                if (/divisi/i.test(parts) || /dept/i.test(parts)) {
+                    const deptMatch = parts.match(/(?:divisi|dept|departemen)\s+(\S[\w\s]*?)(?=\s+(?:program|prog|event)\b)/i);
+                    if (deptMatch) fields.dept = deptMatch[1].trim();
+                    const progMatch = parts.match(/(?:program|prog|event)\s+(\S[\w\s]*?)(?=\s+\S+\s+\d+)/i);
+                    if (progMatch) fields.program = progMatch[1].trim();
+                    const rest = parts.replace(/(?:divisi|dept|departemen)\s+\S[\w\s]*?(?=\s+(?:program|prog|event)\b)/i, '').replace(/(?:program|prog|event)\s+\S[\w\s]*?(?=\s+\S+\s+\d+)/i, '').trim();
+                    const nums = rest.match(/(\d+)/);
+                    if (nums) fields.nominal = nums[1];
+                    fields.barang = rest.replace(/\s*\d+.*$/, '').trim();
+                } else {
+                    const partsArr = parts.split(/\s+/);
+                    if (partsArr.length >= 4) {
+                        fields.dept = partsArr[0];
+                        fields.program = partsArr[1];
+                        fields.barang = partsArr[2];
+                        fields.nominal = partsArr[3] || '';
+                        fields.sumber = partsArr.slice(4).join(' ') || '';
+                    } else {
+                        return 'Format Realisasi: <code>Isi Realisasi [divisi] [program] [barang] [nominal] [sumber_dana]</code><br>Contoh: <i>Isi Realisasi Kreatif Seminar Snack 1500000 Kas</i>';
+                    }
+                }
+
+                const mapping = {
+                    'real-select-dept': fields.dept,
+                    'real-select-prog': fields.program,
+                    'real-keterangan': fields.barang,
+                    'real-nominal': fields.nominal,
+                    'real-sumber-dana': fields.sumber,
+                    'real-rincian': fields.rincian,
+                };
+
+                let filled = [];
+                for (const [id, val] of Object.entries(mapping)) {
+                    if (val) { this.fillForm(id, val); filled.push(id); }
+                }
+
+                if (filled.length > 0) {
+                    return '✅ Form Realisasi diisi! Silakan periksa dan klik <b>Simpan</b>.<br><small>Terisi: ' + filled.join(', ') + '</small>';
+                }
+                return 'Gagal mengisi form. Gunakan format: <code>Isi Realisasi [divisi] [program] [barang] [nominal]</code>';
+            },
+
+            handleKPIIntent(t) {
+                const parts = t.replace(/^(?:isi|tambah|input|buat)\s*kpi\s*/i, '').trim();
+                const fields = { dept: '', program: '', nama: '', target: '', satuan: '', capaian: '0' };
+
+                if (/divisi/i.test(parts) || /dept/i.test(parts)) {
+                    const deptMatch = parts.match(/(?:divisi|dept|departemen)\s+(\S[\w\s]*?)(?=\s+(?:program|prog|event)\b)/i);
+                    if (deptMatch) fields.dept = deptMatch[1].trim();
+                    const progMatch = parts.match(/(?:program|prog|event)\s+(\S[\w\s]*?)(?=\s+\S+\s+\d+)/i);
+                    if (progMatch) fields.program = progMatch[1].trim();
+                    const rest = parts.replace(/(?:divisi|dept|departemen)\s+\S[\w\s]*?(?=\s+(?:program|prog|event)\b)/i, '').replace(/(?:program|prog|event)\s+\S[\w\s]*?(?=\s+\S+\s+\d+)/i, '').trim();
+                    const nums = rest.match(/(\d+)\s*\S*\s*(\d+)/);
+                    if (nums) { fields.target = nums[1]; fields.capaian = nums[2]; } else { const n = rest.match(/(\d+)/); if (n) fields.target = n[1]; }
+                    fields.nama = rest.replace(/\s*\d+.*$/, '').trim() || 'KPI';
+                } else {
+                    const partsArr = parts.split(/\s+/);
+                    if (partsArr.length >= 4) {
+                        fields.dept = partsArr[0];
+                        fields.program = partsArr[1];
+                        fields.nama = partsArr[2];
+                        fields.target = partsArr[3] || '';
+                        fields.satuan = partsArr[4] || '';
+                        fields.capaian = partsArr[5] || '0';
+                    } else {
+                        return 'Format KPI: <code>Isi KPI [divisi] [program] [nama] [target] [satuan] [capaian]</code><br>Contoh: <i>Isi KPI Kreatif Seminar Jumlah Peserta 100 Orang 50</i>';
+                    }
+                }
+
+                const mapping = {
+                    'kpi-dept': fields.dept,
+                    'kpi-prog': fields.program,
+                    'kpi-nama': fields.nama,
+                    'kpi-target': fields.target,
+                    'kpi-satuan': fields.satuan,
+                    'kpi-capaian': fields.capaian,
+                };
+
+                let filled = [];
+                for (const [id, val] of Object.entries(mapping)) {
+                    if (val) { this.fillForm(id, val); filled.push(id); }
+                }
+
+                if (filled.length > 0) {
+                    return '✅ Form KPI diisi! Silakan periksa dan klik <b>Simpan</b>.<br><small>Terisi: ' + filled.join(', ') + '</small>';
+                }
+                return 'Gagal mengisi form. Gunakan format: <code>Isi KPI [divisi] [program] [nama] [target] [satuan] [capaian]</code>';
+            },
+
+            handleAbsensiIntent(t) {
+                const lower = t.toLowerCase();
+                let status = 'Hadir';
+                if (/izin/i.test(lower)) status = 'Izin';
+                else if (/tidak\s*(?:hadir)?|tdk|alpha/i.test(lower)) status = 'Tidak Hadir';
+                else if (/sakit/i.test(lower)) { status = 'Izin'; }
+
+                let program = '';
+                const progMatch = lower.match(/(?:program|prog|event)\s+(\S[\w\s]+?)(?:\s+hadir|\s+izin|\s+deskripsi|$)/i);
+                if (progMatch) program = progMatch[1].trim();
+
+                let deskripsi = t.replace(/^(?:absen|presensi|absensi)\s+(?:hadir|izin|tidak(?:\s+hadir)?|tdk|sakit)\s*/i, '').trim();
+                deskripsi = deskripsi.replace(/(?:program|prog|event)\s+\S[\w\s]+?(?=\s+|$)/i, '').trim();
+                if (!deskripsi) deskripsi = status === 'Hadir' ? 'Hadir' : (status === 'Izin' ? 'Izin' : 'Tidak Hadir');
+
+                // Set radio buttons
+                const tipeRadios = document.querySelectorAll('input[name="tipe_absen"]');
+                tipeRadios.forEach(r => {
+                    if (program && r.value === 'Program') { r.checked = true; if (typeof toggleAbsenProgram === 'function') toggleAbsenProgram(true); }
+                    else if (!program && r.value === 'Harian') r.checked = true;
+                });
+
+                // Set status radio
+                const statusRadios = document.querySelectorAll('input[name="status_hadir"]');
+                statusRadios.forEach(r => {
+                    if (r.value.toLowerCase() === status.toLowerCase()) {
+                        r.checked = true;
+                        if (typeof setAbsenStatus === 'function') setAbsenStatus(status, r);
+                    }
+                });
+
+                let filled = [];
+                if (program) { this.fillForm('absen-select-prog', program); filled.push('program'); }
+                this.fillForm('absen-deskripsi', deskripsi); filled.push('deskripsi');
+
+                return '✅ Form Absensi diisi! Status: <b>' + status + '</b>' + (program ? ' untuk program <b>' + program + '</b>' : '') + '.<br><small>Deskripsi: ' + this.escapeHtml(deskripsi) + '</small><br>Klik <b>SUBMIT ABSENSI</b> untuk mengirim.';
+            },
+
+            handleNavigation(target) {
+                const navMap = {
+                    'dashboard': 'view-dashboard', 'dasbor': 'view-dashboard', 'home': 'view-dashboard',
+                    'program': 'view-program-event', 'program & event': 'view-program-event', 'event': 'view-program-event',
+                    'rab': 'view-input-rab', 'input rab': 'view-input-rab', 'input': 'view-input-rab',
+                    'realisasi': 'view-realisasi-anggaran', 'realisasi anggaran': 'view-realisasi-anggaran',
+                    'rekap': 'view-rekap-rab', 'rekap rab': 'view-rekap-rab', 'analitik': 'view-rekap-rab',
+                    'absensi': 'view-absensi', 'absen': 'view-absensi', 'presensi': 'view-absensi',
+                    'kalender': 'view-timeline', 'timeline': 'view-timeline', 'schedule': 'view-timeline',
+                    'notulensi': 'view-notulensi', 'notulen': 'view-notulensi', 'folder': 'view-notulensi',
+                    'kpi': 'view-kpi', 'indikator': 'view-kpi',
+                    'surat': 'view-surat', 'digital office': 'view-surat',
+                    'database surat': 'view-database-surat', 'db surat': 'view-database-surat',
+                };
+
+                const tabId = navMap[target.toLowerCase()];
+                if (tabId && typeof switchTab === 'function') {
+                    const shortId = tabId.replace('view-', '');
+                    switchTab(shortId);
+                    return '✅ Berpindah ke <b>' + this.getContextLabel(tabId) + '</b>.';
+                }
+                return 'Halaman <b>' + this.escapeHtml(target) + '</b> tidak dikenal. Ketik <b>help</b> untuk daftar halaman.';
+            },
+
+            // --- Voice ---
+            toggleVoice() {
+                if (this.isListening) { this.stopVoice(); }
+                else { this.startVoice(); }
+            },
+
+            startVoice() {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    this.addMessage('Maaf, browser Anda tidak mendukung Voice Input. Gunakan Chrome/Edge terbaru.', false);
+                    return;
+                }
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                this.recognition.lang = 'id-ID';
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.maxAlternatives = 1;
+
+                this.isListening = true;
+                document.getElementById('aiVoiceBtn').classList.add('listening');
+                document.getElementById('aiFooterVoiceBtn').classList.add('listening');
+                document.getElementById('aiFab').classList.add('listening');
+
+                this.recognition.onresult = (e) => {
+                    const transcript = e.results[0][0].transcript;
+                    document.getElementById('aiInput').value = transcript;
+                    this.stopVoice();
+                    this.sendMessage();
+                };
+
+                this.recognition.onerror = (e) => {
+                    console.warn('Voice error:', e.error);
+                    this.addMessage('Voice input error: ' + e.error + '. Coba lagi.', false);
+                    this.stopVoice();
+                };
+
+                this.recognition.onend = () => {
+                    this.stopVoice();
+                };
+
+                try { this.recognition.start(); }
+                catch (err) { this.stopVoice(); }
+            },
+
+            stopVoice() {
+                this.isListening = false;
+                document.getElementById('aiVoiceBtn').classList.remove('listening');
+                document.getElementById('aiFooterVoiceBtn').classList.remove('listening');
+                document.getElementById('aiFab').classList.remove('listening');
+                if (this.recognition) {
+                    try { this.recognition.stop(); } catch (e) {}
+                    this.recognition = null;
+                }
+            },
+
+            // --- Clipboard / Bulk Paste ---
+            async pasteFromClipboard() {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    if (!text || text.trim().length === 0) {
+                        this.addMessage('Clipboard kosong. Salin data dari Excel terlebih dahulu.', false);
+                        return;
+                    }
+
+                    // Check if it's tab-separated (Excel copy)
+                    if (text.includes('\t')) {
+                        this.handleBulkPaste(text);
+                    } else {
+                        // Single line/normal text - put in input
+                        document.getElementById('aiInput').value = text;
+                        document.getElementById('aiInput').focus();
+                        this.open();
+                        this.addMessage('📋 Teks dari clipboard ditempel ke input. Kirim atau edit terlebih dahulu.', false);
+                    }
+                } catch (err) {
+                    this.addMessage('Tidak bisa akses clipboard. Pastikan izin clipboard diberikan atau gunakan Ctrl+V / Cmd+V.', false);
+                }
+            },
+
+            handleBulkPaste(text) {
+                const lines = text.split('\n').filter(l => l.trim());
+                if (lines.length < 2) {
+                    this.addMessage('Data bulk kurang dari 2 baris. Minimal 1 baris header + 1 baris data.', false);
+                    return;
+                }
+
+                const headers = lines[0].split('\t').map(h => h.trim());
+                const rows = lines.slice(1).map(line => line.split('\t').map(c => c.trim()));
+
+                this.bulkData = { headers, rows };
+                this.renderBulkPreview(headers, rows);
+                document.getElementById('aiBulkModal').classList.add('active');
+            },
+
+            renderBulkPreview(headers, rows) {
+                const ctx = this.detectContext();
+                const fieldMap = this.getFieldMapping(ctx);
+
+                let html = '<table class="ai-bulk-table"><thead><tr>';
+                headers.forEach((h, i) => {
+                    html += '<th>' + this.escapeHtml(h) + '<br><select data-col="' + i + '">';
+                    html += '<option value="">— Pilih Field —</option>';
+                    for (const [fieldId, fieldLabel] of Object.entries(fieldMap)) {
+                        const selected = (h.toLowerCase().includes(fieldLabel.toLowerCase()) || fieldLabel.toLowerCase().includes(h.toLowerCase())) ? 'selected' : '';
+                        html += '<option value="' + fieldId + '" ' + selected + '>' + this.escapeHtml(fieldLabel) + '</option>';
+                    }
+                    html += '</select></th>';
+                });
+                html += '</tr></thead><tbody>';
+                rows.slice(0, 20).forEach(row => {
+                    html += '<tr>';
+                    row.forEach(cell => { html += '<td>' + this.escapeHtml(cell) + '</td>'; });
+                    html += '</tr>';
+                });
+                if (rows.length > 20) {
+                    html += '<tr><td colspan="' + headers.length + '" style="text-align:center;color:#999;">… dan ' + (rows.length - 20) + ' baris lainnya</td></tr>';
+                }
+                html += '</tbody></table>';
+
+                document.getElementById('aiBulkPreview').innerHTML = html;
+            },
+
+            closeBulkModal() {
+                document.getElementById('aiBulkModal').classList.remove('active');
+                this.bulkData = null;
+            },
+
+            async confirmBulkInsert() {
+                if (!this.bulkData) return;
+                const ctx = this.detectContext();
+                const selects = document.querySelectorAll('#aiBulkPreview select');
+                const colMapping = {};
+                selects.forEach(sel => { const col = sel.dataset.col; if (sel.value) colMapping[col] = sel.value; });
+
+                const rows = this.bulkData.rows;
+                let inserted = 0;
+                let errors = [];
+
+                for (let ri = 0; ri < rows.length; ri++) {
+                    const row = rows[ri];
+                    const data = {};
+                    for (const [colIdx, fieldId] of Object.entries(colMapping)) {
+                        data[fieldId] = row[parseInt(colIdx)] || '';
+                    }
+
+                    try {
+                        if (ctx === 'view-input-rab' && data['rab-nama-barang']) {
+                            // For RAB, insert via supabase directly
+                            const deptEl = document.getElementById('rab-select-dept');
+                            const progEl = document.getElementById('rab-select-prog');
+                            const deptId = deptEl ? deptEl.value : '';
+                            const progId = progEl ? progEl.value : '';
+
+                            const { error } = await supabaseClient.from('rab_items').insert({
+                                workspace_id: globalWorkspaceId,
+                                department_id: deptId || null,
+                                program_id: progId || null,
+                                nama_barang: data['rab-nama-barang'] || '',
+                                volume: parseInt(data['rab-volume']) || 1,
+                                satuan: data['rab-satuan'] || '',
+                                harga: parseInt(data['rab-harga']) || 0,
+                                rincian: data['rab-rincian'] || '',
+                                sumber_dana: data['rab-sumber-dana'] || '',
+                                created_by: currentUserId,
+                            });
+                            if (error) errors.push(error.message);
+                            else inserted++;
+                        } else if (ctx === 'view-realisasi-anggaran' && data['real-nominal']) {
+                            const deptEl = document.getElementById('real-select-dept');
+                            const progEl = document.getElementById('real-select-prog');
+                            const deptId = deptEl ? deptEl.value : '';
+                            const progId = progEl ? progEl.value : '';
+
+                            const { error } = await supabaseClient.from('realizations').insert({
+                                workspace_id: globalWorkspaceId,
+                                department_id: deptId || null,
+                                program_id: progId || null,
+                                keterangan: data['real-keterangan'] || '',
+                                nominal: parseInt(data['real-nominal']) || 0,
+                                rincian: data['real-rincian'] || '',
+                                sumber_dana: data['real-sumber-dana'] || '',
+                                created_by: currentUserId,
+                            });
+                            if (error) errors.push(error.message);
+                            else inserted++;
+                        } else if (ctx === 'view-absensi') {
+                            const { error } = await supabaseClient.from('attendances').insert({
+                                workspace_id: globalWorkspaceId,
+                                user_id: currentUserId,
+                                user_name: currentUserName,
+                                tipe_absen: data['absen-tipe'] || 'Harian',
+                                program_id: data['absen-program'] || null,
+                                status_hadir: data['absen-status'] || 'Hadir',
+                                deskripsi: data['absen-deskripsi'] || '',
+                                role: currentUserRole,
+                            });
+                            if (error) errors.push(error.message);
+                            else inserted++;
+                        } else if (ctx === 'view-kpi' && data['kpi-nama']) {
+                            const deptEl = document.getElementById('kpi-dept');
+                            const progEl = document.getElementById('kpi-prog');
+                            const deptId = deptEl ? deptEl.value : '';
+                            const progId = progEl ? progEl.value : '';
+
+                            const { error } = await supabaseClient.from('kpis').insert({
+                                workspace_id: globalWorkspaceId,
+                                department_id: deptId || null,
+                                program_id: progId || null,
+                                nama_kpi: data['kpi-nama'] || '',
+                                target: parseFloat(data['kpi-target']) || 0,
+                                satuan: data['kpi-satuan'] || '',
+                                capaian: parseFloat(data['kpi-capaian']) || 0,
+                                created_by: currentUserId,
+                            });
+                            if (error) errors.push(error.message);
+                            else inserted++;
+                        } else {
+                            // Fallback: fill form fields directly
+                            for (const [fieldId, val] of Object.entries(data)) {
+                                this.fillForm(fieldId, val);
+                            }
+                            inserted++;
+                        }
+                    } catch (err) {
+                        errors.push(err.message);
+                    }
+                }
+
+                if (inserted > 0) {
+                    this.addMessage('✅ ' + inserted + ' baris berhasil disisipkan!' + (errors.length > 0 ? ' (' + errors.length + ' error)' : ''), false);
+                    if (typeof refreshCurrentView === 'function') refreshCurrentView(document.querySelector('.btn-action'));
+                } else {
+                    this.addMessage('❌ Gagal menyisipkan data. Error: ' + errors.join('; '), false);
+                }
+
+                this.closeBulkModal();
+            },
+
+            getFieldMapping(ctx) {
+                const mappings = {
+                    'view-input-rab': {
+                        'rab-select-dept': 'Divisi / Departemen',
+                        'rab-select-prog': 'Program / Event',
+                        'rab-nama-barang': 'Nama Barang / Kebutuhan',
+                        'rab-volume': 'Volume / Jumlah',
+                        'rab-satuan': 'Satuan',
+                        'rab-harga': 'Harga Satuan (Rp)',
+                        'rab-rincian': 'Rincian Hitungan',
+                        'rab-sumber-dana': 'Sumber Dana',
+                    },
+                    'view-realisasi-anggaran': {
+                        'real-select-dept': 'Divisi / Departemen',
+                        'real-select-prog': 'Program / Event',
+                        'real-keterangan': 'Keterangan / Barang',
+                        'real-nominal': 'Nominal Dana (Rp)',
+                        'real-rincian': 'Rincian Hitungan',
+                        'real-sumber-dana': 'Sumber Dana',
+                    },
+                    'view-absensi': {
+                        'absen-tipe': 'Tipe Absensi',
+                        'absen-program': 'Program',
+                        'absen-status': 'Status Hadir',
+                        'absen-deskripsi': 'Detail / Deskripsi',
+                    },
+                    'view-kpi': {
+                        'kpi-dept': 'Divisi',
+                        'kpi-prog': 'Program',
+                        'kpi-nama': 'Nama KPI',
+                        'kpi-target': 'Target',
+                        'kpi-satuan': 'Satuan',
+                        'kpi-capaian': 'Capaian',
+                    },
+                };
+                return mappings[ctx] || mappings['view-input-rab'];
+            },
+
+            // --- Context ---
+            detectContext() {
+                const active = document.querySelector('.view-section.active');
+                this.currentContext = active ? active.id : '';
+                this.updateContextBadge();
+                this.showQuickActions();
+                return this.currentContext;
+            },
+
+            updateContextBadge() {
+                const badge = document.getElementById('aiContextBadge');
+                if (!badge) return;
+                const ctx = this.currentContext || this.detectContext();
+                const label = this.getContextLabel(ctx);
+                if (label) {
+                    badge.textContent = label;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            },
+
+            getContextLabel(ctx) {
+                const labels = {
+                    'view-dashboard': 'Dashboard',
+                    'view-program-event': 'Program & Event',
+                    'view-input-rab': 'Input RAB',
+                    'view-realisasi-anggaran': 'Realisasi Anggaran',
+                    'view-rekap-rab': 'Rekap RAB',
+                    'view-absensi': 'Absensi',
+                    'view-timeline': 'Kalender',
+                    'view-notulensi': 'Notulensi',
+                    'view-kpi': 'KPI',
+                    'view-surat': 'Digital Office',
+                    'view-database-surat': 'Database Surat',
+                    'view-locked': 'Terkunci',
+                };
+                return labels[ctx] || '';
+            },
+
+            // --- Quick Actions ---
+            showQuickActions() {
+                const container = document.getElementById('aiQuickActions');
+                if (!container) return;
+                const ctx = this.detectContext();
+                const actions = this.getQuickActions(ctx);
+                container.innerHTML = actions.map(a =>
+                    '<div class="ai-quick-action" onclick="AIAssistant.performQuickAction(\'' + a.id + '\')"><i class="' + a.icon + '"></i><span>' + a.label + '</span></div>'
+                ).join('');
+            },
+
+            getQuickActions(ctx) {
+                const common = [
+                    { id: 'help', icon: 'fa-solid fa-question-circle', label: 'Bantuan' },
+                    { id: 'clipboard', icon: 'fa-solid fa-paste', label: 'Paste Excel' },
+                    { id: 'voice', icon: 'fa-solid fa-microphone', label: 'Voice Input' },
+                ];
+                const contextActions = {
+                    'view-input-rab': [
+                        { id: 'rab-form', icon: 'fa-solid fa-file-invoice', label: 'Isi RAB' },
+                        { id: 'rab-bulk', icon: 'fa-solid fa-table', label: 'Bulk RAB' },
+                    ],
+                    'view-realisasi-anggaran': [
+                        { id: 'real-form', icon: 'fa-solid fa-hand-holding-dollar', label: 'Isi Realisasi' },
+                    ],
+                    'view-absensi': [
+                        { id: 'absen-hadir', icon: 'fa-solid fa-check-circle', label: 'Absen Hadir' },
+                        { id: 'absen-izin', icon: 'fa-solid fa-clock', label: 'Absen Izin' },
+                    ],
+                    'view-kpi': [
+                        { id: 'kpi-form', icon: 'fa-solid fa-bullseye', label: 'Isi KPI' },
+                    ],
+                };
+                return [...(contextActions[ctx] || []), ...common];
+            },
+
+            performQuickAction(actionId) {
+                switch (actionId) {
+                    case 'help':
+                        this.open();
+                        this.addMessage(this.getHelpText(), false);
+                        break;
+                    case 'clipboard':
+                        this.open();
+                        this.pasteFromClipboard();
+                        break;
+                    case 'voice':
+                        this.open();
+                        this.toggleVoice();
+                        break;
+                    case 'rab-form':
+                        this.open();
+                        this.addMessage('Gunakan format:<br><code>Isi RAB [divisi] [program] [barang] [volume] [satuan] [harga] [sumber_dana]</code><br>Contoh: <i>Isi RAB Kreatif Seminar Snack 50 box 15000 Sponsor</i>', false);
+                        break;
+                    case 'rab-bulk':
+                        this.open();
+                        this.addMessage('Salin data RAB dari Excel (termasuk header), lalu klik <b>Paste Excel</b> atau tekan <b>Ctrl+V</b> di input.', false);
+                        break;
+                    case 'real-form':
+                        this.open();
+                        this.addMessage('Gunakan format:<br><code>Isi Realisasi [divisi] [program] [barang] [nominal] [sumber_dana]</code><br>Contoh: <i>Isi Realisasi Kreatif Seminar Snack 1500000 Kas</i>', false);
+                        break;
+                    case 'absen-hadir':
+                        this.open();
+                        this.addMessage('Ketik: <i>absen hadir [deskripsi]</i><br>atau: <i>absen hadir program Seminar ngoding</i>', false);
+                        break;
+                    case 'absen-izin':
+                        this.open();
+                        this.addMessage('Ketik: <i>absen izin [deskripsi]</i><br>atau: <i>absen izin sakit</i>', false);
+                        break;
+                    case 'kpi-form':
+                        this.open();
+                        this.addMessage('Gunakan format:<br><code>Isi KPI [divisi] [program] [nama] [target] [satuan] [capaian]</code><br>Contoh: <i>Isi KPI Kreatif Seminar Peserta 100 Orang 50</i>', false);
+                        break;
+                    default:
+                        this.open();
+                        this.addMessage('Aksi tidak dikenal.', false);
+                }
+            },
+
+            // --- Form Filling ---
+            fillForm(fieldId, value) {
+                const el = document.getElementById(fieldId);
+                if (!el) return false;
+                const strVal = String(value).trim();
+                if (!strVal) return false;
+
+                if (el.tagName === 'SELECT') {
+                    // Try matching by text or value
+                    const options = Array.from(el.options);
+                    const match = options.find(o =>
+                        o.text.toLowerCase().includes(strVal.toLowerCase()) ||
+                        o.value.toLowerCase() === strVal.toLowerCase() ||
+                        o.value.toLowerCase().includes(strVal.toLowerCase())
+                    );
+                    if (match) {
+                        el.value = match.value;
+                        this.highlightField(el);
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                        return true;
+                    }
+                    // If no match, don't set
+                    return false;
+                } else if (el.type === 'radio') {
+                    const radios = document.querySelectorAll('input[name="' + el.name + '"]');
+                    radios.forEach(r => {
+                        if (r.value.toLowerCase().includes(strVal.toLowerCase())) {
+                            r.checked = true;
+                            r.dispatchEvent(new Event('change', { bubbles: true }));
+                            if (typeof setAbsenStatus === 'function') setAbsenStatus(strVal, r);
+                        }
+                    });
+                    return true;
+                } else {
+                    el.value = strVal;
+                    this.highlightField(el);
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    return true;
+                }
+            },
+
+            highlightField(el) {
+                if (typeof el === 'string') el = document.getElementById(el);
+                if (!el) return;
+                el.classList.add('ai-field-highlight');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => el.classList.remove('ai-field-highlight'), 5000);
+            },
+
+            // --- History ---
+            saveHistory() {
+                try {
+                    const messages = document.getElementById('aiChatMessages').innerHTML;
+                    localStorage.setItem(this.storageKey, messages);
+                } catch (e) {}
+            },
+
+            loadHistory() {
+                try {
+                    const saved = localStorage.getItem(this.storageKey);
+                    if (saved) {
+                        document.getElementById('aiChatMessages').innerHTML = saved;
+                    } else {
+                        // Show welcome on load — handled in init()
+                    }
+                } catch (e) {}
+            },
+
+            // --- Helpers ---
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            getHelpText() {
+                return '<b>🤖 AI Assistant — Panduan Lengkap</b><br><br>' +
+                    '<b>📋 Isi Formulir:</b><br>' +
+                    '• <code>Isi RAB [divisi] [program] [barang] [vol] [satuan] [harga]</code><br>' +
+                    '• <code>Isi Realisasi [divisi] [program] [barang] [nominal]</code><br>' +
+                    '• <code>Isi KPI [divisi] [program] [nama] [target] [satuan] [capaian]</code><br>' +
+                    '• <code>Absen hadir/izin [deskripsi]</code><br><br>' +
+                    '<b>📋 Bulk Paste dari Excel:</b><br>' +
+                    '• Salin data (header + baris) dari Excel, klik tombol <b>📋 Paste</b><br>' +
+                    '• Atau tempel langsung di chat dengan format TSV<br><br>' +
+                    '<b>🎤 Voice Input:</b><br>' +
+                    '• Klik ikon 🎤 mikrofon untuk input suara<br>' +
+                    '• Didukung Bahasa Indonesia<br><br>' +
+                    '<b>🔄 Navigasi:</b><br>' +
+                    '• <code>Buka [nama halaman]</code> — ganti tab<br>' +
+                    '• <code>Lagi di mana?</code> — cek posisi<br><br>' +
+                    '<b>⚡ Quick Actions:</b><br>' +
+                    '• Gunakan tombol shortcut di atas input chat';
+            },
+        };
+
     </script>
 </body>
 </html>
