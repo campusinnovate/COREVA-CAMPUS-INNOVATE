@@ -308,6 +308,468 @@
             .chat-widget { width: calc(100% - 40px); right: 20px; left: 20px; bottom: 100px; height: 60vh; }
             .chat-fab { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 1.5rem; }
         }
+
+        /* ========================================
+           AI ASSISTANT STYLES
+           ======================================== */
+        :root {
+            --ai-primary: #0A3055;
+            --ai-secondary: #F6B23B;
+            --ai-accent: #3b82f6;
+            --ai-success: #10b981;
+            --ai-warning: #f59e0b;
+            --ai-error: #ef4444;
+            --ai-bg: rgba(255,255,255,0.98);
+            --ai-border: rgba(246,178,59,0.3);
+            --ai-shadow: 0 20px 60px rgba(10,48,85,0.25);
+        }
+
+        /* AI FAB - Bottom Left */
+        .ai-fab {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: var(--ai-secondary);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: var(--ai-shadow);
+            z-index: 9998;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            touch-action: none;
+            user-select: none;
+        }
+        .ai-fab:hover {
+            transform: scale(1.1) translateY(-3px);
+            box-shadow: 0 15px 40px rgba(246,178,59,0.4);
+        }
+        .ai-fab:active {
+            transform: scale(0.95);
+        }
+        .ai-fab.active {
+            background: linear-gradient(135deg, var(--ai-secondary), #f59e0b);
+            color: var(--ai-primary);
+        }
+        .ai-fab.listening {
+            background: linear-gradient(135deg, var(--ai-error), #dc2626);
+            color: white;
+            animation: aiPulse 1s ease-in-out infinite;
+        }
+        @keyframes aiPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(239,68,68,0); }
+        }
+
+        /* AI Widget Panel */
+        .ai-widget {
+            position: fixed;
+            bottom: 100px;
+            left: 30px;
+            width: 420px;
+            height: 600px;
+            max-height: 80vh;
+            background: var(--ai-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--ai-border);
+            border-radius: 20px;
+            box-shadow: var(--ai-shadow);
+            z-index: 9997;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .ai-widget.active {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        .ai-widget.minimized {
+            height: 60px;
+            width: 320px;
+            border-radius: 30px;
+        }
+        .ai-widget.minimized .ai-widget-body,
+        .ai-widget.minimized .ai-widget-footer {
+            display: none;
+        }
+
+        /* Widget Header */
+        .ai-widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            cursor: grab;
+        }
+        .ai-widget.minimized .ai-widget-header {
+            border-radius: 30px;
+        }
+        .ai-widget-header:active { cursor: grabbing; }
+        .ai-widget-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .ai-widget-title i { font-size: 1.3rem; }
+        .ai-widget-actions { display: flex; gap: 8px; }
+        .ai-widget-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .ai-widget-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .ai-widget-btn.voice-btn.listening { background: var(--ai-error); animation: aiPulse 1s infinite; }
+
+        /* Widget Body */
+        .ai-widget-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        /* Chat Messages Area */
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .ai-chat-messages::-webkit-scrollbar { width: 6px; }
+        .ai-chat-messages::-webkit-scrollbar-thumb { background: var(--ai-secondary); border-radius: 3px; }
+
+        .ai-message {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+            animation: aiFadeIn 0.3s ease-out;
+        }
+        @keyframes aiFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-message.ai { align-self: flex-start; }
+
+        .ai-message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            font-weight: 800;
+        }
+        .ai-message.user .ai-message-avatar {
+            background: linear-gradient(135deg, var(--ai-secondary), #f59e0b);
+            color: var(--ai-primary);
+        }
+        .ai-message.ai .ai-message-avatar {
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: white;
+        }
+
+        .ai-message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .ai-message-bubble {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .ai-message.user .ai-message-bubble {
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-message.ai .ai-message-bubble {
+            background: white;
+            color: var(--ai-primary);
+            border: 1px solid var(--ai-border);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .ai-message-time {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            padding: 0 4px;
+        }
+        .ai-message.user .ai-message-time { text-align: right; color: rgba(255,255,255,0.7); }
+
+        /* Suggestion Chips */
+        .ai-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .ai-suggestion-chip {
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ai-suggestion-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(10,48,85,0.3);
+        }
+        .ai-suggestion-chip.quick-action {
+            background: white;
+            color: var(--ai-primary);
+            border: 1px solid var(--ai-border);
+        }
+        .ai-suggestion-chip.quick-action:hover {
+            border-color: var(--ai-primary);
+            background: #eff6ff;
+        }
+
+        /* Typing Indicator */
+        .ai-typing {
+            display: flex;
+            gap: 10px;
+            align-self: flex-start;
+        }
+        .ai-typing .ai-message-bubble {
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid var(--ai-border);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+        }
+        .ai-typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .ai-typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--ai-secondary);
+            border-radius: 50%;
+            animation: aiTypingBounce 1.4s ease-in-out infinite both;
+        }
+        .ai-typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .ai-typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes aiTypingBounce {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Quick Actions Grid */
+        .ai-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 0 20px 15px;
+        }
+        .ai-quick-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 10px;
+            background: white;
+            border: 1px solid var(--ai-border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ai-quick-action:hover {
+            border-color: var(--ai-primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(10,48,85,0.1);
+        }
+        .ai-quick-action i {
+            font-size: 1.5rem;
+            color: var(--ai-primary);
+        }
+        .ai-quick-action span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--ai-primary);
+            text-align: center;
+        }
+
+        /* Input Area */
+        .ai-widget-footer {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid var(--ai-border);
+            border-radius: 0 0 20px 20px;
+        }
+        .ai-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .ai-input-field {
+            flex: 1;
+            position: relative;
+        }
+        .ai-input-field textarea {
+            width: 100%;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 12px 16px;
+            border: 2px solid var(--ai-border);
+            border-radius: 14px;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: none;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .ai-input-field textarea:focus {
+            border-color: var(--ai-primary);
+            background: white;
+            box-shadow: 0 4px 12px rgba(10,48,85,0.08);
+        }
+        .ai-input-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .ai-input-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .ai-input-btn.send {
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: white;
+        }
+        .ai-input-btn.send:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(10,48,85,0.3); }
+        .ai-input-btn.secondary {
+            background: #f1f5f9;
+            color: var(--ai-primary);
+        }
+        .ai-input-btn.secondary:hover { background: #e2e8f0; }
+        .ai-input-btn.voice {
+            background: linear-gradient(135deg, var(--ai-secondary), #f59e0b);
+            color: var(--ai-primary);
+        }
+        .ai-input-btn.voice:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(246,178,59,0.3); }
+        .ai-input-btn.voice.listening {
+            background: var(--ai-error);
+            color: white;
+            animation: aiPulse 1s infinite;
+        }
+
+        /* Field Highlight Animation */
+        .ai-field-highlight {
+            animation: aiFieldPulse 1.5s ease-in-out 3;
+            box-shadow: 0 0 0 3px rgba(246,178,59,0.5) !important;
+            border-color: var(--ai-secondary) !important;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        @keyframes aiFieldPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+        }
+
+        /* Bulk Paste Modal */
+        .ai-bulk-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10,48,85,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .ai-bulk-modal.active { opacity: 1; visibility: visible; }
+        .ai-bulk-content {
+            background: white;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            border-radius: 20px;
+            padding: 25px;
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .ai-bulk-modal.active .ai-bulk-content { transform: translateY(0) scale(1); }
+        .ai-bulk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .ai-bulk-header h3 { color: var(--ai-primary); font-size: 1.3rem; }
+        .ai-bulk-preview { flex: 1; overflow: auto; margin-bottom: 20px; }
+        .ai-bulk-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .ai-bulk-table th, .ai-bulk-table td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: left; }
+        .ai-bulk-table th { background: #f8fafc; color: var(--ai-primary); font-weight: 700; position: sticky; top: 0; }
+        .ai-bulk-table tr:nth-child(even) { background: #fafafa; }
+        .ai-bulk-table select { width: 100%; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.75rem; }
+        .ai-bulk-actions { display: flex; justify-content: flex-end; gap: 12px; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .ai-fab { bottom: 20px; left: 20px; width: 48px; height: 48px; font-size: 1.3rem; }
+            .ai-widget {
+                left: 0; right: 0; bottom: 0;
+                width: 100%; height: 75vh; max-height: 75vh;
+                border-radius: 24px 24px 0 0;
+                border-left: none; border-right: none;
+            }
+            .ai-widget.active { transform: translateY(0) scale(1); }
+            .ai-widget.minimized { height: 60px; width: 100%; border-radius: 24px 24px 0 0; left: 0; }
+            .ai-widget-header { border-radius: 24px 24px 0 0; }
+            .ai-widget.minimized .ai-widget-header { border-radius: 24px 24px 0 0; }
+            .ai-quick-actions { grid-template-columns: repeat(4, 1fr); }
+            .ai-quick-action { padding: 10px 5px; }
+            .ai-quick-action i { font-size: 1.2rem; }
+            .ai-quick-action span { font-size: 0.65rem; }
+        }
     </style>
 </head>
 <body>
@@ -1180,6 +1642,78 @@
             </div>
         </div>
         <iframe src="organisasichat.html" class="chat-body" id="chatIframe" title="Organisasi Chat"></iframe>
+    </div>
+
+    <!-- AI ASSISTANT FAB & WIDGET -->
+    <button class="ai-fab" id="aiFab" title="AI Assistant - Bantu Isi Data">
+        <i class="fa-solid fa-robot" id="aiFabIcon"></i>
+    </button>
+    <div class="ai-widget" id="aiWidget">
+        <div class="ai-widget-header" id="aiWidgetHeader">
+            <div class="ai-widget-title">
+                <i class="fa-solid fa-robot"></i>
+                <span>AI Assistant</span>
+                <span id="aiContextBadge" style="font-size:0.65rem; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; display:none;"></span>
+            </div>
+            <div class="ai-widget-actions">
+                <button class="ai-widget-btn voice-btn" id="aiVoiceBtn" title="Voice Input" onclick="AIAssistant.toggleVoice()">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button class="ai-widget-btn" onclick="AIAssistant.minimize()" title="Minimize">
+                    <i class="fa-solid fa-window-minimize"></i>
+                </button>
+                <button class="ai-widget-btn" onclick="AIAssistant.close()" title="Tutup">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="ai-widget-body">
+            <div class="ai-chat-messages" id="aiChatMessages">
+                <!-- Messages rendered here -->
+            </div>
+            <div class="ai-quick-actions" id="aiQuickActions">
+                <!-- Quick action buttons rendered here -->
+            </div>
+        </div>
+        <div class="ai-widget-footer">
+            <div class="ai-input-wrapper">
+                <div class="ai-input-field">
+                    <textarea id="aiInput" placeholder="Ketik perintah: 'Isi RAB Divisi Kreatif Program Seminar Snack 50 box 15000 Sponsor'..." rows="1"></textarea>
+                </div>
+                <div class="ai-input-actions">
+                    <button class="ai-input-btn secondary" onclick="AIAssistant.pasteFromClipboard()" title="Paste dari Excel/Clipboard">
+                        <i class="fa-solid fa-paste"></i>
+                    </button>
+                    <button class="ai-input-btn voice" id="aiFooterVoiceBtn" onclick="AIAssistant.toggleVoice()" title="Voice Input">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    <button class="ai-input-btn send" onclick="AIAssistant.sendMessage()" title="Kirim">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI BULK PASTE MODAL -->
+    <div class="ai-bulk-modal" id="aiBulkModal">
+        <div class="ai-bulk-content">
+            <div class="ai-bulk-header">
+                <h3><i class="fa-solid fa-table"></i> Pratinjau Data Bulk Insert</h3>
+                <button class="ai-widget-btn" onclick="AIAssistant.closeBulkModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="ai-bulk-preview" id="aiBulkPreview">
+                <!-- Table rendered here -->
+            </div>
+            <div class="ai-bulk-actions">
+                <button class="btn-action" style="background:#eee; color:var(--primary);" onclick="AIAssistant.closeBulkModal()">
+                    <i class="fa-solid fa-xmark"></i> Batal
+                </button>
+                <button class="btn-action" onclick="AIAssistant.confirmBulkInsert()">
+                    <i class="fa-solid fa-check"></i> Konfirmasi & Sisipkan
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="scheduleModal">
