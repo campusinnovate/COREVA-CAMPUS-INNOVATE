@@ -4093,13 +4093,12 @@
             },
             expandSynonyms(text) {
                 const normalized = this.normalizeText(text);
+                const testBase = ' ' + normalized + ' ';
                 let result = normalized;
-                // Add synonyms for matched words to enrich the text
                 for (const [key, entry] of Object.entries(this.DICTIONARY.SUBJECT)) {
                     for (const word of entry.id) {
                         const rx = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
-                        if (rx.test(result)) {
-                            // Append all synonyms for richer matching
+                        if (rx.test(testBase)) {
                             const others = entry.id.filter(w => w !== word).concat(entry.en || []);
                             result += ' ' + others.join(' ');
                         }
@@ -4108,7 +4107,7 @@
                 for (const [key, entry] of Object.entries(this.DICTIONARY.ACTION)) {
                     for (const word of entry.id) {
                         const rx = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
-                        if (rx.test(result)) {
+                        if (rx.test(testBase)) {
                             const others = entry.id.filter(w => w !== word).concat(entry.en || []);
                             result += ' ' + others.join(' ');
                         }
@@ -4547,23 +4546,14 @@
                     // Context boost (+3 if page matches)
                     const form = this.FORMS[name];
                     if (form && form.ctx === this.currentContext) s += 3;
-                    // Reverse context boost: if on specific page, boost matching intent further
+                    // Context penalty (-2 if page conflicts)
+                    if (form && form.ctx && this.currentContext && form.ctx !== this.currentContext) s -= 2;
                     if (this.currentContext === 'view-absensi' && name === 'ISI_ABSENSI') s += 2;
                     if (this.currentContext === 'view-input-rab' && name === 'ISI_RAB') s += 2;
                     if (this.currentContext === 'view-realisasi-anggaran' && name === 'ISI_REALISASI') s += 2;
                     if (this.currentContext === 'view-kpi' && name === 'ISI_KPI') s += 2;
                     if (this.currentContext === 'view-program-event' && name === 'ISI_PROGRAM') s += 2;
                     if (this.currentContext === 'view-timeline' && name === 'ISI_SCHEDULE') s += 2;
-                    // Dictionary boost: match SUBJECT
-                    if (this.DICTIONARY && this.DICTIONARY.SUBJECT) {
-                        const subjKey = name.replace('ISI_','').toLowerCase();
-                        const dictEntry = this.DICTIONARY.SUBJECT[subjKey];
-                        if (dictEntry) {
-                            for (const w of [...(dictEntry.id||[]), ...(dictEntry.en||[])]) {
-                                if (origLower.includes(w)) { s += 2; break; }
-                            }
-                        }
-                    }
                     if (s > best.score) best = { intent: name, score: s };
                 }
                 return best;
