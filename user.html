@@ -1666,6 +1666,9 @@
                 <button class="ai-widget-btn" onclick="AIAssistant.minimize()" title="Minimize">
                     <i class="fa-solid fa-window-minimize"></i>
                 </button>
+                <button class="ai-widget-btn" onclick="AIAssistant.resetAll()" title="Reset Chat" style="color:#ff6b6b;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
                 <button class="ai-widget-btn" onclick="AIAssistant.close()" title="Tutup">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -3795,116 +3798,162 @@
             // ── Kamus Bahasa Indonesia (Dictionary) ──
             DICTIONARY: {
                 SUBJECT: {
-                    rab:         { id:['rab','anggaran','rincian anggaran','biaya','dana','budget'], en:['budget','rab','cost'] },
-                    realisasi:   { id:['realisasi','pengeluaran','belanja','pemakaian dana','dana keluar'], en:['realization','spending','expense'] },
-                    kpi:         { id:['kpi','indikator','target','capaian','ukuran','tolok ukur'], en:['kpi','indicator','target'] },
-                    absensi:     { id:['absen','absensi','presensi','kehadiran','hadir'], en:['attendance','presence'] },
-                    program:     { id:['program','event','kegiatan','acara','proker','program kerja','agenda'], en:['program','event','activity'] },
-                    jadwal:      { id:['jadwal','schedule','agenda','rapat','meeting','pertemuan'], en:['schedule','agenda','meeting'] },
-                    divisi:      { id:['divisi','departemen','dept','bagian','unit','seksi','bidang'], en:['division','department','section'] },
-                    folder:      { id:['folder','direktori','berkas','map'], en:['folder','directory'] },
-                    surat:       { id:['surat','dokumen','pengajuan','digital office','arsip','naskah'], en:['letter','document','memo'] },
-                    notulensi:   { id:['notulensi','notulen','catatan rapat','risalah','minutes'], en:['minutes','notes'] },
-                    dashboard:   { id:['dashboard','dasbor','beranda','home','utama'], en:['dashboard','home'] },
-                    data:        { id:['data','informasi','laporan','report'], en:['data','information','report'] },
-                    tim:         { id:['tim','team','anggota','personil','member','kru','panitia'], en:['team','member','crew'] },
-                    laporan:     { id:['laporan','report','rekapan','rangkuman','ringkasan'], en:['report','summary'] },
-                    keuangan:    { id:['keuangan','finansial','finance','pemasukan','pemasukkan'], en:['finance','financial'] },
-                    sponsor:     { id:['sponsor','sponsorship','donasi','donatur','mitra'], en:['sponsor','donation','partner'] },
-                    dokumentasi: { id:['dokumentasi','foto','dokumentasi foto','arsip foto','dokumentasi kegiatan'], en:['documentation','photo'] },
-                    evaluasi:    { id:['evaluasi','review','penilaian','assessment','monitoring'], en:['evaluation','review','assessment'] },
-                    pendaftaran: { id:['pendaftaran','registrasi','registration','form pendaftaran','daftar ulang'], en:['registration'] },
-                    peserta:     { id:['peserta','partisipan','audiens','tamu','undangan','hadirin'], en:['participant','audience','guest'] },
+                    rab:         { id:['rab','anggaran','rincian anggaran','biaya','dana','budget','penganggaran','alokasi dana'], en:['budget','rab','cost','allocation'] },
+                    realisasi:   { id:['realisasi','pengeluaran','belanja','pemakaian dana','dana keluar','pencairan','spending'], en:['realization','spending','expense','disbursement'] },
+                    kpi:         { id:['kpi','indikator','target','capaian','ukuran','tolok ukur','metrik','standar kerja'], en:['kpi','indicator','target','metric'] },
+                    absensi:     { id:['absen','absensi','presensi','kehadiran','hadir','check in','checkin','masuk','datang'], en:['attendance','presence','checkin'] },
+                    program:     { id:['program','event','kegiatan','acara','proker','program kerja','agenda','inisiatif','project','rencana kerja'], en:['program','event','activity','initiative'] },
+                    jadwal:      { id:['jadwal','schedule','agenda','rapat','meeting','pertemuan','rundown','timeline'], en:['schedule','agenda','meeting','timeline'] },
+                    divisi:      { id:['divisi','departemen','dept','bagian','unit','seksi','bidang','subdivisi'], en:['division','department','section','unit'] },
+                    folder:      { id:['folder','direktori','berkas','map','direktori file'], en:['folder','directory'] },
+                    surat:       { id:['surat','dokumen','pengajuan','digital office','arsip','naskah','surat menyurat','surat resmi'], en:['letter','document','memo','official letter'] },
+                    notulensi:   { id:['notulensi','notulen','catatan rapat','risalah','minutes','hasil rapat'], en:['minutes','meeting notes'] },
+                    dashboard:   { id:['dashboard','dasbor','beranda','home','utama','halaman utama'], en:['dashboard','home'] },
+                    data:        { id:['data','informasi','laporan','report','rekapan data'], en:['data','information','report'] },
+                    tim:         { id:['tim','team','anggota','personil','member','kru','panitia','kepanitiaan'], en:['team','member','crew','committee'] },
+                    laporan:     { id:['laporan','report','rekapan','rangkuman','ringkasan','laporan akhir','laporan kegiatan'], en:['report','summary','final report'] },
+                    keuangan:    { id:['keuangan','finansial','finance','pemasukan','pemasukkan','uang','financial','neraca'], en:['finance','financial','balance'] },
+                    sponsor:     { id:['sponsor','sponsorship','donasi','donatur','mitra','fundraising','penggalangan dana'], en:['sponsor','donation','partner','fundraising'] },
+                    dokumentasi: { id:['dokumentasi','foto','dokumentasi foto','arsip foto','dokumentasi kegiatan','poto','foto kegiatan'], en:['documentation','photo','archive'] },
+                    evaluasi:    { id:['evaluasi','review','penilaian','assessment','monitoring','evaluasi kegiatan','refleksi'], en:['evaluation','review','assessment','monitoring'] },
+                    pendaftaran: { id:['pendaftaran','registrasi','registration','form pendaftaran','daftar ulang','re-registrasi'], en:['registration','re-registration'] },
+                    peserta:     { id:['peserta','partisipan','audiens','tamu','undangan','hadirin','pengunjung','delegasi'], en:['participant','audience','guest','delegate'] },
+                    konsumsi:    { id:['konsumsi','snack','makanan','minuman','catering','makan siang','nasi box','makan','cemilan','jajan'], en:['consumption','snack','meal','catering','food'] },
+                    dekorasi:    { id:['dekorasi','hias','ornament','dekor','dekorasi panggung','tata rias','hiasan'], en:['decoration','ornament','stage design'] },
+                    perlengkapan:{ id:['perlengkapan','peralatan','alat','perlengkapan acara','logistik','sarana','prasarana'], en:['equipment','supplies','logistics','facilities'] },
+                    transportasi:{ id:['transportasi','transport','perjalanan','tiket','bensin','bbm','akomodasi','travel','kendaraan'], en:['transportation','ticket','fuel','accommodation','vehicle'] },
+                    humas:       { id:['humas','hubungan masyarakat','public relation','pr','publikasi','media','pers','press release','sosialisasi'], en:['public relations','publication','media','press'] },
+                    proposal:    { id:['proposal','pengajuan','usulan','proposal kegiatan','proposal dana','roadshow'], en:['proposal','submission','application'] },
+                    lpjp:        { id:['lpj','pertanggungjawaban','laporan pertanggungjawaban','spj','surat pertanggungjawaban','laporan akhir'], en:['accountability report','final report','statement'] },
+                    bendahara:   { id:['bendahara','kasir','keuangan','dana','kas','bendahara umum'], en:['treasurer','finance','cashier','cash'] },
+                    sekretaris:  { id:['sekretaris','sekret','administrasi','admin','kesekretariatan','tata usaha'], en:['secretary','administration','admin'] },
+                    sie:         { id:['sie','seksi','bidang','divisi','kelompok kerja','task force','pokja'], en:['section','division','working group','task force'] },
+                    acara:       { id:['acara','event','kegiatan','rangkaian acara','rundown acara','susunan acara'], en:['event','program','agenda','rundown'] },
+                    logistik:    { id:['logistik','logistic','perlengkapan','kebutuhan','supply','inventaris','barang'], en:['logistics','supply','inventory','goods'] },
+                    dana:        { id:['dana','dana','anggaran','pemasukan','pengeluaran','funding','sumber dana','alokasi'], en:['funds','budget','income','expense','funding'] },
+                    pemasukan:   { id:['pemasukan','income','pendapatan','penerimaan','revenue','debet','kredit masuk'], en:['income','revenue','receipt'] },
                 },
                 ACTION: {
-                    buat:    { id:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi'], en:['make','create','add','input','fill'] },
-                    hapus:   { id:['hapus','delete','hilang','buang','remove','menghapus','membuang'], en:['delete','remove','erase'] },
-                    ubah:    { id:['ubah','edit','koreksi','revisi','perbaiki','ganti','update','memperbarui'], en:['edit','change','update','modify'] },
-                    lihat:   { id:['lihat','tampilkan','buka','ke','pindah','menu','tab','tunjuk','menuju','navigasi'], en:['view','show','open','go','navigate'] },
-                    cari:    { id:['cari','temukan','filter','sortir','mencari'], en:['search','find','filter'] },
-                    export:  { id:['export','download','unduh','simpan','cetak','print'], en:['export','download','save','print'] },
-                    setuju:  { id:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui'], en:['approve','confirm','verify'] },
-                    tolak:   { id:['tolak','reject','batal','tidak setuju','menolak'], en:['reject','decline','cancel'] },
-                    reset:   { id:['reset','ulang','kembali','restart','fresh','reset ulang'], en:['reset','restart','clear'] },
-                    submit:  { id:['submit','simpan','kirim','proses','eksekusi','save','terbitkan','publikasi'], en:['submit','save','publish','execute'] },
-                    selesai: { id:['selesai','tuntas','done','beres','kelar','rampung','finish'], en:['done','finish','complete'] },
-                    lanjut:  { id:['lanjut','terus','next','selanjutnya','berikutnya','continue'], en:['next','continue','proceed'] },
-                    tanya:   { id:['tanya','tanyakan','bertanya','tebak','tanya jawab'], en:['ask','question','inquiry'] },
-                    konfirmasi:{id:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti'], en:['confirm','sure','certain'] },
-                    tolong:  { id:['tolong','bantu','bantuin','minta tolong','mohon','mohon bantuan','please help'], en:['help','please'] },
+                    buat:    { id:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi','bikinin','buatin','bikinkan','daftarin'], en:['make','create','add','input','fill'] },
+                    hapus:   { id:['hapus','delete','hilang','buang','remove','menghapus','membuang','ngapus','hapusin'], en:['delete','remove','erase'] },
+                    ubah:    { id:['ubah','edit','koreksi','revisi','perbaiki','ganti','update','memperbarui','ngedit','revisi','ngubah','rubah'], en:['edit','change','update','modify'] },
+                    lihat:   { id:['lihat','tampilkan','buka','ke','pindah','menu','tab','tunjuk','menuju','navigasi','lihatin','nampilin','perlihatkan'], en:['view','show','open','go','navigate'] },
+                    cari:    { id:['cari','temukan','filter','sortir','mencari','nyari','cariin','nemuin','carikan'], en:['search','find','filter','locate'] },
+                    export:  { id:['export','download','unduh','simpan','cetak','print','exportir','downloadin','nyimpen'], en:['export','download','save','print'] },
+                    setuju:  { id:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui','setujui','accin'], en:['approve','confirm','verify','authorize'] },
+                    tolak:   { id:['tolak','reject','batal','tidak setuju','menolak','nampol','ngegas','gak setuju','no'], en:['reject','decline','cancel','disagree'] },
+                    reset:   { id:['reset','ulang','kembali','restart','fresh','reset ulang','resetting'], en:['reset','restart','clear'] },
+                    submit:  { id:['submit','simpan','kirim','proses','eksekusi','save','terbitkan','publikasi','prosesin','jalanin','nyimpen'], en:['submit','save','publish','execute','process'] },
+                    selesai: { id:['selesai','tuntas','done','beres','kelar','rampung','finish','beresin','selesain','tuntasin'], en:['done','finish','complete','finalize'] },
+                    lanjut:  { id:['lanjut','terus','next','selanjutnya','berikutnya','continue','lanjutin','terusin','gas','gaskeun','anvin'], en:['next','continue','proceed','go ahead'] },
+                    tanya:   { id:['tanya','tanyakan','bertanya','tebak','tanya jawab','nanya','nanyain'], en:['ask','question','inquiry','inquire'] },
+                    konfirmasi:{id:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti','konfir','yakinin'], en:['confirm','sure','certain'] },
+                    tolong:  { id:['tolong','bantu','bantuin','minta tolong','mohon','mohon bantuan','please help','plis','pleas','bantuin dong'], en:['help','please','assist'] },
+                    ngisi:   { id:['ngisi','nginput','ngeisi','masukin','inputin'], en:['fill','input','enter'] },
+                    nambah:  { id:['nambah','nambain','nambahin','tambahin','plus','tambah lagi'], en:['add','increase','plus'] },
+                    kurang:  { id:['kurang','kurangin','ngurangin','minus','ngurangi'], en:['reduce','decrease','subtract','minus'] },
+                    itung:   { id:['itung','hitung','kalkulasi','jumlahin','totalin','ngehitung','ngitung','jumlahkan','total','totalkan'], en:['calculate','sum','total','compute'] },
+                    catat:   { id:['catat','catetin','nulis','nyatet','mencatat','noted','take note'], en:['note','record','write down'] },
                 },
                 TIME: {
-                    besok:     { id:['besok','esok','bsk','keesokan'], en:['tomorrow'] },
-                    lusa:      { id:['lusa','lusa depan'], en:['day after tomorrow'] },
-                    kemarin:   { id:['kemarin','kmrn','kemaren'], en:['yesterday'] },
-                    hari_ini:  { id:['hari ini','sekarang','skrg','hari ini juga','saat ini'], en:['today','now'] },
-                    minggu_dpn:{ id:['minggu depan','pekan depan','next week'], en:['next week'] },
-                    bulan_dpn: { id:['bulan depan','month depan'], en:['next month'] },
+                    besok:     { id:['besok','esok','bsk','keesokan','besoknya'], en:['tomorrow'] },
+                    lusa:      { id:['lusa','lusa depan','besok lusa'], en:['day after tomorrow'] },
+                    kemarin:   { id:['kemarin','kmrn','kemaren','kmren','harian kemarin'], en:['yesterday'] },
+                    hari_ini:  { id:['hari ini','sekarang','skrg','hari ini juga','saat ini','sekarangan','sekarang jg'], en:['today','now','currently'] },
+                    minggu_dpn:{ id:['minggu depan','pekan depan','next week','minggu besok','minggu mendatang'], en:['next week'] },
+                    bulan_dpn: { id:['bulan depan','month depan','bulan besok','bulan mendatang','bulan dpn'], en:['next month'] },
+                    tadi_pagi: { id:['tadi','tadi pagi','pagi tadi','barusan','sebentar lagi','tadi siang','tadi malem','tadi malam'], en:['earlier','just now','this morning','a moment ago'] },
+                    nanti:     { id:['nanti','nanti sore','nanti malem','nanti malam','nanti siang','nanti pagi'], en:['later','this evening','tonight'] },
+                    minggu_lalu:{id:['minggu lalu','pekan lalu','last week','minggu kemarin','minggu kmrn'], en:['last week'] },
+                    bulan_lalu: { id:['bulan lalu','last month','bulan kemarin','bulan kmrn'], en:['last month'] },
+                    tahun_lalu: { id:['tahun lalu','tahun kmrn','tahun kemarin','last year','taun lalu'], en:['last year'] },
+                    tahun_dpn:  { id:['tahun depan','next year','taun depan','tahun besok','tahun mendatang'], en:['next year'] },
                 },
                 MODIFIER: {
-                    baru:    { id:['baru','anyar','fresh'], en:['new'] },
-                    lama:    { id:['lama','old','terdahulu'], en:['old'] },
-                    semua:   { id:['semua','seluruh','all','total','keseluruhan'], en:['all','every'] },
-                    aktif:   { id:['aktif','active','berjalan'], en:['active','ongoing'] },
-                    selesai: { id:['selesai','done','completed','lunas','tuntas'], en:['done','completed'] },
+                    baru:    { id:['baru','anyar','fresh','terbaru','newest','paling baru'], en:['new','newest','latest'] },
+                    lama:    { id:['lama','old','terdahulu','lama-lama','terlama','paling lama'], en:['old','oldest','earliest'] },
+                    semua:   { id:['semua','seluruh','all','total','keseluruhan','semuanya','semua data','sekalian'], en:['all','every','entire'] },
+                    aktif:   { id:['aktif','active','berjalan','ongoing','berlangsung','berjalan'], en:['active','ongoing','running'] },
+                    selesai: { id:['selesai','done','completed','lunas','tuntas','beres','rampung','finish'], en:['done','completed','finished'] },
+                    urgent:  { id:['urgent','penting','mendesak','darurat','prioritas','critical','kritis','genting','segera'], en:['urgent','critical','priority','immediate'] },
+                    tertunda:{ id:['tertunda','pending','delay','tertunda','ditunda','nanti dulu','tunda'], en:['pending','delayed','postponed','deferred'] },
+                    tertinggi:{id:['tertinggi','paling besar','max','maksimal','paling mahal','terbesar','terbanyak'], en:['highest','maximum','largest','biggest'] },
+                    terendah: {id:['terendah','paling kecil','min','minimal','paling murah','terkecil','tersedikit'], en:['lowest','minimum','smallest','cheapest'] },
                 },
                 ENTITY: {
-                    dept:      { id:['divisi','departemen','dept','bagian','unit','org','organisasi'] },
-                    program:   { id:['program','event','kegiatan','acara','proker','prog'] },
-                    barang:    { id:['barang','nama barang','kebutuhan','item','bahan','alat'] },
-                    harga:     { id:['harga','nominal','biaya','cost','rp','jumlah uang','nilai'] },
-                    volume:    { id:['volume','jumlah','qty','kuantitas','banyak'] },
-                    satuan:    { id:['satuan','unit','per'] },
-                    tempat:    { id:['tempat','lokasi','di','venue','ruang','gedung'] },
-                    tanggal:   { id:['tanggal','tgl','date','hari','pada'] },
-                    waktu:     { id:['waktu','jam','pukul'] },
-                    status:    { id:['status','state','kondisi','keadaan'] },
-                    nama:      { id:['nama','judul','title','name'] },
-                    sumber:    { id:['sumber dana','dari','asal dana','funding'] },
-                    deskripsi: { id:['deskripsi','keterangan','detail','aktivitas','uraian','penjelasan'] },
-                    target:    { id:['target','goal','sasaran','objective'] },
-                    capaian:   { id:['capaian','achievement','hasil','pencapaian'] },
-                    tipe:      { id:['tipe','jenis','type','kategori','macam','sort'] },
-                    penerima:  { id:['penerima','tujuan','untuk','kepada'] },
-                    judul:     { id:['judul','title','perihal','subjek','topik'] },
+                    dept:      { id:['divisi','departemen','dept','bagian','unit','org','organisasi','biro','sekretariat'] },
+                    program:   { id:['program','event','kegiatan','acara','proker','prog','project','inisiatif'] },
+                    barang:    { id:['barang','nama barang','kebutuhan','item','bahan','alat','perlengkapan','logistik'] },
+                    harga:     { id:['harga','nominal','biaya','cost','rp','jumlah uang','nilai','total bayar','tagihan'] },
+                    volume:    { id:['volume','jumlah','qty','kuantitas','banyaknya','banyak','total item'] },
+                    satuan:    { id:['satuan','unit','per','satuan ukur','ukuran'] },
+                    tempat:    { id:['tempat','lokasi','di','venue','ruang','gedung','aula','ruangan','lapangan'] },
+                    tanggal:   { id:['tanggal','tgl','date','hari','pada','saat','waktu pelaksanaan'] },
+                    waktu:     { id:['waktu','jam','pukul','jam mulai','jam selesai'] },
+                    status:    { id:['status','state','kondisi','keadaan','kehadiran','posisi'] },
+                    nama:      { id:['nama','judul','title','name','nama kegiatan','nama acara'] },
+                    sumber:    { id:['sumber dana','dari','asal dana','funding','sumber','dana dari','sponsorship','kas','anggaran dari'] },
+                    deskripsi: { id:['deskripsi','keterangan','detail','aktivitas','uraian','penjelasan','desk','info tambahan','catatan'] },
+                    target:    { id:['target','goal','sasaran','objective','rencana','cita cita'] },
+                    capaian:   { id:['capaian','achievement','hasil','pencapaian','realisasi target','output'] },
+                    tipe:      { id:['tipe','jenis','type','kategori','macam','sort','klasifikasi'] },
+                    penerima:  { id:['penerima','tujuan','untuk','kepada','ditujukan ke','ditujukan kepada'] },
+                    judul:     { id:['judul','title','perihal','subjek','topik','mengenai','tentang'] },
+                    rincian:   { id:['rincian','detail','perincian','uraian','spesifikasi','komponen'] },
                 },
                 NORMALIZE: {
-                    'ga':'tidak','gak':'tidak','nggak':'tidak','kaga':'tidak',
-                    'mau':'ingin','pengen':'ingin','kepingin':'ingin',
-                    'bikin':'buat','bikinin':'buat','ngebuat':'buat',
-                    'ngisi':'isi','nginput':'input','nambah':'tambah',
-                    'isiin':'isi','tambahin':'tambah','buatin':'buat',
-                    'cariin':'cari','liatin':'lihat','tunjukin':'tampilkan',
-                    'hapusin':'hapus','ilangin':'hapus','buangin':'hapus',
-                    'update':'perbarui','edit':'ubah','change':'ubah',
-                    'yuk':'ayo','mari':'ayo','ok':'oke','okay':'oke','okelah':'oke',
-                    'dah':'sudah','udah':'sudah','udh':'sudah','sdh':'sudah',
-                    'gini':'begini','gitu':'begitu','gt':'begitu',
+                    'ga':'tidak','gak':'tidak','nggak':'tidak','kaga':'tidak','ndak':'tidak','nda':'tidak','kagak':'tidak','enggak':'tidak','ngga':'tidak',
+                    'mau':'ingin','pengen':'ingin','kepingin':'ingin','pgn':'ingin','pengen banget':'ingin','pengen bgt':'ingin',
+                    'bikin':'buat','bikinin':'buat','ngebuat':'buat','buatin':'buat','bikinkan':'buat',
+                    'ngisi':'isi','nginput':'input','nambah':'tambah','ngisiin':'isi','ngisikan':'isi','masukin':'isi',
+                    'isiin':'isi','tambahin':'tambah','nambahin':'tambah','nambain':'tambah','nambahin lagi':'tambah','plus':'tambah',
+                    'cariin':'cari','nyari':'cari','nyarinya':'cari','nemuin':'temukan','carikan':'cari',
+                    'liatin':'lihat','tunjukin':'tampilkan','nampilin':'tampilkan','lihatin':'lihat','perlihatkan':'tampilkan',
+                    'hapusin':'hapus','ilangin':'hapus','buangin':'hapus','ngapus':'hapus','ngapusin':'hapus','nyingkirin':'hapus',
+                    'update':'perbarui','edit':'ubah','change':'ubah','revisi':'ubah','koreksi':'ubah','ngedit':'edit','ngubah':'ubah','rubah':'ubah','ngganti':'ganti','ngerubah':'ubah',
+                    'yuk':'ayo','mari':'ayo','ok':'oke','okay':'oke','okelah':'oke','okeh':'oke','okke':'oke','siap':'oke','sip':'oke','siap bos':'oke',
+                    'dah':'sudah','udah':'sudah','udh':'sudah','sdh':'sudah','udahan':'sudah','lah':'sudah','udah ah':'sudah',
+                    'gini':'begini','gitu':'begitu','gt':'begitu','gituloh':'begitu',
                     'dgn':'dengan','dg':'dengan','utk':'untuk','bg':'bagi',
-                    'jg':'juga','jga':'juga','aja':'saja',
-                    'tp':'tapi','tapi':'tetapi','krn':'karena','karna':'karena',
-                    'lg':'lagi','blm':'belum','saya':'aku','kami':'kita',
-                    'gua':'saya','gue':'saya','gw':'saya','lo':'kamu','lu':'kamu','elo':'kamu',
-                    'kak':'kakak','kaka':'kakak','mas':'kakak','mba':'kakak','mbak':'kakak','bro':'kawan','bang':'kakak',
-                    'makasih':'terima kasih','trims':'terima kasih','thx':'terima kasih','matur':'terima kasih',
-                    'sip':'oke','siap':'oke','siap bos':'oke','okelah':'oke','otw':'dalam perjalanan',
-                    'mantap':'bagus','keren':'bagus','top':'bagus','jos':'bagus','gila':'luar biasa',
-                    'btw':'omong-omong','ngomong-ngomong':'omong-omong','by the way':'omong-omong',
-                    'skip':'lewati','lewatkan':'lewati','miss':'lewat',
-                    'on progress':'berjalan','pending':'tertunda','cancel':'batal',
-                    'anvin':'lanjutkan','gas':'lanjut','gaskeun':'lanjut',
-                    'wkwk':'haha','wkwkwk':'haha','wqwqwq':'haha','haha':'haha',
-                    'sgt':'sangat','bgt':'banget','banget':'sangat','skali':'sekali',
-                    'msh':'masih','msh':'masih','msh ada':'masih ada',
-                    'bs':'bisa','bsa':'bisa','gk bisa':'tidak bisa','gbs':'tidak bisa',
-                    'plis':'tolong','please':'tolong','pls':'tolong',
-                    'dlu':'dulu','duluan':'dulu',
-                    'dr':'dari','darimana':'dari mana',
-                    'di mana':'dimana','di mn':'dimana',
-                    'krna':'karena','soalnya':'karena',
-                    'kpn':'kapan','kapan':'kapan',
-                    'bgmn':'bagaimana','gmn':'bagaimana','gimana':'bagaimana',
-                    'knp':'kenapa','knpa':'kenapa','ngapain':'mengapa',
+                    'jg':'juga','jga':'juga','aja':'saja','doang':'saja','tok':'saja','wae':'saja','k thok':'saja',
+                    'tp':'tapi','tapi':'tetapi','tpi':'tetapi','tapinya':'tetapi',
+                    'krn':'karena','karna':'karena','krena':'karena','soalnya':'karena','sebab':'karena','dikarenakan':'karena','krna':'karena',
+                    'lg':'lagi','blm':'belum','blom':'belum','belom':'belum','saya':'aku','kami':'kita',
+                    'gua':'saya','gue':'saya','gw':'saya','lo':'kamu','lu':'kamu','elo':'kamu','aing':'saya','koe':'kamu',
+                    'kak':'kakak','kaka':'kakak','mas':'kakak','mba':'kakak','mbak':'kakak','bro':'kawan','bang':'kakak','sis':'kakak','kaks':'kakak',
+                    'makasih':'terima kasih','trims':'terima kasih','thx':'terima kasih','matur':'terima kasih','matur suwun':'terima kasih','suwun':'terima kasih','tq':'terima kasih','thanks':'terima kasih',
+                    'sip':'oke','siap':'oke','siap bos':'oke','otw':'dalam perjalanan','ots':'dalam perjalanan',
+                    'mantap':'bagus','keren':'bagus','top':'bagus','jos':'bagus','gila':'luar biasa','gokil':'luar biasa','gilak':'luar biasa','keren abis':'bagus','kren':'bagus','mantab':'bagus',
+                    'btw':'omong-omong','ngomong-ngomong':'omong-omong','by the way':'omong-omong','omong2':'omong-omong',
+                    'skip':'lewati','lewatkan':'lewati','miss':'lewat','skiping':'lewati','skip aja':'lewatkan',
+                    'on progress':'berjalan','pending':'tertunda','cancel':'batal','cancelled':'batal','on going':'berjalan',
+                    'anvin':'lanjutkan','gas':'lanjut','gaskeun':'lanjut','gas pol':'lanjut','full sen':'lanjut','keun':'lanjut','gaspol':'lanjut','gas terus':'lanjut',
+                    'wkwk':'haha','wkwkwk':'haha','wqwqwq':'haha','haha':'haha','awokawok':'haha','wkwkwkwk':'haha',
+                    'sgt':'sangat','bgt':'banget','banget':'sangat','skali':'sekali','sangattt':'sangat','bgt':'sangat','bangeeet':'sangat','bangeet':'sangat','super':'sangat',
+                    'msh':'masih','msih':'masih','msh ada':'masih ada','msi':'masih','masihh':'masih','masi':'masih',
+                    'bs':'bisa','bsa':'bisa','gk bisa':'tidak bisa','gbs':'tidak bisa','kagak bisa':'tidak bisa','ora iso':'tidak bisa','ora':'tidak',
+                    'plis':'tolong','please':'tolong','pls':'tolong','mohon':'tolong','plizz':'tolong','plisss':'tolong','bantu dong':'tolong','pleas':'tolong','pliss':'tolong',
+                    'dlu':'dulu','duluan':'dulu','dluan':'dulu','dahulu':'dulu',
+                    'dr':'dari','darimana':'dari mana','darimna':'dari mana',
+                    'di mana':'dimana','di mn':'dimana','dimn':'dimana','dimana':'dimana',
+                    'krna':'karena',
+                    'kpn':'kapan','kapan':'kapan','kapan2':'kapan','kpn ya':'kapan',
+                    'bgmn':'bagaimana','gmn':'bagaimana','gimana':'bagaimana','gi mana':'bagaimana','gmn dong':'bagaimana',
+                    'knp':'kenapa','knpa':'kenapa','ngapain':'mengapa','kenape':'kenapa','knp sih':'kenapa',
+                    'goceng':'5000','ceban':'10000','gopek':'500','cepek':'100','gocap':'50','noceng':'2000','pean':'1000','goceng':'lima ribu','ceban':'sepuluh ribu',
+                    'ribu':'000','ratus':'00',
+                    'dong':'lah','sih':'lah','loh':'lah','lho':'lah','kok':'mengapa','kek':'saja','kan':'bukan','khan':'bukan',
+                    'nyetuju':'setuju','nyetujui':'setuju','acc':'setuju','accin':'setuju','approve':'setuju','sah kan':'sahkan',
+                    'prosesin':'proses','jalanin':'jalankan','eksekusi':'proses','running':'berjalan',
+                    'nanya':'tanya','nanyain':'tanya','tanyain':'tanya',
+                    'ngurangin':'kurang','ngurang':'kurang','kurangin':'kurang','minus':'kurang',
+                    'ngeprint':'cetak','nyetak':'cetak','ngeprintin':'cetak',
+                    'downloadin':'unduh','ngunduh':'unduh','download':'unduh',
+                    'yg':'yang',
+                    'selesai':'tuntas','beres':'tuntas','kelar':'tuntas','rampung':'tuntas','finish':'tuntas','tuntas':'selesai',
+                    'itung':'hitung','ngitung':'hitung','ngehitung':'hitung','jumlahin':'jumlah','totalin':'total','totalkan':'jumlah','jumlahkan':'jumlah',
+                    'catet':'catat','catetin':'catat','nulis':'catat','nyatet':'catat','noted':'catat',
+                    'lanjutin':'lanjut','terusin':'lanjut','next':'lanjut','selanjutnya':'lanjut','berikutnya':'lanjut',
                 },
             },
 
@@ -4063,8 +4112,42 @@
                 const nums = text.match(/\b\d[\d.,]*\b/g) || [];
                 if (nums.length > 0) {
                     const clean = n => parseInt(n.replace(/[.,]/g,''));
-                    if (!e.volume && !e.harga && !e.target) { e.volume = clean(nums[0]); if (nums[1]) e.harga = clean(nums[1]); }
-                    if (intent === 'ISI_REALISASI' && !e.harga) e.harga = clean(nums[nums.length-1]);
+                    const lower = text.toLowerCase();
+                    const hasRp = /(\brp\b|rp\.|harga|biaya|cost|nominal)/i.test(lower);
+                    const hasVolume = /(\bvolume\b|kali|qty|kuantitas|banyak|\d+\s*x\s*)/i.test(lower);
+                    const hasTarget = /(target|goal|sasaran|objective)/i.test(lower);
+                    const hasCapaian = /(capaian|achievement|hasil|pencapaian)/i.test(lower);
+
+                    // Price detected → this number is harga
+                    if (hasRp) {
+                        e.harga = clean(nums[nums.length-1]);
+                        if (nums.length > 1) e.volume = clean(nums[0]);
+                    }
+                    // Volume detected → first number volume, last number harga
+                    else if (hasVolume) {
+                        e.volume = clean(nums[0]);
+                        if (nums.length > 1) e.harga = clean(nums[nums.length-1]);
+                    }
+                    // Intent-specific defaults
+                    else if (intent === 'ISI_REALISASI') {
+                        e.harga = clean(nums[nums.length-1]);
+                        if (nums.length > 1) e.volume = clean(nums[0]);
+                    }
+                    else if (intent === 'ISI_KPI') {
+                        if (hasTarget) e.target = clean(nums[0]);
+                        if (hasCapaian && nums.length > 1) e.capaian = clean(nums[1]);
+                        else { e.target = clean(nums[0]); if (nums.length > 1) e.capaian = clean(nums[1]); }
+                    }
+                    // Default RAB/common: first=volume, last=harga
+                    else {
+                        e.volume = clean(nums[0]);
+                        if (nums.length > 1) e.harga = clean(nums[nums.length-1]);
+                    }
+                }
+                // Also try to extract "RP" prefixed numbers like Rp15.000 or Rp 15,000
+                const rpMatch = text.match(/(?:rp|rp\.)\s*([\d.,]+)/i);
+                if (rpMatch && !e.harga) {
+                    e.harga = parseInt(rpMatch[1].replace(/[.,]/g,''));
                 }
                 // Absensi status detection
                 if (intent === 'ISI_ABSENSI') {
@@ -4200,19 +4283,69 @@
 
                     // Handle clarification response
                     if (this.pending) {
-                        const extra = this.extractEntities(enriched, this.pending.intent);
-                        Object.assign(this.pending.entities, extra);
-                        const merged = this.pending.entities;
-                        const allFilled = this.fillFormFields(this.pending.intent, merged);
-                        if (allFilled.missing.length === 0) {
-                            reply = allFilled.msg;
+                        // — ESCAPE: batal / gak jadi / cancel —
+                        if (/batal|gak jadi|nggak jadi|cancel|gausah|udahan|stop|skip aja|skip|sudah|batalkan/i.test(enriched)) {
                             this.pending = null;
-                        } else {
-                            reply = this.askClarification(this.pending.intent, allFilled.missing, merged);
+                            reply = 'Baik, dibatalkan. Ada yang lain yang bisa dibantu?';
+                            this.addMessage(reply, false);
+                            this.showQuickActions();
+                            return;
                         }
-                        this.addMessage(reply, false);
-                        this.showQuickActions();
-                        return;
+                        // — ESCAPE: intent kuat berbeda (topic switch from pending) —
+                        const recheck = this.classifyIntent(enriched);
+                        if (recheck.intent !== this.pending.intent && recheck.score >= 5) {
+                            this.pending = null;
+                            // fall through to normal processing below
+                        } else {
+                            const extra = this.extractEntities(enriched, this.pending.intent);
+                            // Special handling for bare number answers
+                            const bareNum = text.match(/^\s*(\d[\d.,]*)\s*$/);
+                            if (bareNum && Object.keys(extra).length === 0) {
+                                const form = this.FORMS[this.pending.intent];
+                                if (form) {
+                                    for (const f of form.fields) {
+                                        const fid = f.id;
+                                        const val = bareNum[1].replace(/[.,]/g,'');
+                                        if (!this.pending.entities[fid] && !this.pending.entities[f.l]) {
+                                            // Check if field type is numeric
+                                            if (f.t === 'num' || f.l === 'volume' || f.l === 'harga' || f.l === 'nominal' || f.l === 'target') {
+                                                extra[f.l] = parseInt(val) || parseFloat(val) || val;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Special handling for bare single word (likely dept/program name)
+                            const bareWord = text.match(/^\s*(\w[\w\s]{1,30}?)\s*$/);
+                            if (bareWord && Object.keys(extra).length === 0) {
+                                const word = bareWord[1].trim();
+                                for (const d of this.known.depts) {
+                                    if (d.toLowerCase().includes(word.toLowerCase()) || word.toLowerCase().includes(d.toLowerCase())) {
+                                        extra.dept = d; break;
+                                    }
+                                }
+                                if (!extra.dept) {
+                                    for (const p of this.known.progs) {
+                                        if (p.toLowerCase().includes(word.toLowerCase()) || word.toLowerCase().includes(p.toLowerCase())) {
+                                            extra.program = p; break;
+                                        }
+                                    }
+                                }
+                            }
+                            Object.assign(this.pending.entities, extra);
+                            const merged = this.pending.entities;
+                            const allFilled = this.fillFormFields(this.pending.intent, merged);
+                            if (allFilled.missing.length === 0) {
+                                reply = allFilled.msg;
+                                this.pending = null;
+                            } else {
+                                reply = this.askClarification(this.pending.intent, allFilled.missing, merged);
+                            }
+                            this.addMessage(reply, false);
+                            this.showQuickActions();
+                            return;
+                        }
                     }
 
                     const { intent, score } = this.classifyIntent(enriched);
@@ -4283,9 +4416,16 @@
                             else if (idx2 > 0) s += 1;
                         }
                     }
-                    // Context boost
+                    // Context boost (+3 if page matches)
                     const form = this.FORMS[name];
-                    if (form && form.ctx === this.currentContext) s += 1;
+                    if (form && form.ctx === this.currentContext) s += 3;
+                    // Reverse context boost: if on specific page, boost matching intent further
+                    if (this.currentContext === 'view-absensi' && name === 'ISI_ABSENSI') s += 2;
+                    if (this.currentContext === 'view-input-rab' && name === 'ISI_RAB') s += 2;
+                    if (this.currentContext === 'view-realisasi-anggaran' && name === 'ISI_REALISASI') s += 2;
+                    if (this.currentContext === 'view-kpi' && name === 'ISI_KPI') s += 2;
+                    if (this.currentContext === 'view-program-event' && name === 'ISI_PROGRAM') s += 2;
+                    if (this.currentContext === 'view-timeline' && name === 'ISI_SCHEDULE') s += 2;
                     // Dictionary boost: match SUBJECT
                     if (this.DICTIONARY && this.DICTIONARY.SUBJECT) {
                         const subjKey = name.replace('ISI_','').toLowerCase();
@@ -4491,6 +4631,7 @@
                     if (!val && entities.satuan && f.l==='satuan') val = entities.satuan;
 
                     if (!val && entities.capaian && f.l==='capaian') val = entities.capaian;
+                    if (!val && entities.rincian && (f.l==='rincian'||f.id.includes('rincian'))) val = entities.rincian;
 
                     if (val) {
                         if (this.fillField(f.id, String(val))) filled.push(f.l);
@@ -4512,14 +4653,37 @@
             askClarification(intent, missing, entities) {
                 this.pending = { intent, entities };
                 const label = this.getIntentLabel(intent);
-                let reply = 'Untuk ' + label + ', info apa yang belum ada?';
-                // Ask about the first missing field
+                // Show what's already filled
+                let filled = '';
+                const form = this.FORMS[intent];
+                if (form) {
+                    const filledFields = form.fields.filter(f => {
+                        for (const [k,v] of Object.entries(entities)) {
+                            if (v && (f.l === k || f.id.includes(k) || k.includes(f.l))) return true;
+                        }
+                        return false;
+                    }).map(f => f.l);
+                    if (filledFields.length > 0) filled = '<br><small>✅ Sudah: ' + filledFields.join(', ') + '</small>';
+                }
+                // Ask about ONE specific field with example
                 if (missing.length > 0) {
                     const first = missing[0];
-                    reply = 'Baik, untuk ' + label + ', <b>' + first + '</b> yang mana?';
+                    const examples = {
+                        'divisi':'Humas, Kreatif, Danus, PSDA','program':'Seminar, Konser, Pelantikan','barang':'Snack, Spanduk, Alat tulis',
+                        'volume':'misal: 50, 100, 200','harga':'misal: 50000, 150000','nominal':'misal: 2000000',
+                        'satuan':'box, unit, buah, pcs','sumber dana':'BEM, Sponsor, Kas, Himpunan',
+                        'nama':'nama kegiatannya apa','tanggal':'tanggal berapa dilaksanakan',
+                        'waktu':'jam berapa','tempat':'di mana lokasinya','status':'Hadir, Izin, Sakit',
+                        'target':'target berapa','capaian':'capainnya berapa','keterangan':'detailnya apa',
+                        'judul':'judulnya apa','penerima':'untuk siapa','tipe':'jenisnya apa',
+                        'nama program':'nama programnya','nama folder':'nama foldernya',
+                        'nama departemen':'nama divisinya','nama barang':'barangnya apa',
+                    };
+                    const example = examples[first] || 'contoh: ' + first;
+                    let reply = 'Baik, ' + label + ' — <b>' + first + '</b> yang mana?<br><small>Misal: ' + example + '</small>' + filled;
+                    return reply;
                 }
-                reply += '<br><small>Contoh: bisa sebutkan ' + missing.slice(0,3).join(', ') + '</small>';
-                return reply;
+                return 'Untuk ' + label + ', info apa yang belum ada?';
             },
 
             fillField(id, value) {
@@ -4578,8 +4742,21 @@
                 if (vb) vb.classList.add('listening'); if (fb) fb.classList.add('listening'); if (fa) fa.classList.add('listening');
                 this.recognition.onresult = (e) => {
                     const t = e.results[0][0].transcript;
-                    const inp = document.getElementById('aiInput'); if (inp) inp.value = t;
-                    this.stopVoice(); this.sendMessage();
+                    const inp = document.getElementById('aiInput');
+                    if (inp) { inp.value = t; inp.style.height = 'auto'; inp.focus(); }
+                    this.stopVoice();
+                    // Auto-send only if user doesn't edit within 2 seconds
+                    if (inp) {
+                        inp.dataset.voiceTs = Date.now();
+                        const checkEdit = () => {
+                            if (!inp || inp.dataset.voiceTs && (Date.now() - parseInt(inp.dataset.voiceTs)) >= 2000) {
+                                if (inp && inp.value.trim()) this.sendMessage();
+                            } else {
+                                setTimeout(checkEdit, 500);
+                            }
+                        };
+                        setTimeout(checkEdit, 2000);
+                    }
                 };
                 this.recognition.onerror = (e) => { this.addMessage('Voice error: ' + e.error, false); this.stopVoice(); };
                 this.recognition.onend = () => { this.stopVoice(); };
