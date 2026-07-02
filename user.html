@@ -3785,6 +3785,7 @@
             currentContext: '', bulkData: null, recognition: null,
             storageKey: 'ai_chat_',
             pending: null, known: { depts: [], progs: [] },
+            lastIntent: null, lastSubject: '',
             isDragging: false, didDrag: false, touchInProgress: false,
             dragStartX: 0, dragStartY: 0,
             fabStartX: 0, fabStartY: 0,
@@ -3806,6 +3807,14 @@
                     notulensi:   { id:['notulensi','notulen','catatan rapat','risalah','minutes'], en:['minutes','notes'] },
                     dashboard:   { id:['dashboard','dasbor','beranda','home','utama'], en:['dashboard','home'] },
                     data:        { id:['data','informasi','laporan','report'], en:['data','information','report'] },
+                    tim:         { id:['tim','team','anggota','personil','member','kru','panitia'], en:['team','member','crew'] },
+                    laporan:     { id:['laporan','report','rekapan','rangkuman','ringkasan'], en:['report','summary'] },
+                    keuangan:    { id:['keuangan','finansial','finance','pemasukan','pemasukkan'], en:['finance','financial'] },
+                    sponsor:     { id:['sponsor','sponsorship','donasi','donatur','mitra'], en:['sponsor','donation','partner'] },
+                    dokumentasi: { id:['dokumentasi','foto','dokumentasi foto','arsip foto','dokumentasi kegiatan'], en:['documentation','photo'] },
+                    evaluasi:    { id:['evaluasi','review','penilaian','assessment','monitoring'], en:['evaluation','review','assessment'] },
+                    pendaftaran: { id:['pendaftaran','registrasi','registration','form pendaftaran','daftar ulang'], en:['registration'] },
+                    peserta:     { id:['peserta','partisipan','audiens','tamu','undangan','hadirin'], en:['participant','audience','guest'] },
                 },
                 ACTION: {
                     buat:    { id:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi'], en:['make','create','add','input','fill'] },
@@ -3816,6 +3825,13 @@
                     export:  { id:['export','download','unduh','simpan','cetak','print'], en:['export','download','save','print'] },
                     setuju:  { id:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui'], en:['approve','confirm','verify'] },
                     tolak:   { id:['tolak','reject','batal','tidak setuju','menolak'], en:['reject','decline','cancel'] },
+                    reset:   { id:['reset','ulang','kembali','restart','fresh','reset ulang'], en:['reset','restart','clear'] },
+                    submit:  { id:['submit','simpan','kirim','proses','eksekusi','save','terbitkan','publikasi'], en:['submit','save','publish','execute'] },
+                    selesai: { id:['selesai','tuntas','done','beres','kelar','rampung','finish'], en:['done','finish','complete'] },
+                    lanjut:  { id:['lanjut','terus','next','selanjutnya','berikutnya','continue'], en:['next','continue','proceed'] },
+                    tanya:   { id:['tanya','tanyakan','bertanya','tebak','tanya jawab'], en:['ask','question','inquiry'] },
+                    konfirmasi:{id:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti'], en:['confirm','sure','certain'] },
+                    tolong:  { id:['tolong','bantu','bantuin','minta tolong','mohon','mohon bantuan','please help'], en:['help','please'] },
                 },
                 TIME: {
                     besok:     { id:['besok','esok','bsk','keesokan'], en:['tomorrow'] },
@@ -3868,33 +3884,57 @@
                     'jg':'juga','jga':'juga','aja':'saja',
                     'tp':'tapi','tapi':'tetapi','krn':'karena','karna':'karena',
                     'lg':'lagi','blm':'belum','saya':'aku','kami':'kita',
+                    'gua':'saya','gue':'saya','gw':'saya','lo':'kamu','lu':'kamu','elo':'kamu',
+                    'kak':'kakak','kaka':'kakak','mas':'kakak','mba':'kakak','mbak':'kakak','bro':'kawan','bang':'kakak',
+                    'makasih':'terima kasih','trims':'terima kasih','thx':'terima kasih','matur':'terima kasih',
+                    'sip':'oke','siap':'oke','siap bos':'oke','okelah':'oke','otw':'dalam perjalanan',
+                    'mantap':'bagus','keren':'bagus','top':'bagus','jos':'bagus','gila':'luar biasa',
+                    'btw':'omong-omong','ngomong-ngomong':'omong-omong','by the way':'omong-omong',
+                    'skip':'lewati','lewatkan':'lewati','miss':'lewat',
+                    'on progress':'berjalan','pending':'tertunda','cancel':'batal',
+                    'anvin':'lanjutkan','gas':'lanjut','gaskeun':'lanjut',
+                    'wkwk':'haha','wkwkwk':'haha','wqwqwq':'haha','haha':'haha',
+                    'sgt':'sangat','bgt':'banget','banget':'sangat','skali':'sekali',
+                    'msh':'masih','msh':'masih','msh ada':'masih ada',
+                    'bs':'bisa','bsa':'bisa','gk bisa':'tidak bisa','gbs':'tidak bisa',
+                    'plis':'tolong','please':'tolong','pls':'tolong',
+                    'dlu':'dulu','duluan':'dulu',
+                    'dr':'dari','darimana':'dari mana',
+                    'di mana':'dimana','di mn':'dimana',
+                    'krna':'karena','soalnya':'karena',
+                    'kpn':'kapan','kapan':'kapan',
+                    'bgmn':'bagaimana','gmn':'bagaimana','gimana':'bagaimana',
+                    'knp':'kenapa','knpa':'kenapa','ngapain':'mengapa',
                 },
             },
 
             // ── Intent Definitions ──
             INTENTS: {
-                ISI_RAB:      { s:['rab','anggaran','barang','kebutuhan'],                a:['isi','tambah','input','buat','catat','bikin'] },
-                ISI_REALISASI:{ s:['realisasi','pengeluaran','belanja','dana keluar'],    a:['isi','tambah','input','buat','catat'] },
-                ISI_KPI:      { s:['kpi','indikator','target','capaian'],                a:['isi','tambah','input','buat','bikin'] },
-                ISI_ABSENSI:  { s:['absen','absensi','presensi','kehadiran'],            a:['isi','tambah','buat','isiin'] },
-                ISI_PROGRAM:  { s:['program','event','kegiatan','acara','proker'],       a:['isi','tambah','buat','bikin','daftar'] },
-                ISI_SCHEDULE: { s:['jadwal','schedule','agenda','rapat','meeting'],      a:['buat','tambah','isi','bikin'] },
-                ISI_DEPT:     { s:['divisi','departemen','dept','bagian'],               a:['buat','tambah','bikin','daftar'] },
-                ISI_FOLDER:   { s:['folder','folder dokumentasi'],                       a:['buat','tambah','bikin'] },
-                ISI_SURAT:    { s:['surat','dokumen','pengajuan','digital office'],     a:['buat','tambah','isi','ajukan'] },
-                ISI_NOTULENSI:{ s:['notulensi','notulen','catatan rapat'],               a:['buat','tambah','isi'] },
-                NAVIGATE:     { s:[], a:['buka','ke','menu','tab','pindah','tampilkan','lihat'] },
-                EXPORT:       { s:['export','download','unduh','excel','csv'],           a:['export','download','unduh'] },
-                DELETE:       { s:['hapus','delete','hilang'],                           a:['hapus','delete'] },
-                REFRESH:      { s:['refresh','reload','perbarui'],                       a:['refresh','reload','segar'] },
-                GREET:        { s:['halo','hai','pagi','siang','sore','selamat'],        a:[] },
-                HELP:         { s:['help','bantuan','panduan'],                         a:['help','bantuan','tolong'] },
-                WHOAMI:       { s:['siapa'], a:[] },
-                WHEREAMI:     { s:['dimana','posisi','halaman'],                        a:[] },
-                EDIT:         { s:['ubah','edit','ganti','koreksi','revisi','perbaiki'], a:['ubah','edit','ganti','update'] },
-                SEARCH:       { s:['cari','temukan','tampilkan data','mana'],            a:['cari','temukan','filter','lihat'] },
-                APPROVE:      { s:['setuju','acc','approve','konfirmasi','sahkan'],      a:['setuju','approve','konfirmasi','sahkan'] },
-                SUMMARY:      { s:['total','rekap','ringkasan','laporan','jumlah'],       a:['total','rekap','hitung','summary'] },
+                ISI_RAB:      { s:['rab','anggaran','rincian','barang','kebutuhan','item','belanja','pengadaan'], a:['isi','tambah','input','buat','catat','bikin'] },
+                ISI_REALISASI:{ s:['realisasi','pengeluaran','belanja','dana keluar','pemakaian'], a:['isi','tambah','input','buat','catat'] },
+                ISI_KPI:      { s:['kpi','indikator','target','capaian','metrik','ukuran kerja','standar'], a:['isi','tambah','input','buat','bikin'] },
+                ISI_ABSENSI:  { s:['absen','absensi','presensi','kehadiran','check in','masuk','datang'], a:['isi','tambah','buat','isiin'] },
+                ISI_PROGRAM:  { s:['program','event','kegiatan','acara','proker','inisiatif','project','rencana kerja'], a:['isi','tambah','buat','bikin','daftar'] },
+                ISI_SCHEDULE: { s:['jadwal','schedule','agenda','rapat','meeting','pertemuan'], a:['buat','tambah','isi','bikin'] },
+                ISI_DEPT:     { s:['divisi','departemen','dept','bagian','unit'], a:['buat','tambah','bikin','daftar'] },
+                ISI_FOLDER:   { s:['folder','folder dokumentasi','map'], a:['buat','tambah','bikin'] },
+                ISI_SURAT:    { s:['surat','dokumen','pengajuan','digital office','arsip','naskah'], a:['buat','tambah','isi','ajukan'] },
+                ISI_NOTULENSI:{ s:['notulensi','notulen','catatan rapat','risalah'], a:['buat','tambah','isi'] },
+                NAVIGATE:     { s:[], a:['buka','ke','menu','tab','pindah','tampilkan','lihat','arahkan','antar','buka halaman'] },
+                EXPORT:       { s:['export','download','unduh','excel','csv','cetak','print'], a:['export','download','unduh','cetak'] },
+                DELETE:       { s:['hapus','delete','hilang','buang','remove'], a:['hapus','delete','buang'] },
+                REFRESH:      { s:['refresh','reload','perbarui','segar','muat ulang'], a:['refresh','reload','segar'] },
+                GREET:        { s:['halo','hai','pagi','siang','sore','selamat','hey','hei','hi'], a:[] },
+                HELP:         { s:['help','bantuan','panduan','cara pakai','tips'], a:['help','bantuan','tolong','guide'] },
+                WHOAMI:       { s:['siapa','siapa saya','nama saya'], a:[] },
+                WHEREAMI:     { s:['dimana','posisi','halaman','di halaman apa'], a:[] },
+                EDIT:         { s:['ubah','edit','ganti','koreksi','revisi','perbaiki','modif'], a:['ubah','edit','ganti','update','koreksi'] },
+                SEARCH:       { s:['cari','temukan','tampilkan data','mana','cari data','dimana data'], a:['cari','temukan','filter','lihat'] },
+                APPROVE:      { s:['setuju','acc','approve','konfirmasi','sahkan','verifikasi'], a:['setuju','approve','konfirmasi','sahkan'] },
+                SUMMARY:      { s:['total','rekap','ringkasan','laporan','jumlah','totalan','keseluruhan'], a:['total','rekap','hitung','summary','jumlahkan'] },
+                RESET:        { s:['reset','ulang','mulai ulang','fresh','baru lagi','reset konteks','kembali ke awal','clear'], a:['reset','ulang','clear','fresh'] },
+                SUBMIT:       { s:['submit','simpan','kirim','proses','save','eksekusi','terbitkan'], a:['submit','simpan','kirim','proses','save'] },
+                TOLONG:       { s:['tolong','bantu','bantuin','minta tolong','mohon','please help'], a:['tolong','bantu','minta'] },
             },
 
             // ── Form Field Definitions ──
@@ -4194,8 +4234,27 @@
                         return;
                     }
 
-                    const entities = this.extractEntities(enriched, intent);
-                    reply = this.executeIntent(intent, entities);
+                    // Route TOLONG → HELP if subject is generic
+                    const finalIntent = (intent === 'TOLONG' && !this.getLastSubjectName()) ? 'HELP' : intent;
+
+                    // — Topic Change Detection —
+                    const subject = this.getLastSubjectName();
+                    if (this.lastIntent && this.lastIntent !== finalIntent && this.lastIntent !== 'GREET' && this.lastIntent !== 'HELP') {
+                        const oldName = this.INTENTS[this.lastIntent]?.s?.[0] || this.lastIntent;
+                        const newName = this.INTENTS[finalIntent]?.s?.[0] || finalIntent;
+                        if (oldName !== newName) {
+                            reply = `Baik, kita ganti topik dari <b>${oldName}</b> ke <b>${newName}</b>. Ada yang bisa dibantu?`;
+                            this.addMessage(reply, false);
+                            this.resetContext();
+                        }
+                    }
+                    // — end Topic Change Detection —
+
+                    this.lastIntent = finalIntent;
+                    if (subject) this.lastSubject = subject;
+
+                    const entities = this.extractEntities(enriched, finalIntent);
+                    reply = this.executeIntent(finalIntent, entities);
                     this.addMessage(reply, false);
                     this.showQuickActions();
                 }, 300 + Math.random()*300);
@@ -4272,6 +4331,12 @@
                         return '✅ Konfirmasi: silakan buka halaman terkait dan setujui secara manual. Atau detailkan surat/item yang dimaksud.';
                     }
                     case 'SUMMARY': return this.handleSummary(entities);
+                    case 'RESET': {
+                        this.resetAll();
+                        return '🔄 Percakapan direset. Mulai lagi yuk!';
+                    }
+                    case 'SUBMIT': return this.submitCurrentForm();
+                    case 'TOLONG': return 'Iya, ada yang bisa saya bantu? Silakan sebutkan apa yang ingin dilakukan. Misal: <i>"tolong isi rab"</i> atau <i>"bantu buat program"</i>.';
                     default: {
                         const r = this.fillFormFields(intent, entities);
                         if (r.missing.length > 0) return this.askClarification(intent, r.missing, entities);
@@ -4699,8 +4764,68 @@
 
             // ── Helpers ──
             escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; },
+
+            // ── Context & Reset ──
+            getLastSubjectName() {
+                const m = this.lastSubject;
+                if (!m) return '';
+                // Try to find which intent has this subject
+                for (const [k,v] of Object.entries(this.INTENTS)) {
+                    if (v.s.some(s => m.includes(s))) return v.s[0] || k;
+                }
+                return m;
+            },
+            resetContext() {
+                this.pending = null;
+                this.lastIntent = null;
+                this.lastSubject = '';
+            },
+            resetAll() {
+                this.resetContext();
+                this.currentContext = '';
+                this.bulkData = null;
+                const m = document.getElementById('aiChatMessages');
+                if (m) m.innerHTML = '<div class="ai-msg">Halo! Saya asisten AI. Ketik <b>help</b> untuk lihat panduan.</div>';
+                this.saveHistory();
+            },
+
+            // ── Direct Submit (v4) ──
+            getSubmitFn(intent) {
+                const map = {
+                    ISI_RAB:       'saveRabDetail',
+                    ISI_REALISASI: 'saveRealisasiDetail',
+                    ISI_KPI:       'saveKPI',
+                    ISI_ABSENSI:   'absenActionSubmit',
+                    ISI_PROGRAM:   'saveProgram',
+                    ISI_SCHEDULE:  'saveSchedule',
+                    ISI_DEPT:      'saveDepartment',
+                    ISI_FOLDER:    'saveFolder',
+                    ISI_SURAT:     null,
+                };
+                const fnName = map[intent];
+                if (!fnName) return null;
+                return window[fnName];
+            },
+            submitCurrentForm() {
+                const intent = this.pending ? this.pending.intent : this.guessFormIntent();
+                if (!intent) return 'Tidak ada form yang bisa disubmit.';
+                const fn = this.getSubmitFn(intent);
+                if (!fn) return `Fitur submit untuk ${intent} belum tersedia, silakan klik tombol submit manual.`;
+                try {
+                    const e = { preventDefault: () => {} };
+                    const result = fn(e);
+                    // Handle both sync and async (Promise) returns
+                    if (result && typeof result.then === 'function') {
+                        result.catch(err => console.error('Submit error:', err));
+                    }
+                    this.pending = null;
+                    return '✅ Data berhasil dikirim ke database!';
+                } catch(e) {
+                    return `❌ Gagal menyimpan: ${e.message}`;
+                }
+            },
             getHelpText() {
-                return '<b>🤖 AI Assistant v3 — Paham Bahasa Alami!</b><br><br>' +
+                return '<b>🤖 AI Assistant v4 — Makin Pinter!</b><br><br>' +
                     '<b>📋 Contoh Isi Data:</b><br>' +
                     '• <i>"isi rab kreatif seminar snack 50 box 15000"</i><br>' +
                     '• <i>"saya mau input realisasi divisi humas acara pelantikan 2000000"</i><br>' +
@@ -4709,15 +4834,20 @@
                     '• <i>"buat program baru kreatif seminar besok jam 9 di aula"</i><br>' +
                     '• <i>"jadwalin rapat evaluasi lusa"</i><br>' +
                     '• <i>"buat divisi baru namanya Kreatif"</i><br><br>' +
-                    '<b>🔍 Fitur Baru:</b><br>' +
+                    '<b>🔍 Fitur Lanjutan:</b><br>' +
                     '• <i>"ubah harga snack jadi 20000"</i> — edit data<br>' +
                     '• <i>"cari barang kreatif"</i> — cari data<br>' +
                     '• <i>"total rab divisi kreatif"</i> — ringkasan<br>' +
                     '• <i>"setujui pengajuan"</i> — approve (admin)<br><br>' +
-                    '<b>🧠 Paham Bahasa Gaul:</b><br>' +
+                    '<b>🆕 Fitur Baru v4:</b><br>' +
+                    '• <i>"reset"</i> / <i>"mulai ulang"</i> — hapus semua chat<br>' +
+                    '• <i>"simpan data"</i> / <i>"submit"</i> — simpan form langsung ke database<br>' +
+                    '• <i>"tolong isi rab"</i> — minta bantuan khusus<br>' +
+                    '• Ganti topik otomatis: <i>"sekarang aku mau buat program"</i><br><br>' +
+                    '<b>🧠 Paham Bahasa Gaul & Slang:</b><br>' +
                     '• <i>"bikinin rab kreatif snack 50 15000"</i><br>' +
-                    '• <i>"ngisi absen izin"</i><br>' +
-                    '• <i>"tambahin program seminar"</i><br><br>' +
+                    '• <i>"ngisi absen izin"</i> • <i>"tambahin program seminar"</i><br>' +
+                    '• <i>"makasih" • "gas" • "plis bantuin"</i><br><br>' +
                     '<b>🎤 Voice:</b> Klik mikrofon & bicara biasa<br>' +
                     '<b>📋 Paste Excel:</b> Salin dari Excel, klik Paste<br>' +
                     '<b>⚡ Quick Actions:</b> Tombol di atas input';
