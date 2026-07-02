@@ -341,7 +341,7 @@
             transform: translateX(-3px);
         }
 
-    </style>
+        /* NEW FEATURES: Collapsible Sections */\n        .section-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin: 10px 0 5px; font-size: 0.7rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; border-radius: 8px; transition: 0.2s; user-select: none; }\n        .section-toggle:hover { background: #e2e8f0; color: var(--text-dark); }\n        .section-toggle i.fa-chevron-down { transition: transform 0.3s ease; font-size: 0.6rem; }\n        .section-toggle.collapsed i.fa-chevron-down { transform: rotate(-90deg); }\n        .section-toggle .section-count { font-size: 0.65rem; background: #cbd5e1; color: white; padding: 1px 8px; border-radius: 10px; margin-left: auto; }\n        .section-toggle.collapsed .section-count { background: #e2e8f0; color: #94a3b8; }\n        .section-toggle:hover .section-count { background: var(--primary); }\n        .section-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 2000px; opacity: 1; }\n        .section-body.collapsed { max-height: 0; opacity: 0; margin: 0; padding: 0; }\n        .section-body.collapsed > * { display: none; }\n\n        /* Team Card Styles */\n        .team-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 14px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 5px; border: 1px solid transparent; }\n        .team-item:hover { background: white; border-color: var(--border-color); box-shadow: var(--shadow-sm); transform: translateX(2px); }\n        .team-item.active { background: white; border-color: var(--border-color); box-shadow: var(--shadow-md); border-left: 4px solid var(--green); }\n        .team-avatar { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, var(--green), #059669); color: white; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: var(--shadow-sm); }\n        .team-info { flex: 1; overflow: hidden; }\n        .team-name { font-weight: 800; font-size: 0.95rem; color: var(--text-dark); }\n        .team-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 8px; }\n\n        .dept-badge { font-size: 0.6rem; background: #e0f2fe; color: #1d4ed8; padding: 2px 8px; border-radius: 10px; font-weight: 700; display: inline-block; margin-top: 2px; }\n\n        /* Message Search */\n        .message-search-bar { display: none; padding: 10px 20px; background: #f8fafc; border-bottom: 1px solid var(--border-color); align-items: center; gap: 10px; }\n        .message-search-bar.active { display: flex; }\n        .message-search-bar input { flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-size: 0.85rem; }\n        .message-search-bar input:focus { border-color: var(--primary); }\n        .message-search-bar button { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 8px; border-radius: 6px; }\n        .message-search-bar button:hover { background: #e2e8f0; color: var(--primary); }\n        .message-search-count { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }\n\n        /* Reply Preview */\n        .reply-preview { background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 10px; margin-bottom: 6px; border-left: 3px solid var(--primary); font-size: 0.8rem; }\n        .message-row.me .reply-preview { background: rgba(255,255,255,0.1); border-left-color: var(--secondary); }\n        .reply-preview-name { font-weight: 800; font-size: 0.7rem; color: var(--primary); margin-bottom: 2px; }\n        .message-row.me .reply-preview-name { color: var(--secondary); }\n        .reply-preview-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted); }\n        .message-row.me .reply-preview-text { color: rgba(255,255,255,0.7); }\n\n        .reply-indicator { display: none; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 15px; margin-bottom: 10px; align-items: center; gap: 12px; }\n        .reply-indicator.active { display: flex; }\n        .reply-indicator-info { flex: 1; min-width: 0; }\n        .reply-indicator-info strong { font-size: 0.8rem; display: block; }\n        .reply-indicator-info span { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }\n        .reply-indicator .btn-close { background: none; border: none; font-size: 1rem; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }\n        .reply-indicator .btn-close:hover { background: #e2e8f0; }\n\n        /* Message Reactions */\n        .message-reactions { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }\n        .message-reaction { background: #f1f5f9; border: 1px solid var(--border-color); border-radius: 12px; padding: 2px 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 3px; }\n        .message-row.me .message-reaction { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }\n        .message-reaction:hover { transform: scale(1.1); }\n        .message-reaction.active { background: #eff6ff; border-color: var(--blue); }\n        .reaction-count { font-weight: 700; font-size: 0.65rem; color: var(--text-muted); }\n        .message-row.me .reaction-count { color: rgba(255,255,255,0.7); }\n\n        .quick-reactions { position: absolute; bottom: 100%; left: 0; background: white; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 6px 10px; display: none; gap: 4px; z-index: 50; }\n        .quick-reactions.active { display: flex; animation: fadeUp 0.2s ease; }\n        .quick-reactions button { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; transition: 0.2s; }\n        .quick-reactions button:hover { background: #f1f5f9; transform: scale(1.2); }\n\n        .message-actions { position: absolute; top: 50%; right: -45px; transform: translateY(-50%); display: none; gap: 2px; background: white; border-radius: 8px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color); padding: 3px; z-index: 20; }\n        .message-row.me .message-actions { right: auto; left: -45px; }\n        .message-row:hover .message-actions { display: flex; }\n        .message-actions button { background: none; border: none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }\n        .message-actions button:hover { background: #f1f5f9; color: var(--primary); }\n\n        /* Profile Collapsible Sections */\n        .profile-section { text-align: left; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }\n        .profile-section-header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: #f8fafc; cursor: pointer; font-size: 0.75rem; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; user-select: none; transition: 0.2s; }\n        .profile-section-header:hover { background: #e2e8f0; }\n        .profile-section-header i.fa-chevron-down { font-size: 0.6rem; transition: transform 0.3s; color: var(--text-muted); }\n        .profile-section-header.collapsed i.fa-chevron-down { transform: rotate(-90deg); }\n        .profile-section-body { padding: 12px 14px; transition: max-height 0.3s ease, opacity 0.3s ease; max-height: 2000px; opacity: 1; overflow: hidden; }\n        .profile-section-body.collapsed { max-height: 0; padding: 0 14px; opacity: 0; }\n\n        .group-member-dept { font-size: 0.6rem; color: #1d4ed8; background: #e0f2fe; padding: 1px 6px; border-radius: 8px; font-weight: 700; margin-left: auto; }\n\n        /* Team Stats */\n        .team-detail-stat { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }\n        .team-stat-card { background: #f8fafc; border-radius: 10px; padding: 10px; text-align: center; border: 1px solid var(--border-color); }\n        .team-stat-card strong { font-size: 1.1rem; color: var(--primary); display: block; }\n        .team-stat-card span { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }\n        .team-program-item { padding: 8px 10px; background: #f8fafc; border-radius: 8px; border-left: 3px solid var(--green); margin-bottom: 6px; }\n        .team-program-item .prog-name { font-weight: 700; font-size: 0.8rem; }\n        .team-program-item .prog-status { font-size: 0.65rem; color: var(--text-muted); }\n\n        /* Mention type for departments */\n        .mention-item-icon.type-dept { background: #059669; border-radius: 8px; }\n\n        /* Org Chart Tree View */\n        .org-tree { text-align: center; }\n        .org-tree ul { padding-top: 20px; position: relative; transition: 0.5s; list-style: none; padding-left: 0; display: flex; justify-content: center; flex-wrap: wrap; }\n        .org-tree ul ul { padding-top: 20px; }\n        .org-tree li { display: inline-block; vertical-align: top; text-align: center; list-style: none; padding: 0 10px; position: relative; transition: 0.5s; }\n        .org-tree li::before, .org-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #cbd5e1; width: 50%; height: 20px; }\n        .org-tree li::after { right: auto; left: 50%; border-left: 2px solid #cbd5e1; }\n        .org-tree li:only-child::after, .org-tree li:only-child::before { display: none; }\n        .org-tree li:only-child { padding-top: 0; }\n        .org-tree li:first-child::before, .org-tree li:last-child::after { border: 0 none; }\n        .org-tree li:last-child::before { border-right: 2px solid #cbd5e1; border-radius: 0 5px 0 0; }\n        .org-tree li:first-child::after { border-radius: 5px 0 0 0; }\n        .org-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #cbd5e1; width: 0; height: 20px; }\n        .org-tree .org-member { display: inline-flex; border: 2px solid #cbd5e1; border-radius: 12px; text-decoration: none; transition: 0.3s; background: white; }\n        .org-tree .org-member:hover { border-color: var(--secondary); transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }\n\n        /* Activity feed enhanced */\n        .activity-container { max-height: 400px; overflow-y: auto; }\n        .activity-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }\n        .activity-icon { width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }\n        .activity-info { flex: 1; }\n        .activity-title { font-size: 0.85rem; color: var(--text-dark); font-weight: 500; display: block; }\n        .activity-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; display: block; }\n    </style>
 </head>
 <body>
 
@@ -360,12 +360,12 @@
     <nav class="app-sidebar">
         <div class="logo" onclick="window.location.href='user-hub.html'" title="Kembali ke Dashboard"><i class="fa-solid fa-layer-group"></i></div>
         <a href="#" class="nav-icon active" onclick="activateSidebar(this); switchTab('all', document.querySelectorAll('.chat-tab')[0])"><i class="fa-solid fa-message"></i><span>Obrolan</span></a>
-        <a href="#" class="nav-icon" onclick="activateSidebar(this); switchTab('groups', document.querySelectorAll('.chat-tab')[2])" title="Lihat Grup Divisi"><i class="fa-solid fa-users-rectangle"></i><span>Grup Divisi</span></a>
+        <a href="#" class="nav-icon" onclick="activateSidebar(this); switchChatFilter('teams')" title="Lihat Tim Divisi"><i class="fa-solid fa-users-rectangle"></i><span>Tim</span></a>
         <a href="#" class="nav-icon" onclick="openOrgChartModal(); activateSidebar(this)" title="Lihat Struktur Organisasi"><i class="fa-solid fa-sitemap"></i><span>Struktur</span></a>
         <a href="#" class="nav-icon" onclick="openCalendarModal(); activateSidebar(this)" title="Jadwalkan Agenda"><i class="fa-solid fa-calendar-check"></i><span>Agenda</span></a>
         <div class="sidebar-bottom">
             <a href="#" class="nav-icon" onclick="openActivityModal(); activateSidebar(this)" title="Aktivitas Terbaru"><i class="fa-solid fa-bell"></i></a>
-            <div class="profile-avatar-mini" id="my-mini-avatar" onclick="alert('Profile Menu')">U</div>
+            <div class="profile-avatar-mini" id="my-mini-avatar" onclick="showMyProfile()">U</div>
         </div>
     </nav>
 
@@ -378,9 +378,10 @@
             </div>
         </div>
         <div class="chat-tabs">
-            <div class="chat-tab active" onclick="switchTab('all', this)">Semua</div>
-            <div class="chat-tab" onclick="switchTab('unread', this)">Belum Dibaca</div>
-            <div class="chat-tab" onclick="switchTab('groups', this)">Grup Divisi</div>
+            <div class="chat-tab active" onclick="switchChatFilter('all')">Semua</div>
+            <div class="chat-tab" onclick="switchChatFilter('unread')">Baru</div>
+            <div class="chat-tab" onclick="switchChatFilter('groups')">Grup</div>
+            <div class="chat-tab" onclick="switchChatFilter('teams')">Tim</div>
         </div>
         <div class="chat-list-content" id="chat-list-container">
             <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
@@ -390,11 +391,34 @@
         </div>
     </aside>
 
-    <main class="chat-main-area">
+        <main class="chat-main-area">
         <div class="empty-chat-state" id="empty-chat-state">
             <i class="fa-regular fa-comments"></i>
             <h3>Workspace Messenger</h3>
-            <p style="max-width: 350px; text-align: center; font-size: 0.95rem; line-height: 1.6;">Pilih obrolan dari panel sebelah kiri atau mulai pesan baru dengan rekan dan admin lainnya.</p>
+            <p style="max-width: 350px; text-align: center; font-size: 0.9rem; line-height: 1.6;">Pilih obrolan dari panel sebelah kiri atau mulai pesan baru dengan rekan dan admin lainnya.</p>
+        </div>
+
+        <!-- Team Detail View -->
+        <div style="display: none; flex-direction: column; height: 100%;" id="team-detail-view">
+            <div class="chat-header fade-in">
+                <div class="chat-header-info">
+                    <button class="btn-back-mobile" onclick="closeChatMobile()"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button class="btn-back-dashboard" onclick="switchChatFilter('teams')" title="Kembali ke Tim"><i class="fa-solid fa-arrow-left"></i></button>
+                    <div class="chat-header-avatar" id="team-detail-avatar" style="background: linear-gradient(135deg, var(--green), #059669);"><i class="fa-solid fa-users"></i></div>
+                    <div class="chat-header-text">
+                        <h3 id="team-detail-name">Nama Tim</h3>
+                        <p id="team-detail-status"><span id="team-member-count">0</span> Anggota</p>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button title="Buka Obrolan Grup Tim" id="btn-team-chat" onclick="openTeamGroupChat()"><i class="fa-solid fa-comment"></i></button>
+                    <button title="Jadwalkan Agenda" onclick="openCalendarModal()"><i class="fa-solid fa-calendar-plus"></i></button>
+                    <button title="Tutup" onclick="switchChatFilter('teams')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 20px;" id="team-detail-body">
+                <div style="text-align: center; color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat detail tim...</div>
+            </div>
         </div>
 
         <div style="display: none; flex-direction: column; height: 100%;" id="active-chat-view">
@@ -409,10 +433,21 @@
                     </div>
                 </div>
                 <div class="chat-header-actions">
-                    <button title="Jadwalkan Agenda Kalender" onclick="openCalendarModal()"><i class="fa-solid fa-calendar-plus"></i></button>
-                    <button title="Detail Informasi & Anggota" onclick="toggleProfilePanel()"><i class="fa-solid fa-circle-info"></i></button>
+                    <button title="Cari Pesan" onclick="toggleMessageSearch()"><i class="fa-solid fa-search"></i></button>
+                    <button title="Jadwalkan Agenda" onclick="openCalendarModal()"><i class="fa-solid fa-calendar-plus"></i></button>
+                    <button title="Detail Informasi" onclick="toggleProfilePanel()"><i class="fa-solid fa-circle-info"></i></button>
                     <button title="Hapus Grup" id="btn-delete-group" class="btn-danger" onclick="deleteCurrentGroup()" style="display:none;"><i class="fa-solid fa-trash"></i></button>
                 </div>
+            </div>
+
+            <!-- Message Search Bar -->
+            <div class="message-search-bar" id="message-search-bar">
+                <i class="fa-solid fa-search" style="color: var(--text-muted);"></i>
+                <input type="text" id="message-search-input" placeholder="Cari pesan dalam percakapan..." oninput="searchMessages(this.value)">
+                <span class="message-search-count" id="message-search-count"></span>
+                <button onclick="navigateSearchResult(-1)" title="Sebelumnya"><i class="fa-solid fa-chevron-up"></i></button>
+                <button onclick="navigateSearchResult(1)" title="Selanjutnya"><i class="fa-solid fa-chevron-down"></i></button>
+                <button onclick="toggleMessageSearch()" title="Tutup"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <div class="messages-container" id="messages-container"></div>

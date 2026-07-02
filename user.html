@@ -4527,10 +4527,11 @@
                 let best = { intent: 'UNKNOWN', score: 0 };
                 for (const [name, cfg] of Object.entries(this.INTENTS)) {
                     let s = 0;
+                    let subjectMatchCount = 0;
                     // Match substantive keywords (weigth 4)
                     for (const kw of cfg.s) {
-                        if (lower.includes(kw)) s += 4;
-                        else if (origLower.includes(kw)) s += 3;
+                        if (lower.includes(kw)) { s += 4; subjectMatchCount++; }
+                        else if (origLower.includes(kw)) { s += 3; subjectMatchCount++; }
                     }
                     // Match action keywords (weight 3/2 with boundary)
                     for (const kw of cfg.a) {
@@ -4543,17 +4544,23 @@
                             else if (idx2 > 0) s += 1;
                         }
                     }
-                    // Context boost (+3 if page matches)
+                    // Context boost (+6 if page matches)
                     const form = this.FORMS[name];
-                    if (form && form.ctx === this.currentContext) s += 3;
-                    // Context penalty (-2 if page conflicts)
-                    if (form && form.ctx && this.currentContext && form.ctx !== this.currentContext) s -= 2;
+                    const contextMatch = form && form.ctx === this.currentContext;
+                    if (contextMatch) s += 6;
+                    // Context penalty (-4 if page conflicts)
+                    if (form && form.ctx && this.currentContext && form.ctx !== this.currentContext) s -= 4;
+                    // Page-specific additional boost
                     if (this.currentContext === 'view-absensi' && name === 'ISI_ABSENSI') s += 2;
                     if (this.currentContext === 'view-input-rab' && name === 'ISI_RAB') s += 2;
                     if (this.currentContext === 'view-realisasi-anggaran' && name === 'ISI_REALISASI') s += 2;
                     if (this.currentContext === 'view-kpi' && name === 'ISI_KPI') s += 2;
                     if (this.currentContext === 'view-program-event' && name === 'ISI_PROGRAM') s += 2;
                     if (this.currentContext === 'view-timeline' && name === 'ISI_SCHEDULE') s += 2;
+                    // Guard: form intents need subject keyword OR context boost
+                    if (this.FORMS[name] && subjectMatchCount === 0 && !contextMatch) continue;
+                    // Guard: ISI_PROGRAM needs 2+ subject matches unless on program page
+                    if (name === 'ISI_PROGRAM' && subjectMatchCount < 2 && !contextMatch) continue;
                     if (s > best.score) best = { intent: name, score: s };
                 }
                 return best;
