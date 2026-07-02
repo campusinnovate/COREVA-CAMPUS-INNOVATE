@@ -342,7 +342,9 @@
             z-index: 9996;
             transition: box-shadow 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.15s ease;
             touch-action: none;
+            -webkit-touch-callout: none;
             user-select: none;
+            overscroll-behavior: none;
             will-change: left, top;
         }
         .ai-fab:active { cursor: grabbing; }
@@ -756,7 +758,7 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .ai-fab { bottom: 20px; left: 20px; width: 48px; height: 48px; font-size: 1.3rem; }
+            .ai-fab { width: 48px; height: 48px; font-size: 1.3rem; }
             .ai-widget {
                 left: 0; right: 0; bottom: 0;
                 width: 100%; height: 75vh; max-height: 75vh;
@@ -3783,11 +3785,11 @@
             currentContext: '', bulkData: null, recognition: null,
             storageKey: 'ai_chat_',
             pending: null, known: { depts: [], progs: [] },
-            isDragging: false, didDrag: false,
+            isDragging: false, didDrag: false, touchInProgress: false,
             dragStartX: 0, dragStartY: 0,
             fabStartX: 0, fabStartY: 0,
             fabX: -1, fabY: -1, // -1 = not initialized, use default
-            dragBoundFn: null, dragEndFn: null,
+            dragBoundFn: null, dragEndFn: null, dragTimeout: null,
 
             // ── Kamus Bahasa Indonesia (Dictionary) ──
             DICTIONARY: {
@@ -4721,18 +4723,28 @@
                     '<b>⚡ Quick Actions:</b> Tombol di atas input';
             },
 
-            // ── Draggable FAB ──
+            // ── Draggable FAB — pointer + touch + mouse ──
             initDrag() {
                 const fab = document.getElementById('aiFab');
                 if (!fab) return;
                 const start = (e) => this.startDrag(e);
+                fab.addEventListener('pointerdown', start);
                 fab.addEventListener('mousedown', start);
-                fab.addEventListener('touchstart', start, { passive: true });
+                fab.addEventListener('touchstart', start);
             },
             startDrag(e) {
+                // Skip synthetic mouse events after touch
+                if (e.pointerType === 'mouse' && this.touchInProgress) return;
+                if (e.type === 'mousedown' && this.touchInProgress) return;
                 if (this.isDragging) return;
-                // Don't drag if clicking to toggle (quick tap)
-                const pos = e.type === 'touchstart' ? e.touches[0] : e;
+                e.preventDefault();
+                // Mark touch in progress for touch events
+                if (e.type === 'touchstart' || e.pointerType === 'touch') {
+                    this.touchInProgress = true;
+                    if (this.dragTimeout) { clearTimeout(this.dragTimeout); this.dragTimeout = null; }
+                }
+                const pos = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+                if (!pos) return;
                 const fab = document.getElementById('aiFab');
                 if (!fab) return;
                 const rect = fab.getBoundingClientRect();
@@ -4743,29 +4755,33 @@
                 this.isDragging = true;
                 this.didDrag = false;
                 fab.classList.add('dragging');
-                // Bind move + end handlers
+                // Reusable move/end handlers
                 const move = (ev) => this.onDrag(ev);
                 const end = (ev) => { this.stopDrag(ev); };
                 this.dragBoundFn = move;
                 this.dragEndFn = end;
+                document.addEventListener('pointermove', move);
+                document.addEventListener('pointerup', end);
+                document.addEventListener('pointercancel', end);
                 document.addEventListener('mousemove', move);
                 document.addEventListener('mouseup', end);
-                document.addEventListener('touchmove', move, { passive: true });
-                document.addEventListener('touchend', end, { passive: true });
+                document.addEventListener('touchmove', move);
+                document.addEventListener('touchend', end);
+                document.addEventListener('touchcancel', end);
             },
             onDrag(e) {
                 if (!this.isDragging) return;
-                const pos = e.type === 'touchmove' ? e.touches[0] : e;
+                const pos = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
                 if (!pos) return;
                 const dx = pos.clientX - this.dragStartX;
                 const dy = pos.clientY - this.dragStartY;
                 let x = this.fabStartX + dx;
                 let y = this.fabStartY + dy;
                 // Clamp to viewport
-                const fabSize = 56;
+                const fs = this.fabSize || 56;
                 const pad = 10;
-                x = Math.max(pad, Math.min(x, window.innerWidth - fabSize - pad));
-                y = Math.max(pad, Math.min(y, window.innerHeight - fabSize - pad));
+                x = Math.max(pad, Math.min(x, window.innerWidth - fs - pad));
+                y = Math.max(pad, Math.min(y, window.innerHeight - fs - pad));
                 this.didDrag = true;
                 this.setFabPosition(x, y);
                 this.syncWidgetPosition();
@@ -4776,12 +4792,21 @@
                 const fab = document.getElementById('aiFab');
                 if (fab) fab.classList.remove('dragging');
                 if (this.dragBoundFn) {
+                    document.removeEventListener('pointermove', this.dragBoundFn);
+                    document.removeEventListener('pointerup', this.dragEndFn);
+                    document.removeEventListener('pointercancel', this.dragEndFn);
                     document.removeEventListener('mousemove', this.dragBoundFn);
                     document.removeEventListener('mouseup', this.dragEndFn);
                     document.removeEventListener('touchmove', this.dragBoundFn);
                     document.removeEventListener('touchend', this.dragEndFn);
+                    document.removeEventListener('touchcancel', this.dragEndFn);
                     this.dragBoundFn = null;
                     this.dragEndFn = null;
+                }
+                // Reset touchInProgress after delay so synthetic mouse events are ignored
+                if (this.touchInProgress) {
+                    if (this.dragTimeout) clearTimeout(this.dragTimeout);
+                    this.dragTimeout = setTimeout(() => { this.touchInProgress = false; this.dragTimeout = null; }, 500);
                 }
                 this.savePosition();
             },
