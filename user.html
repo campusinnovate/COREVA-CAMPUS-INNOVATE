@@ -5013,7 +5013,7 @@
             },
             updateContextBadge() {
                 const b = document.getElementById('aiContextBadge'); if (!b) return;
-                const label = this.getContextLabel(this.currentContext||this.detectContext());
+                const label = this.getContextLabel(this.currentContext);
                 if (label) { b.textContent = label; b.style.display = 'inline'; } else { b.style.display = 'none'; }
             },
             getContextLabel(ctx) {
@@ -5028,7 +5028,7 @@
             // ── Quick Actions ──
             showQuickActions() {
                 const c = document.getElementById('aiQuickActions'); if (!c) return;
-                const ctx = this.detectContext();
+                const ctx = this.currentContext || this.detectContext();
                 const actions = this.getQuickActions(ctx);
                 c.innerHTML = actions.map(a =>
                     '<div class="ai-quick-action" onclick="AIAssistant.performQuickAction(\''+a.id+'\')"><i class="'+a.icon+'"></i><span>'+a.label+'</span></div>'
