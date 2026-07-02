@@ -371,6 +371,18 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
             50% { box-shadow: 0 0 0 15px rgba(239,68,68,0); }
         }
+        .ai-fab-hidden { display: none !important; }
+        .ai-fab-restore {
+            position: fixed; bottom: 20px; left: 20px; z-index: 9995;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--ai-primary), #1e40af);
+            color: var(--ai-secondary); border: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .ai-fab-restore:hover { transform: scale(1.1); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
 
         /* AI Widget Panel */
         .ai-widget {
@@ -1666,6 +1678,9 @@
                 <button class="ai-widget-btn" onclick="AIAssistant.minimize()" title="Minimize">
                     <i class="fa-solid fa-window-minimize"></i>
                 </button>
+                <button class="ai-widget-btn" id="aiFabToggleBtn" onclick="AIAssistant.toggleFab()" title="Sembunyikan FAB">
+                    <i class="fa-solid fa-eye-slash"></i>
+                </button>
                 <button class="ai-widget-btn" onclick="AIAssistant.resetAll()" title="Reset Chat" style="color:#ff6b6b;">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -1700,6 +1715,11 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- AI FAB RESTORE BADGE (shown when FAB is hidden) -->
+    <div class="ai-fab-restore" id="aiFabRestore" onclick="AIAssistant.restoreFab()" style="display: none;">
+        <i class="fa-solid fa-robot"></i>
     </div>
 
     <!-- AI BULK PASTE MODAL -->
@@ -3954,6 +3974,27 @@
                     'itung':'hitung','ngitung':'hitung','ngehitung':'hitung','jumlahin':'jumlah','totalin':'total','totalkan':'jumlah','jumlahkan':'jumlah',
                     'catet':'catat','catetin':'catat','nulis':'catat','nyatet':'catat','noted':'catat',
                     'lanjutin':'lanjut','terusin':'lanjut','next':'lanjut','selanjutnya':'lanjut','berikutnya':'lanjut',
+                    // -nya suffix forms (Indonesian possessive -> base word)
+                    'divisinya':'divisi','programnya':'program','barangnya':'barang',
+                    'jumlahnya':'jumlah','satuannya':'satuan','harganya':'harga',
+                    'sumbernya':'sumber','namanya':'nama','hitungannya':'hitungan',
+                    'kegiatannya':'kegiatan','kebutuhannya':'butuh','anggarannya':'anggaran',
+                    'realisasinya':'realisasi','kpinya':'kpi','absensinya':'absensi',
+                    'jadwalnya':'jadwal','foldernya':'folder','suratnya':'surat',
+                    'targetnya':'target','capaiannya':'capaian','deskripsinya':'deskripsi',
+                    'volumenya':'volume','tempatnya':'tempat','tanggalnya':'tanggal',
+                    'waktunya':'waktu','statusnya':'status','tipenya':'tipe',
+                    'rinciannya':'rincian','judulnya':'judul','penerimanya':'penerima',
+                    'notulensinya':'notulensi','pesertanya':'peserta','timnya':'tim',
+                    'laporannya':'laporan','dokumentasinya':'dokumentasi','evaluasinya':'evaluasi',
+                    'pendaftarannya':'pendaftaran','sponsornya':'sponsor','konsumsinya':'konsumsi',
+                    'dekorasinya':'dekorasi','perlengkapannya':'perlengkapan','transportasinya':'transportasi',
+                    'proposalnya':'proposal','logistiknya':'logistik','dananya':'dana',
+                    'pemasukannya':'pemasukan','pengeluarannya':'pengeluaran',
+                    // "itu adalah" / "itu" / "itu ada" markers → strip to space
+                    'itu adalah':' ','itu':' ','itu ada':' ','adalah':' ','yaitu':' ',
+                    // Math operators
+                    '*':'kali','dikali':'kali','dibagi':'bagi','per':'/',
                 },
             },
 
@@ -3974,7 +4015,7 @@
                 DELETE:       { s:['hapus','delete','hilang','buang','remove'], a:['hapus','delete','buang'] },
                 REFRESH:      { s:['refresh','reload','perbarui','segar','muat ulang'], a:['refresh','reload','segar'] },
                 GREET:        { s:['halo','hai','pagi','siang','sore','selamat','hey','hei','hi'], a:[] },
-                HELP:         { s:['help','bantuan','panduan','cara pakai','tips'], a:['help','bantuan','tolong','guide'] },
+                HELP:         { s:['help','bantuan','panduan','cara pakai','tips','cara','gimana cara','bagaimana cara','langkah','tutorial','petunjuk'], a:['help','bantuan','tolong','guide','ajari'] },
                 WHOAMI:       { s:['siapa','siapa saya','nama saya'], a:[] },
                 WHEREAMI:     { s:['dimana','posisi','halaman','di halaman apa'], a:[] },
                 EDIT:         { s:['ubah','edit','ganti','koreksi','revisi','perbaiki','modif'], a:['ubah','edit','ganti','update','koreksi'] },
@@ -4081,7 +4122,105 @@
             smartEntityExtract(text, intent) {
                 const lower = ' ' + text.toLowerCase() + ' ';
                 const e = {};
-                // Build dynamic patterns from ENTITY dictionary
+
+                // — SPECIAL PREPROCESSING for complex sentences —
+
+                // 1. Strip "-nya itu adalah", "-nya itu ada", "-nya itu", "-nya adalah", "-nya dari", and bare "-nya"
+                let processed = text
+                    .replace(/(\w+)nya\s+itu\s+adalah\s*/gi, '$1 ')
+                    .replace(/(\w+)nya\s+itu\s+ada\s*/gi, '$1 ')
+                    .replace(/(\w+)nya\s+itu\s*/gi, '$1 ')
+                    .replace(/(\w+)nya\s+adalah\s*/gi, '$1 ')
+                    .replace(/(\w+)nya\s+dari\s*/gi, '$1 ')
+                    .replace(/(\w+)nya\b/gi, '$1 ')
+                    // 2. Strip standalone "itu adalah", "itu ada", "itu", "adalah", "yaitu"
+                    .replace(/\bitu\s+adalah\b/gi, ' ')
+                    .replace(/\bitu\s+ada\b/gi, ' ')
+                    .replace(/\bitu\b/gi, ' ')
+                    .replace(/\badalah\b/gi, ' ')
+                    .replace(/\byaitu\b/gi, ' ');
+
+                // 3. Normalize "untuk kegiatan hitungannya" → strip
+                processed = processed.replace(/untuk\s+kegiatan\s+hitungan\w*\s+itu\s+suatu\s+kegiatan\s*\*/gi, 'volume 1 ');
+
+                // 4. Compound key matching: try longest ENTITY keys first BEFORE single-word regex
+                const compoundMap = {
+                    'sumber dana': 'sumber',
+                    'nama barang': 'barang',
+                    'harga satuan': 'harga',
+                    'dana dari': 'sumber',
+                    'asal dana': 'sumber',
+                    'nama program': 'program',
+                    'nama kegiatan': 'program',
+                    'nama divisi': 'dept',
+                    'nama departemen': 'dept',
+                    'judul surat': 'judul',
+                    'judul kegiatan': 'judul',
+                };
+                for (const [compound, targetKey] of Object.entries(compoundMap)) {
+                    const rx = new RegExp('\\b' + compound + '\\s+(\\S[\\w\\s]{0,40}?)(?=\\s+(?:dan|untuk|dengan|serta|lalu|adalah|,$)|$)', 'i');
+                    const m = processed.match(rx);
+                    if (m && !e[targetKey]) {
+                        e[targetKey] = m[1].trim();
+                        // Remove matched text so single-word regex doesn't conflict
+                        processed = processed.replace(rx, ' ');
+                    }
+                }
+
+                // 5. Multi-clause: split by "dan" and process each clause
+                const clauses = processed.split(/\bdan\b|,|\.\s*/).filter(c => c.trim());
+                for (const clause of clauses) {
+                    const clauseEntities = this.extractEntitiesFromClause(clause, intent);
+                    Object.assign(e, clauseEntities);
+                }
+
+                // — STANDARD ENTITY EXTRACTION (used as fallback via extractEntitiesFromClause) —
+                // (this is now extracted to a helper, but maintain backward compat)
+
+                // Fuzzy match against known data
+                if (!e.dept && this.known.depts.length) {
+                    for (const d of this.known.depts) {
+                        if (lower.includes(' ' + d.toLowerCase() + ' ')) { e.dept = d; break; }
+                    }
+                }
+                if (!e.program && this.known.progs.length) {
+                    for (const p of this.known.progs) {
+                        if (lower.includes(' ' + p.toLowerCase() + ' ')) { e.program = p; break; }
+                    }
+                }
+
+                // Extract all numbers (from original text)
+                const nums = text.match(/\b\d[\d.,]*\b/g) || [];
+                this.assignNumbers(e, nums, text, intent);
+
+                // Absensi status detection
+                if (intent === 'ISI_ABSENSI') {
+                    if (/izin|sakit|cuti/i.test(lower) && !e.status) e.status = 'Izin';
+                    else if (/tidak\s*(?:hadir)?|tdk|alpha|bolos/i.test(lower) && !e.status) e.status = 'Tidak Hadir';
+                    else if (!e.status) e.status = 'Hadir';
+                    if (!e.deskripsi) {
+                        let desc = text.replace(/^(?:saya\s+mau\s+)?(?:absen|presensi|absensi)\s+(?:hadir|izin|tidak(?:\s+hadir)?|tdk|sakit)\s*/i,'').trim();
+                        if (!desc) desc = e.status;
+                        e.deskripsi = desc;
+                    }
+                }
+
+                // Navigation target
+                if (intent === 'NAVIGATE') {
+                    let t = text.replace(/^(?:buka|ke|menu|tab|pindah\s*ke|tampilkan|lihat|menuju)\s*/i,'').trim();
+                    e.target = t;
+                }
+
+                // Parse relative time words
+                const relativeDate = this.extractTimeWords(text);
+                if (relativeDate && !e.tanggal) e.tanggal = relativeDate;
+                return e;
+            },
+
+            extractEntitiesFromClause(clause, intent) {
+                const text = clause.trim();
+                if (!text) return {};
+                const e = {};
                 const nextLabelMap = {
                     dept: ['program','event','kegiatan','proker','acara'],
                     program: ['divisi','dept','departemen'],
@@ -4097,78 +4236,56 @@
                     const m = text.match(rx);
                     if (m) e[key] = m[1].trim();
                 }
-                // Fuzzy match against known data
+                // Fuzzy match against known data for this clause
+                const clauseLower = ' ' + text.toLowerCase() + ' ';
                 if (!e.dept && this.known.depts.length) {
                     for (const d of this.known.depts) {
-                        if (lower.includes(' ' + d.toLowerCase() + ' ')) { e.dept = d; break; }
+                        if (clauseLower.includes(' ' + d.toLowerCase() + ' ')) { e.dept = d; break; }
                     }
                 }
                 if (!e.program && this.known.progs.length) {
                     for (const p of this.known.progs) {
-                        if (lower.includes(' ' + p.toLowerCase() + ' ')) { e.program = p; break; }
+                        if (clauseLower.includes(' ' + p.toLowerCase() + ' ')) { e.program = p; break; }
                     }
                 }
-                // Extract all numbers
-                const nums = text.match(/\b\d[\d.,]*\b/g) || [];
-                if (nums.length > 0) {
-                    const clean = n => parseInt(n.replace(/[.,]/g,''));
-                    const lower = text.toLowerCase();
-                    const hasRp = /(\brp\b|rp\.|harga|biaya|cost|nominal)/i.test(lower);
-                    const hasVolume = /(\bvolume\b|kali|qty|kuantitas|banyak|\d+\s*x\s*)/i.test(lower);
-                    const hasTarget = /(target|goal|sasaran|objective)/i.test(lower);
-                    const hasCapaian = /(capaian|achievement|hasil|pencapaian)/i.test(lower);
+                return e;
+            },
 
-                    // Price detected → this number is harga
-                    if (hasRp) {
-                        e.harga = clean(nums[nums.length-1]);
-                        if (nums.length > 1) e.volume = clean(nums[0]);
-                    }
-                    // Volume detected → first number volume, last number harga
-                    else if (hasVolume) {
-                        e.volume = clean(nums[0]);
-                        if (nums.length > 1) e.harga = clean(nums[nums.length-1]);
-                    }
-                    // Intent-specific defaults
-                    else if (intent === 'ISI_REALISASI') {
-                        e.harga = clean(nums[nums.length-1]);
-                        if (nums.length > 1) e.volume = clean(nums[0]);
-                    }
-                    else if (intent === 'ISI_KPI') {
-                        if (hasTarget) e.target = clean(nums[0]);
-                        if (hasCapaian && nums.length > 1) e.capaian = clean(nums[1]);
-                        else { e.target = clean(nums[0]); if (nums.length > 1) e.capaian = clean(nums[1]); }
-                    }
-                    // Default RAB/common: first=volume, last=harga
-                    else {
-                        e.volume = clean(nums[0]);
-                        if (nums.length > 1) e.harga = clean(nums[nums.length-1]);
-                    }
+            assignNumbers(e, nums, text, intent) {
+                if (nums.length === 0) return;
+                const clean = n => parseInt(n.replace(/[.,]/g,''));
+                const lower = text.toLowerCase();
+                const hasRp = /(\brp\b|rp\.|harga|biaya|cost|nominal)/i.test(lower);
+                const hasVolume = /(\bvolume\b|kali|qty|kuantitas|banyak|\d+\s*x\s*)/i.test(lower);
+                const hasTarget = /(target|goal|sasaran|objective)/i.test(lower);
+                const hasCapaian = /(capaian|achievement|hasil|pencapaian)/i.test(lower);
+
+                if (hasRp) {
+                    e.harga = clean(nums[nums.length-1]);
+                    if (nums.length > 1) e.volume = clean(nums[0]);
                 }
-                // Also try to extract "RP" prefixed numbers like Rp15.000 or Rp 15,000
+                else if (hasVolume) {
+                    e.volume = clean(nums[0]);
+                    if (nums.length > 1) e.harga = clean(nums[nums.length-1]);
+                }
+                else if (intent === 'ISI_REALISASI') {
+                    e.harga = clean(nums[nums.length-1]);
+                    if (nums.length > 1) e.volume = clean(nums[0]);
+                }
+                else if (intent === 'ISI_KPI') {
+                    if (hasTarget) e.target = clean(nums[0]);
+                    if (hasCapaian && nums.length > 1) e.capaian = clean(nums[1]);
+                    else { e.target = clean(nums[0]); if (nums.length > 1) e.capaian = clean(nums[1]); }
+                }
+                else {
+                    e.volume = clean(nums[0]);
+                    if (nums.length > 1) e.harga = clean(nums[nums.length-1]);
+                }
+                // Also try to extract "RP" prefixed numbers like Rp15.000
                 const rpMatch = text.match(/(?:rp|rp\.)\s*([\d.,]+)/i);
                 if (rpMatch && !e.harga) {
                     e.harga = parseInt(rpMatch[1].replace(/[.,]/g,''));
                 }
-                // Absensi status detection
-                if (intent === 'ISI_ABSENSI') {
-                    if (/izin|sakit|cuti/i.test(lower) && !e.status) e.status = 'Izin';
-                    else if (/tidak\s*(?:hadir)?|tdk|alpha|bolos/i.test(lower) && !e.status) e.status = 'Tidak Hadir';
-                    else if (!e.status) e.status = 'Hadir';
-                    if (!e.deskripsi) {
-                        let desc = text.replace(/^(?:saya\s+mau\s+)?(?:absen|presensi|absensi)\s+(?:hadir|izin|tidak(?:\s+hadir)?|tdk|sakit)\s*/i,'').trim();
-                        if (!desc) desc = e.status;
-                        e.deskripsi = desc;
-                    }
-                }
-                // Navigation target
-                if (intent === 'NAVIGATE') {
-                    let t = text.replace(/^(?:buka|ke|menu|tab|pindah\s*ke|tampilkan|lihat|menuju)\s*/i,'').trim();
-                    e.target = t;
-                }
-                // Parse relative time words
-                const relativeDate = this.extractTimeWords(text);
-                if (relativeDate && !e.tanggal) e.tanggal = relativeDate;
-                return e;
             },
             extractTimeWords(text) {
                 const lower = text.toLowerCase();
@@ -4209,13 +4326,24 @@
                 this.loadHistory(); this.showQuickActions(); this.detectContext();
                 this.refreshKnownData();
                 this.loadPosition();
+                // Restore FAB hidden state
+                const key = 'ai_fab_hidden_' + (globalWorkspaceId||'0');
+                try {
+                    if (localStorage.getItem(key) === 'true') {
+                        if (fab) fab.classList.add('ai-fab-hidden');
+                        const restore = document.getElementById('aiFabRestore');
+                        if (restore) restore.style.display = 'flex';
+                        const btn = document.getElementById('aiFabToggleBtn');
+                        if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    }
+                } catch(e){}
                 this.initDrag();
                 window.addEventListener('resize', () => {
                     this.loadPosition();
                     if (this.isOpen) this.syncWidgetPosition();
                 });
                 setTimeout(() => {
-                    this.addMessage('Halo! Saya AI Assistant v3 — sekarang paham bahasa gaul, sinonim, dan variasi kata! Cukup ceritakan apa yang mau kamu lakukan dengan bahasa sehari-hari. Ketik <b>help</b> untuk panduan lengkap.', false);
+                    this.addMessage('Halo! Saya AI Assistant canggih — paham bahasa gaul, kalimat kompleks, dan sinonim! Cukup ceritakan apa yang mau kamu lakukan dengan bahasa sehari-hari. Ketik <b>help</b> untuk panduan lengkap.', false);
                 }, 500);
             },
             refreshKnownData() {
@@ -4612,9 +4740,18 @@
                         // Also check direct key match like 'dept', 'program' etc
                         if (entities[f.id.split('-').slice(-1)[0]] && !val) val = entities[f.id.split('-').slice(-1)[0]];
                     }
-                    // Specific mappings
-                    if (!val && entities.dept && f.l==='divisi') val = entities.dept;
-                    if (!val && entities.program && f.l==='program') val = entities.program;
+                    // Compound field-to-entity mapping (long label → short entity key)
+                    if (!val) {
+                        const compoundMap = {
+                            'sumber dana':'sumber','nama program':'program','nama barang':'barang',
+                            'nama departemen':'dept','nama folder':'nama','nama divisi':'dept',
+                            'harga satuan':'harga','nama kegiatan':'program','judul surat':'judul',
+                        };
+                        if (compoundMap[f.l] && entities[compoundMap[f.l]]) val = entities[compoundMap[f.l]];
+                    }
+                    // Specific mappings (ordered: longer labels first)
+                    if (!val && entities.sumber && f.l==='sumber dana') val = entities.sumber;
+                    if (!val && entities.nama && (f.l==='nama program'||f.l==='nama folder'||f.l==='nama departemen'||f.l==='nama divisi')) val = entities.nama;
                     if (!val && entities.barang && f.l==='barang') val = entities.barang;
                     if (!val && entities.nama && f.l==='nama') val = entities.nama;
                     if (!val && entities.nama && (f.l==='nama program'||f.l==='nama folder')) val = entities.nama;
@@ -4965,6 +5102,34 @@
                 if (m) m.innerHTML = '<div class="ai-msg">Halo! Saya asisten AI. Ketik <b>help</b> untuk lihat panduan.</div>';
                 this.saveHistory();
             },
+            // ── FAB Hide/Show ──
+            toggleFab() {
+                const fab = document.getElementById('aiFab');
+                const restore = document.getElementById('aiFabRestore');
+                const btn = document.getElementById('aiFabToggleBtn');
+                if (!fab) return;
+                if (fab.classList.contains('ai-fab-hidden')) {
+                    this.restoreFab();
+                } else {
+                    fab.classList.add('ai-fab-hidden');
+                    if (restore) restore.style.display = 'flex';
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    const key = 'ai_fab_hidden_' + (globalWorkspaceId||'0');
+                    try { localStorage.setItem(key, 'true'); } catch(e){}
+                    this.addMessage('🔘 FAB disembunyikan. Klik badge AI di pojok kiri bawah untuk memunculkan lagi.', false);
+                }
+            },
+            restoreFab() {
+                const fab = document.getElementById('aiFab');
+                const restore = document.getElementById('aiFabRestore');
+                const btn = document.getElementById('aiFabToggleBtn');
+                if (!fab) return;
+                fab.classList.remove('ai-fab-hidden');
+                if (restore) restore.style.display = 'none';
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                const key = 'ai_fab_hidden_' + (globalWorkspaceId||'0');
+                try { localStorage.setItem(key, 'false'); } catch(e){}
+            },
 
             // ── Direct Submit (v4) ──
             getSubmitFn(intent) {
@@ -5002,30 +5167,29 @@
                 }
             },
             getHelpText() {
-                return '<b>🤖 AI Assistant v4 — Makin Pinter!</b><br><br>' +
-                    '<b>📋 Contoh Isi Data:</b><br>' +
+                return '<b>🤖 AI Assistant v5 — Makin Canggih!</b><br><br>' +
+                    '<b>📋 Contoh Isi Data (Simple):</b><br>' +
                     '• <i>"isi rab kreatif seminar snack 50 box 15000"</i><br>' +
-                    '• <i>"saya mau input realisasi divisi humas acara pelantikan 2000000"</i><br>' +
-                    '• <i>"buat kpi untuk divisi kreatif program seminar target 100 orang capaian 50"</i><br>' +
-                    '• <i>"absen hadir hari ini"</i> atau <i>"presensi izin sakit"</i><br>' +
-                    '• <i>"buat program baru kreatif seminar besok jam 9 di aula"</i><br>' +
-                    '• <i>"jadwalin rapat evaluasi lusa"</i><br>' +
-                    '• <i>"buat divisi baru namanya Kreatif"</i><br><br>' +
+                    '• <i>"input realisasi humas acara pelantikan 2000000"</i><br>' +
+                    '• <i>"buat kpi kreatif program seminar target 100 capain 50"</i><br>' +
+                    '• <i>"absen hadir hari ini"</i> • <i>"presensi izin"</i><br>' +
+                    '• <i>"buat program kreatif seminar besok jam 9 di aula"</i><br>' +
+                    '• <i>"jadwalin rapat evaluasi minggu depan"</i><br><br>' +
+                    '<b>🧠 Contoh Kalimat Kompleks (Paham!):</b><br>' +
+                    '• <i>"tolong isi divisinya kreatif program itu adalah tutorial editing nama barangnya laptop jumlahnya 1 satuan lapis harga satuannya 100000"</i><br>' +
+                    '• <i>"divisinya humas programnya itu adalah seminar, barangnya itu spanduk, volumenya 5, harganya 50000"</i><br>' +
+                    '• <i>"barangnya snack jumlahnya 50 harga 15000 sumber dananya dari sponsor"</i><br><br>' +
                     '<b>🔍 Fitur Lanjutan:</b><br>' +
                     '• <i>"ubah harga snack jadi 20000"</i> — edit data<br>' +
                     '• <i>"cari barang kreatif"</i> — cari data<br>' +
                     '• <i>"total rab divisi kreatif"</i> — ringkasan<br>' +
-                    '• <i>"setujui pengajuan"</i> — approve (admin)<br><br>' +
-                    '<b>🆕 Fitur Baru v4:</b><br>' +
-                    '• <i>"reset"</i> / <i>"mulai ulang"</i> — hapus semua chat<br>' +
-                    '• <i>"simpan data"</i> / <i>"submit"</i> — simpan form langsung ke database<br>' +
-                    '• <i>"tolong isi rab"</i> — minta bantuan khusus<br>' +
+                    '• <i>"setujui pengajuan"</i> — approve (admin)<br>' +
+                    '• <i>"reset"</i> — hapus chat • <i>"submit"</i> — simpan data<br>' +
                     '• Ganti topik otomatis: <i>"sekarang aku mau buat program"</i><br><br>' +
                     '<b>🧠 Paham Bahasa Gaul & Slang:</b><br>' +
-                    '• <i>"bikinin rab kreatif snack 50 15000"</i><br>' +
-                    '• <i>"ngisi absen izin"</i> • <i>"tambahin program seminar"</i><br>' +
-                    '• <i>"makasih" • "gas" • "plis bantuin"</i><br><br>' +
-                    '<b>🎤 Voice:</b> Klik mikrofon & bicara biasa<br>' +
+                    '• <i>"bikinin rab"</i> • <i>"ngisi absen izin"</i> • <i>"makasih ya"</i> • <i>"gas"</i><br>' +
+                    '• <i>"goceng ya"</i> (5000) • <i>"ceban"</i> (10000) • <i>"plis bantuin"</i><br><br>' +
+                    '<b>🎤 Voice:</b> Klik mikrofon, AI akan tulis dulu, kirim otomatis 2 detik<br>' +
                     '<b>📋 Paste Excel:</b> Salin dari Excel, klik Paste<br>' +
                     '<b>⚡ Quick Actions:</b> Tombol di atas input';
             },
@@ -5034,6 +5198,8 @@
             initDrag() {
                 const fab = document.getElementById('aiFab');
                 if (!fab) return;
+                // Skip drag if FAB is hidden
+                if (fab.classList.contains('ai-fab-hidden')) return;
                 const start = (e) => this.startDrag(e);
                 fab.addEventListener('pointerdown', start);
                 fab.addEventListener('mousedown', start);
