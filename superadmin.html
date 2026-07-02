@@ -5,28 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin - Campus Innovate</title>
     <link rel="icon" href="data:,">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
-            --primary: #0A3055; 
-            --secondary: #F6B23B; 
-            --bg: #f4f7fa; 
-            --text: #1e293b; 
-            --white: #fff; 
-            --green: #2ecc71; 
-            --red: #e74c3c; 
-            --blue: #3498db; 
+            --primary: #0A3055;
+            --primary-soft: #f0f4f8;
+            --accent: #f59e0b;
+            --accent-soft: #fffbeb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
             --border: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.08);
         }
         
         * { 
             margin: 0; 
             padding: 0; 
             box-sizing: border-box; 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-family: 'Inter', sans-serif; 
         }
         
         body { 
@@ -55,7 +67,7 @@
         
         .mobile-header h2 { 
             font-size: 1.2rem; 
-            color: var(--secondary); 
+            color: var(--accent); 
             margin: 0;
         }
         
@@ -88,19 +100,19 @@
 
         .sidebar { 
             width: 260px; 
-            background: linear-gradient(180deg, var(--primary) 0%, #1a497d 100%); 
+            background: var(--primary); 
             height: 100vh; 
             padding: 30px 20px; 
-            color: var(--white); 
+            color: #fff; 
             position: fixed; 
-            box-shadow: 5px 0 20px rgba(0,0,0,0.05); 
+            box-shadow: 2px 0 8px rgba(0,0,0,0.04); 
             z-index: 100; 
             overflow-y: auto; 
             transition: 0.3s;
         }
         
         .sidebar h2 { 
-            color: var(--secondary); 
+            color: #fff; 
             margin-bottom: 5px; 
             font-size: 1.6rem; 
             display: flex; 
@@ -136,15 +148,14 @@
         
         .nav-item:hover { 
             background: rgba(255,255,255,0.1); 
-            color: var(--white); 
+            color: #fff; 
             transform: translateX(5px); 
         }
         
         .nav-item.active { 
-            background: var(--secondary); 
+            background: var(--primary-soft); 
             color: var(--primary); 
-            box-shadow: 0 5px 15px rgba(246, 178, 59, 0.25); 
-            font-weight: 800;
+            box-shadow: none; 
         }
         
         /* MAIN CONTENT */
@@ -193,13 +204,13 @@
 
         /* CARDS & GRIDS */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 35px; }
-        .stat-card { background: var(--white); padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border-bottom: 5px solid var(--primary); transition: 0.3s; position: relative; overflow: hidden;}
+        .stat-card { background: #fff; padding: 35px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border-bottom: 5px solid var(--primary); transition: 0.3s; position: relative; overflow: hidden;}
         .stat-card::after { content: '\f201'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: -15px; bottom: -20px; font-size: 7rem; color: var(--primary); opacity: 0.03; pointer-events: none;}
         .stat-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08);}
         .stat-card h3 { color: #64748b; font-size: 1.05rem; margin-bottom: 15px; font-weight: 700;}
         .stat-card p { font-size: 3rem; font-weight: 800; color: var(--primary); line-height: 1;}
         
-        .panel { background: var(--white); padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); overflow-x: auto; margin-bottom: 30px;}
+        .panel { background: #fff; padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); overflow-x: auto; margin-bottom: 30px;}
         .panel h2 { color: var(--primary); font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;}
         
         /* TABLES */
@@ -215,30 +226,30 @@
         .hidden-data { font-family: monospace; letter-spacing: 2px; color: #94a3b8; font-weight: bold; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; display: inline-block; min-width: 120px; text-align: center;}
         .hidden-data.revealed { letter-spacing: normal; color: var(--primary); font-weight: 700; background: #e0f2fe; border: 1px solid #bae6fd;}
         .btn-toggle-eye { background: transparent; border: none; color: #64748b; font-size: 1.1rem; cursor: pointer; margin-left: 8px; transition: 0.2s;}
-        .btn-toggle-eye:hover { color: var(--blue); transform: scale(1.1);}
+        .btn-toggle-eye:hover { color: var(--info); transform: scale(1.1);}
         
         .filter-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; align-items: center;}
         .filter-item { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px;}
         .filter-item label { font-size: 0.8rem; font-weight: 700; color: var(--primary);}
-        .filter-item select, .filter-item input { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-family: 'Plus Jakarta Sans'; font-size: 0.9rem; transition: all 0.3s ease;}
-        .filter-item select:focus, .filter-item input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);}
+        .filter-item select, .filter-item input { padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-family: 'Inter'; font-size: 0.9rem; transition: all 0.3s ease;}
+        .filter-item select:focus, .filter-item input:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);}
         
         /* SEARCH BAR ANIMATION */
         .search-wrapper { position: relative; width: 100%; display: flex; align-items: center;}
         .search-wrapper i { position: absolute; left: 12px; color: #94a3b8; transition: 0.3s ease; }
         .search-input { width: 100%; padding: 10px 10px 10px 35px !important; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
         .search-input:focus { transform: scale(1.02); }
-        .search-input:focus + i { color: var(--blue); transform: scale(1.1); }
+        .search-input:focus + i { color: var(--info); transform: scale(1.1); }
 
         /* BUTTONS & BADGES */
         .btn-action { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
-        .btn-del { background: #fee2e2; color: var(--red); }
-        .btn-del:hover { background: var(--red); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(231, 76, 60, 0.2);}
+        .btn-del { background: #fee2e2; color: var(--error); }
+        .btn-del:hover { background: var(--error); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(231, 76, 60, 0.2);}
         .btn-acc { background: #dcfce7; color: #16a34a; }
-        .btn-acc:hover { background: var(--green); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);}
-        .btn-lock { background: #e0f2fe; color: var(--blue); }
-        .btn-lock:hover { background: var(--blue); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);}
-        .btn-excel { background: linear-gradient(90deg, var(--green), #27ae60); color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; cursor: pointer; border: none; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; transition: 0.3s;}
+        .btn-acc:hover { background: var(--success); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);}
+        .btn-lock { background: #e0f2fe; color: var(--info); }
+        .btn-lock:hover { background: var(--info); color: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);}
+        .btn-excel { background: linear-gradient(90deg, var(--success), #27ae60); color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; cursor: pointer; border: none; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; transition: 0.3s;}
         .btn-excel:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(46, 204, 113, 0.3); }
 
         .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; display: inline-block;}
@@ -250,30 +261,30 @@
         /* MODAL */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 48, 85, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.4s ease; z-index: 10000; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background: var(--white); width: 95%; max-width: 650px; border-radius: 25px; padding: 40px; transform: scale(0.9) translateY(30px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;}
+        .modal-content { background: #fff; width: 95%; max-width: 650px; border-radius: 25px; padding: 40px; transform: scale(0.9) translateY(30px); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;}
         .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
         .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;}
         .modal-header h2 { color: var(--primary); font-size: 1.6rem; font-weight: 800; line-height: 1.2;}
         .close-btn { background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; color: #64748b; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;}
-        .close-btn:hover { background: var(--red); color: white; transform: rotate(90deg); }
+        .close-btn:hover { background: var(--error); color: white; transform: rotate(90deg); }
 
         /* FORM IN MODAL */
         .input-group { margin-bottom: 25px; }
         .input-group label { display: block; font-weight: 700; font-size: 0.95rem; color: var(--primary); margin-bottom: 10px;}
-        .input-group input, .input-group select { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1rem; outline: none; transition: 0.3s; font-weight: 500; color: var(--text);}
-        .input-group input:focus, .input-group select:focus { border-color: var(--blue); background: white; box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);}
+        .input-group input, .input-group select { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8fafc; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none; transition: 0.3s; font-weight: 500; color: var(--text);}
+        .input-group input:focus, .input-group select:focus { border-color: var(--info); background: white; box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);}
         .info-box { background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 25px; font-size: 0.9rem; color: #475569; line-height: 1.6;}
         
         /* DROPDOWN SELECT FOR ROLE IN TABLE */
-        .select-role-table { padding: 8px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--primary); outline: none; transition: 0.3s; background: white; cursor: pointer;}
-        .select-role-table:focus { border-color: var(--secondary); }
-        .select-role-table.role-admin { border-color: var(--blue); color: var(--blue); }
-        .select-role-table.role-user { border-color: var(--green); color: var(--green); }
-        .select-role-table.role-superadmin { border-color: var(--secondary); color: #b45309; background: #fef08a; cursor: not-allowed;}
+        .select-role-table { padding: 8px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--primary); outline: none; transition: 0.3s; background: white; cursor: pointer;}
+        .select-role-table:focus { border-color: var(--accent); }
+        .select-role-table.role-admin { border-color: var(--info); color: var(--info); }
+        .select-role-table.role-user { border-color: var(--success); color: var(--success); }
+        .select-role-table.role-superadmin { border-color: var(--accent); color: #b45309; background: #fef08a; cursor: not-allowed;}
         
         /* TOGGLE SWITCHES */
         .feature-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; border: 2px solid #f1f5f9; border-radius: 15px; margin-bottom: 15px; background: white; transition: 0.3s;}
-        .feature-item:hover { border-color: var(--blue); box-shadow: 0 5px 15px rgba(52,152,219,0.05);}
+        .feature-item:hover { border-color: var(--info); box-shadow: 0 5px 15px rgba(52,152,219,0.05);}
         .feature-info strong { display: flex; align-items: center; gap: 10px; color: var(--primary); font-size: 1.05rem; margin-bottom: 5px; font-weight: 800;}
         .feature-info span { font-size: 0.85rem; color: #64748b; }
         
@@ -281,7 +292,7 @@
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background: white; transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
-        input:checked + .slider { background-color: var(--green); }
+        input:checked + .slider { background-color: var(--success); }
         input:checked + .slider:before { transform: translateX(24px); }
         
         /* CHART CONTAINER */
@@ -308,13 +319,13 @@
         <div class="nav-item" onclick="switchMenu('server')"><i class="fa-solid fa-satellite-dish"></i> Status Server & Web</div>
         <div class="nav-item" onclick="switchMenu('analytics')"><i class="fa-solid fa-users-rays"></i> Analitik Pengguna</div>
         
-        <div class="nav-item" style="margin-top: 60px; background: rgba(231, 76, 60, 0.1); color: var(--red); justify-content: center;" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Keluar Sistem</div>
+        <div class="nav-item" style="margin-top: 60px; background: rgba(231, 76, 60, 0.1); color: var(--error); justify-content: center;" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Keluar Sistem</div>
     </div>
 
     <div class="main-content">
         <div class="header">
             <h1>Sistem Monitoring Global</h1>
-            <div class="admin-badge"><i class="fa-solid fa-shield-halved" style="color: var(--secondary); font-size: 1.2rem;"></i> Super Administrator</div>
+            <div class="admin-badge"><i class="fa-solid fa-shield-halved" style="color: var(--accent); font-size: 1.2rem;"></i> Super Administrator</div>
         </div>
 
         <div id="view-dashboard" class="view-section active">
@@ -387,8 +398,8 @@
                         <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px;">Manajemen seluruh identitas, pengubahan strata *role*, dan penghapusan akses anggota dari sistem.</p>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn-excel" style="background: var(--green); padding: 10px 20px;" onclick="exportUsersToCSV()"><i class="fa-solid fa-file-csv"></i> Export Data Pengguna</button>
-                        <button class="btn-excel" style="background: var(--blue); padding: 10px 20px;" onclick="openModal('modalDirectCreateUser')"><i class="fa-solid fa-user-plus"></i> Buat Pengguna Baru</button>
+                        <button class="btn-excel" style="background: var(--success); padding: 10px 20px;" onclick="exportUsersToCSV()"><i class="fa-solid fa-file-csv"></i> Export Data Pengguna</button>
+                        <button class="btn-excel" style="background: var(--info); padding: 10px 20px;" onclick="openModal('modalDirectCreateUser')"><i class="fa-solid fa-user-plus"></i> Buat Pengguna Baru</button>
                     </div>
                 </div>
 
@@ -486,13 +497,13 @@
 
         <div id="view-server" class="view-section">
             <div class="stats-grid">
-                <div class="stat-card" style="border-bottom-color: var(--green);">
+                <div class="stat-card" style="border-bottom-color: var(--success);">
                     <h3>Status Server Database Utama</h3>
-                    <p style="color: var(--green); font-size: 2rem;"><i class="fa-solid fa-check-circle" style="font-size: 1.5rem; margin-right: 10px;"></i> Berjalan Baik</p>
+                    <p style="color: var(--success); font-size: 2rem;"><i class="fa-solid fa-check-circle" style="font-size: 1.5rem; margin-right: 10px;"></i> Berjalan Baik</p>
                 </div>
-                <div class="stat-card" style="border-bottom-color: var(--blue);">
+                <div class="stat-card" style="border-bottom-color: var(--info);">
                     <h3>Rata-rata Ping / Latency</h3>
-                    <p style="color: var(--blue); font-size: 2rem;"><i class="fa-solid fa-satellite-dish" style="font-size: 1.5rem; margin-right: 10px;"></i> <span id="avg-ping">...</span> ms</p>
+                    <p style="color: var(--info); font-size: 2rem;"><i class="fa-solid fa-satellite-dish" style="font-size: 1.5rem; margin-right: 10px;"></i> <span id="avg-ping">...</span> ms</p>
                 </div>
             </div>
             <div class="panel">
@@ -607,7 +618,7 @@
                     Karena otentikasi Bypass digunakan, akun pengguna akan segera aktif seketika setelah tombol ini diklik. Pastikan Anda mencatat dan memberikan kredensial (Email & Sandi) kepada pemilik akun bersangkutan.
                 </div>
 
-                <button type="submit" class="btn-excel" id="btn-submit-create" style="width: 100%; justify-content: center; background: var(--blue); font-size: 1rem;">
+                <button type="submit" class="btn-excel" id="btn-submit-create" style="width: 100%; justify-content: center; background: var(--info); font-size: 1rem;">
                     <i class="fa-solid fa-paper-plane"></i> Buat Akun & Aktifkan
                 </button>
             </form>
@@ -626,7 +637,7 @@
             <form onsubmit="saveFeatureLocks(event)">
                 <div class="feature-item">
                     <div class="feature-info">
-                        <strong><i class="fa-solid fa-file-invoice-dollar" style="color:var(--secondary); font-size:1.2rem; width:25px; text-align:center;"></i> Modul Keuangan (RAB)</strong>
+                        <strong><i class="fa-solid fa-file-invoice-dollar" style="color:var(--accent); font-size:1.2rem; width:25px; text-align:center;"></i> Modul Keuangan (RAB)</strong>
                         <span>Akses penuh Menu Input RAB, Realisasi & Analitik Serapan.</span>
                     </div>
                     <label class="switch"><input type="checkbox" id="lock-finance"><span class="slider"></span></label>
@@ -634,7 +645,7 @@
                 
                 <div class="feature-item">
                     <div class="feature-info">
-                        <strong><i class="fa-solid fa-bullseye" style="color:var(--green); font-size:1.2rem; width:25px; text-align:center;"></i> Modul Indikator KPI</strong>
+                        <strong><i class="fa-solid fa-bullseye" style="color:var(--success); font-size:1.2rem; width:25px; text-align:center;"></i> Modul Indikator KPI</strong>
                         <span>Akses pembuatan target dan tracking progres KPI harian.</span>
                     </div>
                     <label class="switch"><input type="checkbox" id="lock-kpi"><span class="slider"></span></label>
@@ -642,7 +653,7 @@
 
                 <div class="feature-item">
                     <div class="feature-info">
-                        <strong><i class="fa-solid fa-file-signature" style="color:var(--blue); font-size:1.2rem; width:25px; text-align:center;"></i> Digital Office (E-Sign)</strong>
+                        <strong><i class="fa-solid fa-file-signature" style="color:var(--info); font-size:1.2rem; width:25px; text-align:center;"></i> Digital Office (E-Sign)</strong>
                         <span>Sistem persuratan elektronik, pengajuan proposal & OCR.</span>
                     </div>
                     <label class="switch"><input type="checkbox" id="lock-do"><span class="slider"></span></label>
@@ -841,7 +852,7 @@
             const { data: userRoles, error } = await supabaseClient.from('user_roles').select('*').order('created_at', { ascending: false });
             
             if (error) {
-                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--red); padding: 20px;">Gagal memuat data pengguna. Database tertolak.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--error); padding: 20px;">Gagal memuat data pengguna. Database tertolak.</td></tr>';
                 return;
             }
 
@@ -1021,7 +1032,7 @@
                 let disabledAttr = ur.role === 'superadmin' ? 'disabled title="Akses absolut tidak dapat diubah"' : '';
                 
                 // Styling Last Seen
-                let lastSeenColor = ur.is_inactive ? 'var(--red)' : 'var(--green)';
+                let lastSeenColor = ur.is_inactive ? 'var(--error)' : 'var(--success)';
                 let lastSeenIcon = ur.is_inactive ? 'fa-solid fa-moon' : 'fa-solid fa-bolt';
 
                 tableBody.innerHTML += `
@@ -1276,7 +1287,7 @@
             
             if (error) {
                 console.error(error);
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--red); padding: 20px;">Gagal memuat jalur pipa data permintaan.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--error); padding: 20px;">Gagal memuat jalur pipa data permintaan.</td></tr>';
                 return;
             }
 
@@ -1284,7 +1295,7 @@
             tableBody.innerHTML = '';
 
             if (pendingRequests.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 50px;"><i class="fa-solid fa-check-double" style="font-size: 3rem; color: var(--green); margin-bottom: 15px; display: block;"></i>Bersih! Tidak ada tumpukan permintaan akses baru (Zero Inbox).</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 50px;"><i class="fa-solid fa-check-double" style="font-size: 3rem; color: var(--success); margin-bottom: 15px; display: block;"></i>Bersih! Tidak ada tumpukan permintaan akses baru (Zero Inbox).</td></tr>';
                 return;
             }
 
@@ -1296,7 +1307,7 @@
                 tableBody.innerHTML += `
                     <tr>
                         <td><strong style="color: var(--primary); font-size: 1.05rem;">${req.nama}</strong></td>
-                        <td style="color: var(--blue); font-weight: 500;">${req.email}</td>
+                        <td style="color: var(--info); font-weight: 500;">${req.email}</td>
                         <td><span class="badge badge-warning"><i class="fa-solid fa-building"></i> ${req.organisasi}</span></td>
                         <td>${req.dob}</td>
                         <td style="color: #64748b;">${reqDate} <strong style="color:var(--text); margin-left:5px;">${reqTime}</strong></td>
@@ -1322,10 +1333,10 @@
                     <span style="color:#64748b;">Nama Pendaftar:</span> <strong style="color:var(--primary); font-size:1.05rem;">${req.nama}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
-                    <span style="color:#64748b;">Alamat Surel (Email):</span> <strong style="color:var(--blue);">${req.email}</strong>
+                    <span style="color:#64748b;">Alamat Surel (Email):</span> <strong style="color:var(--info);">${req.email}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px; margin-bottom: 10px;">
-                    <span style="color:#64748b;">Kata Sandi (Password):</span> <strong style="color:var(--red); font-family: monospace;">${passToDisplay}</strong>
+                    <span style="color:#64748b;">Kata Sandi (Password):</span> <strong style="color:var(--error); font-family: monospace;">${passToDisplay}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between;">
                     <span style="color:#64748b;">Organisasi Diajukan:</span> <strong style="color:#d97706; background:#fef3c7; padding:2px 10px; border-radius:10px;">${req.organisasi}</strong>
@@ -1488,7 +1499,7 @@
         // ==========================================
         async function renderServerStatus() {
             const tableBody = document.getElementById('serverTableBody');
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-wifi fa-fade" style="font-size:2rem; margin-bottom:15px; display:block; color:var(--blue);"></i> Mengukur packet loss dan node network...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px;"><i class="fa-solid fa-wifi fa-fade" style="font-size:2rem; margin-bottom:15px; display:block; color:var(--info);"></i> Mengukur packet loss dan node network...</td></tr>';
             
             // Visual simulated ping wait time to give the "feel" of a network trace
             await new Promise(r => setTimeout(r, 1200));
@@ -1510,8 +1521,8 @@
                     const pingMs = Math.floor(Math.random() * 63) + 12;
                     totalPing += pingMs;
                     
-                    let pingColor = 'var(--blue)';
-                    if(pingMs > 50) pingColor = 'var(--secondary)'; // Yellow if a bit high
+                    let pingColor = 'var(--info)';
+                    if(pingMs > 50) pingColor = 'var(--accent)'; // Yellow if a bit high
                     
                     const timeNow = new Date().toLocaleTimeString('id-ID', { hour12: false });
 
@@ -1579,7 +1590,7 @@
                         label: 'Total Kuantitas Activity (Absensi/Login)',
                         data: dataCounts,
                         backgroundColor: '#0A3055', // Ganti ke primary color agar lebih elegan
-                        hoverBackgroundColor: '#F6B23B',
+                        hoverBackgroundColor: '#f59e0b',
                         borderRadius: 8,
                         borderWidth: 0
                     }]
@@ -1595,8 +1606,8 @@
                         legend: { display: false },
                         tooltip: {
                             backgroundColor: 'rgba(10, 48, 85, 0.9)',
-                            titleFont: { family: 'Plus Jakarta Sans', size: 14 },
-                            bodyFont: { family: 'Plus Jakarta Sans', size: 13 },
+                            titleFont: { family: 'Inter', size: 14 },
+                            bodyFont: { family: 'Inter', size: 13 },
                             padding: 15,
                             cornerRadius: 8,
                             callbacks: {
@@ -1607,11 +1618,11 @@
                     scales: {
                         y: { 
                             beginAtZero: true, 
-                            ticks: { precision: 0, font: {family: 'Plus Jakarta Sans'} },
+                            ticks: { precision: 0, font: {family: 'Inter'} },
                             grid: { color: '#f1f5f9', borderDash: [5, 5] }
                         },
                         x: { 
-                            ticks: { font: {family: 'Plus Jakarta Sans', weight: '600'} },
+                            ticks: { font: {family: 'Inter', weight: '600'} },
                             grid: { display: false }
                         }
                     }

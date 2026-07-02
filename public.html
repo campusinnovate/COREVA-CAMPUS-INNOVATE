@@ -5,14 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website Generator - Campus Innovate</title>
     <link rel="icon" type="image/png" href="coreva_logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --theme-color: #0A3055; --bg-body: #f8fafc; --text: #1e293b; --secondary: #F6B23B; --green: #2ecc71; --red: #e74c3c;}
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        :root {
+            --primary: #0A3055;
+            --primary-soft: #f0f4f8;
+            --accent: #f59e0b;
+            --accent-soft: #fffbeb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
         /* ============================================
            FIX BUG UTAMA: overflow-x: hidden dipindah
@@ -20,19 +42,19 @@
            dan position sticky navbar tidak rusak
            ============================================ */
         html { overflow-x: hidden; scroll-behavior: smooth; scroll-padding-top: 80px; }
-        body { background: var(--bg-body); color: var(--text); }
+        body { background: var(--bg); color: var(--text); }
 
         /* CUSTOM TOAST NOTIFICATION */
         #toast-container { position: fixed; top: 90px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; font-weight: 600; font-size: 0.95rem; border-left: 5px solid var(--theme-color); transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast { background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 15px; font-weight: 600; font-size: 0.95rem; border-left: 5px solid var(--primary); transform: translateX(150%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .toast.show { transform: translateX(0); }
         .toast i { font-size: 1.3rem; }
-        .toast.success { border-color: var(--green); color: #166534; }
-        .toast.success i { color: var(--green); }
-        .toast.error { border-color: var(--red); color: #991b1b; }
-        .toast.error i { color: var(--red); }
-        .toast.info { border-color: var(--theme-color); color: var(--theme-color); }
-        .toast.info i { color: var(--theme-color); }
+        .toast.success { border-color: var(--success); color: #166534; }
+        .toast.success i { color: var(--success); }
+        .toast.error { border-color: var(--error); color: #991b1b; }
+        .toast.error i { color: var(--error); }
+        .toast.info { border-color: var(--primary); color: var(--primary); }
+        .toast.info i { color: var(--primary); }
 
         /* BANNER PENGUMUMAN */
         #global-announcement { display: none; background: linear-gradient(90deg, #e67e22, #d35400); color: white; padding: 12px 40px; text-align: center; position: relative; z-index: 1001; animation: slideDown 0.5s ease; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);}
@@ -44,14 +66,14 @@
 
         /* NAVBAR PUBLIK */
         .public-navbar { position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 30px rgba(0,0,0,0.03); transition: all 0.3s ease;}
-        .public-navbar .brand { font-weight: 800; color: var(--theme-color); font-size: 1.5rem; display: flex; align-items: center; gap: 12px;}
+        .public-navbar .brand { font-weight: 800; color: var(--primary); font-size: 1.5rem; display: flex; align-items: center; gap: 12px;}
         .public-nav-links { display: flex; gap: 30px; align-items: center; }
         .public-nav-links a { text-decoration: none; color: #475569; font-size: 0.95rem; font-weight: 700; transition: 0.3s; position: relative; padding: 5px 0;}
-        .public-nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: var(--secondary); transition: 0.3s; border-radius: 5px;}
-        .public-nav-links a:hover { color: var(--theme-color); }
+        .public-nav-links a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: var(--accent); transition: 0.3s; border-radius: 5px;}
+        .public-nav-links a:hover { color: var(--primary); }
         .public-nav-links a:hover::after { width: 100%; }
         
-        .mobile-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; color: var(--theme-color); cursor: pointer; transition: 0.2s;}
+        .mobile-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; color: var(--primary); cursor: pointer; transition: 0.2s;}
 
         /* LAYOUT & UTILITIES */
         .page-container { max-width: 1150px; margin: 0 auto; padding: 0 20px; }
@@ -63,14 +85,14 @@
 
         /* HERO SECTION */
         .hero-layout { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; position: relative; background-size: cover; background-position: center; min-height: 550px; margin-top: 0; }
-        .hero-layout::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,48,85,0.92), rgba(0,0,0,0.7)); z-index: 1;}
+        .hero-layout::before { content: ''; position: absolute; inset: 0; background: rgba(10,48,85,0.85); z-index: 1;}
         .hero-content { position: relative; z-index: 2; max-width: 850px; padding: 20px; animation: scaleIn 1s ease-out forwards;}
         .hero-content h1 { font-size: 4rem; font-weight: 800; margin-bottom: 25px; line-height: 1.15; text-shadow: 0 10px 25px rgba(0,0,0,0.4); letter-spacing: -1px;}
         .hero-content p { font-size: 1.3rem; opacity: 0.9; line-height: 1.6; }
 
         /* TYPOGRAPHY */
-        .section-heading { font-size: 2.2rem; font-weight: 800; color: var(--theme-color); margin-bottom: 40px; display: flex; align-items: center; gap: 15px; text-transform: capitalize; letter-spacing: -0.5px;}
-        .section-heading::after { content: ''; flex: 1; height: 3px; background: linear-gradient(90deg, var(--theme-color), transparent); opacity: 0.15; border-radius: 5px;}
+        .section-heading { font-size: 2.2rem; font-weight: 800; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 15px; text-transform: capitalize; letter-spacing: -0.5px;}
+        .section-heading::after { content: ''; flex: 1; height: 3px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.15; border-radius: 5px;}
 
         /* ==========================================
            FIX BUG STRUKTUR ORGANISASI
@@ -104,7 +126,7 @@
             white-space: nowrap;
             box-sizing: border-box;
             /* Background biar ada feel section tersendiri */
-            background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+            background: var(--bg);
         }
         
         .tree-preview-wrapper::-webkit-scrollbar { height: 8px; }
@@ -197,7 +219,7 @@
         .tree-card-preview:hover { 
             box-shadow: 0 12px 30px rgba(10,48,85,0.12); 
             transform: translateY(-4px); 
-            border-color: var(--secondary);
+            border-color: var(--accent);
         }
         .tree-avatar-preview { 
             width: 56px; height: 56px; 
@@ -208,11 +230,11 @@
             font-size: 1.4rem; color: #94a3b8; 
             border: 2px solid #e2e8f0;
         }
-        .tree-name-preview { font-weight: 800; font-size: 0.95rem; color: var(--theme-color); margin-bottom: 4px; line-height: 1.3;}
+        .tree-name-preview { font-weight: 800; font-size: 0.95rem; color: var(--primary); margin-bottom: 4px; line-height: 1.3;}
         .tree-role-preview { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; background: #f1f5f9; padding: 3px 10px; border-radius: 20px; display: inline-block;}
         .bph-badge-preview { 
             position: absolute; top: -12px; left: 50%; transform: translateX(-50%); 
-            background: var(--theme-color); color: white; 
+            background: var(--primary); color: white; 
             padding: 4px 15px; border-radius: 20px; 
             font-weight: 700; font-size: 0.68rem; white-space: nowrap; letter-spacing: 0.5px; 
             box-shadow: 0 4px 12px rgba(10,48,85,0.25);
@@ -222,20 +244,20 @@
         .data-grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; }
         .stat-card { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; transition: 0.3s;}
         .stat-card:hover { transform: scale(1.02); }
-        .stat-card .amount { font-size: 2.8rem; font-weight: 800; color: var(--theme-color); letter-spacing: -1px; }
+        .stat-card .amount { font-size: 2.8rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
         
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
         .kpi-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: 0.3s; border: 1px solid transparent;}
-        .kpi-card:hover { transform: translateY(-5px); border-color: var(--secondary); }
+        .kpi-card:hover { transform: translateY(-5px); border-color: var(--accent); }
         .kpi-bar-bg { width: 100%; background: #f1f5f9; height: 14px; border-radius: 10px; margin-top: 15px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
-        .kpi-bar-fill { height: 100%; background: linear-gradient(90deg, var(--theme-color), var(--secondary)); border-radius: 10px; transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;}
+        .kpi-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 10px; transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;}
         .kpi-bar-fill::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shimmer 2s infinite; }
 
         /* WIDGET STATUS PROGRAM (COMPACT UI) */
         .prog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;}
-        .prog-item { background: white; padding: 22px; border-radius: 16px; border-left: 5px solid var(--secondary); box-shadow: 0 8px 25px rgba(0,0,0,0.03); transition: 0.3s; display: flex; flex-direction: column; justify-content: center;}
+        .prog-item { background: white; padding: 22px; border-radius: 16px; border-left: 5px solid var(--accent); box-shadow: 0 8px 25px rgba(0,0,0,0.03); transition: 0.3s; display: flex; flex-direction: column; justify-content: center;}
         .prog-item:hover { transform: translateX(8px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
-        .prog-item h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--theme-color); line-height: 1.3; font-weight: 800;}
+        .prog-item h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--primary); line-height: 1.3; font-weight: 800;}
         .prog-item p { font-size: 0.85rem; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;}
         .badge-status { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; text-transform: uppercase; align-self: flex-start;}
 
@@ -245,16 +267,16 @@
         /* GRID NEWS */
         .news-grid { display: grid; gap: 30px; }
         .news-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.04); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; height: 100%; display: flex; flex-direction: column; border: 1px solid transparent;}
-        .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border-color: var(--secondary); }
+        .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border-color: var(--accent); }
         .news-image { height: 240px; background-color: #e2e8f0; background-size: cover; background-position: center; transition: 0.5s; position: relative;}
-        .news-image::after { content: '\f06e  Baca Selengkapnya'; font-family: 'Font Awesome 6 Free', 'Plus Jakarta Sans'; font-weight: 900; position: absolute; inset: 0; background: rgba(10,48,85,0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; opacity: 0; transition: 0.3s; }
+        .news-image::after { content: '\f06e  Baca Selengkapnya'; font-family: 'Font Awesome 6 Free', 'Inter'; font-weight: 900; position: absolute; inset: 0; background: rgba(10,48,85,0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; opacity: 0; transition: 0.3s; }
         .news-card:hover .news-image { transform: scale(1.05); }
         .news-card:hover .news-image::after { opacity: 1; }
         .news-img-wrapper { overflow: hidden; }
         .news-body { padding: 30px; display: flex; flex-direction: column; flex-grow: 1; background: white; position: relative; z-index: 2;}
-        .news-meta { font-size: 0.75rem; color: var(--theme-color); background: rgba(10,48,85,0.08); padding: 6px 15px; border-radius: 20px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; display: inline-block; align-self: flex-start; letter-spacing: 0.5px;}
-        .news-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 12px; line-height: 1.4; color: var(--theme-color); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: 0.3s;}
-        .news-card:hover .news-title { color: var(--secondary); }
+        .news-meta { font-size: 0.75rem; color: var(--primary); background: rgba(10,48,85,0.08); padding: 6px 15px; border-radius: 20px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; display: inline-block; align-self: flex-start; letter-spacing: 0.5px;}
+        .news-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 12px; line-height: 1.4; color: var(--primary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: 0.3s;}
+        .news-card:hover .news-title { color: var(--accent); }
         .news-desc { font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;}
         .news-desc ul, .news-desc ol { padding-left: 20px; margin-top: 5px;}
 
@@ -267,21 +289,21 @@
         .modal-header { position: relative; width: 100%; height: 250px; background: #e2e8f0; background-size: cover; background-position: center; display: flex; align-items: flex-end;}
         .modal-header::before { content: ''; position: absolute; inset:0; background: linear-gradient(0deg, rgba(10,48,85,0.9), transparent); }
         .modal-header-content { position: relative; z-index: 1; padding: 40px; color: white;}
-        .modal-header-content .badge { background: var(--secondary); color: var(--theme-color); font-size: 0.8rem; padding: 6px 15px; border-radius: 20px; font-weight: 800; margin-bottom: 15px; display: inline-block; letter-spacing: 0.5px;}
+        .modal-header-content .badge { background: var(--accent); color: var(--primary); font-size: 0.8rem; padding: 6px 15px; border-radius: 20px; font-weight: 800; margin-bottom: 15px; display: inline-block; letter-spacing: 0.5px;}
         .modal-header-content h2 { font-size: 2rem; font-weight: 800; line-height: 1.3; text-shadow: 0 4px 10px rgba(0,0,0,0.3);}
         
         .modal-close { position: absolute; top: 20px; right: 20px; width: 45px; height: 45px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); color: white; border: none; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: 0.3s; z-index: 2; display: flex; align-items: center; justify-content: center;}
-        .modal-close:hover { background: var(--red); transform: rotate(90deg) scale(1.1);}
+        .modal-close:hover { background: var(--error); transform: rotate(90deg) scale(1.1);}
         
         .modal-body { padding: 40px 50px; overflow-y: auto; flex-grow: 1; font-size: 1.1rem; line-height: 1.9; color: #334155;}
         .modal-body p { margin-bottom: 15px; }
         .modal-body ul, .modal-body ol { padding-left: 20px; margin-bottom: 15px; }
 
         /* LOADING & FOOTER */
-        .loader-screen { position: fixed; inset:0; background:var(--bg-body); z-index: 99999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: 0.5s ease; }
-        .spinner { border: 4px solid rgba(10,48,85,0.1); border-top: 4px solid var(--theme-color); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 25px;}
-        footer { background: var(--theme-color); color: #cbd5e1; padding: 70px 20px 40px; text-align: center; margin-top: 80px; position: relative;}
-        footer::before { content:''; position:absolute; top:0; left:0; width:100%; height:5px; background:var(--secondary); }
+        .loader-screen { position: fixed; inset:0; background:var(--bg); z-index: 99999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: 0.5s ease; }
+        .spinner { border: 4px solid rgba(10,48,85,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 25px;}
+        footer { background: var(--primary); color: #cbd5e1; padding: 70px 20px 40px; text-align: center; margin-top: 80px; position: relative;}
+        footer::before { content:''; position:absolute; top:0; left:0; width:100%; height:5px; background:var(--accent); }
         
         @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -334,7 +356,7 @@
 
     <div id="loader" class="loader-screen">
         <div class="spinner"></div>
-        <h3 style="color: var(--theme-color); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">Menyiapkan Ruang Publik...</h3>
+        <h3 style="color: var(--primary); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">Menyiapkan Ruang Publik...</h3>
         <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">Mengambil data langsung dari Dashboard Internal</p>
     </div>
 
@@ -509,7 +531,7 @@
                 queryKey = 'custom_domain';
                 queryValue = currentDomain;
             } else {
-                document.getElementById('loader').innerHTML = `<h2 style="color:var(--red);">Akses Ditolak: Parameter URL (org / workspace) Tidak Ditemukan!</h2><p style="color:#666; margin-top:10px;">Gunakan ?workspace=[ID] atau ?org=[Nama_Organisasi].</p>`; 
+                document.getElementById('loader').innerHTML = `<h2 style="color:var(--error);">Akses Ditolak: Parameter URL (org / workspace) Tidak Ditemukan!</h2><p style="color:#666; margin-top:10px;">Gunakan ?workspace=[ID] atau ?org=[Nama_Organisasi].</p>`; 
                 return;
             }
 
@@ -528,7 +550,7 @@
                 }
                 
                 if (!wsData) {
-                    document.getElementById('loader').innerHTML = `<h2 style="color:var(--red);">Akses Ditolak: Organisasi tidak ditemukan di server!</h2><p style="color:#666; margin-top:10px;">Domain atau link belum terdaftar.</p>`; 
+                    document.getElementById('loader').innerHTML = `<h2 style="color:var(--error);">Akses Ditolak: Organisasi tidak ditemukan di server!</h2><p style="color:#666; margin-top:10px;">Domain atau link belum terdaftar.</p>`; 
                     return;
                 }
                 
@@ -614,7 +636,7 @@
 
                 let navBrandContent = logoUrl 
                     ? `<img src="${escapeHtml(logoUrl)}" style="height:35px; object-fit:contain;"> ${escapeHtml(orgName)}` 
-                    : `<i class="fa-solid fa-layer-group" style="color: var(--secondary);"></i> ${escapeHtml(orgName)}`;
+                    : `<i class="fa-solid fa-layer-group" style="color: var(--accent);"></i> ${escapeHtml(orgName)}`;
 
                 let blocksHTMLString = `
                     <div class="public-navbar">
@@ -644,7 +666,7 @@
                     let htmlChunk = '';
 
                     if (b.type === 'hero') {
-                        let bgImg = b.data.url ? `background-image: url('${escapeHtml(b.data.url)}');` : `background-color: var(--theme-color);`;
+                        let bgImg = b.data.url ? `background-image: url('${escapeHtml(b.data.url)}');` : `background-color: var(--primary);`;
                         htmlChunk = `
                         <section id="section-${b.id}" class="dynamic-block hero-layout reveal" style="border-radius: ${b.styles.borderRadius}; ${bgImg}">
                             <div class="hero-content">
@@ -758,10 +780,10 @@
                                                 <div class="amount" style="color:#1e293b;" id="fin-rab-${i}">...</div>
                                             </div>
                                         </div>
-                                        <div class="stat-card" style="border-radius: ${b.styles.borderRadius}; border-left: 6px solid var(--green);">
+                                        <div class="stat-card" style="border-radius: ${b.styles.borderRadius}; border-left: 6px solid var(--success);">
                                             <div>
                                                 <h3 style="color:#64748b; font-size:1.1rem; margin-bottom:5px;">Realisasi / Terserap</h3>
-                                                <div class="amount" style="color:var(--green);" id="fin-real-${i}">...</div>
+                                                <div class="amount" style="color:var(--success);" id="fin-real-${i}">...</div>
                                             </div>
                                         </div>
                                     </div>
@@ -791,7 +813,7 @@
                                 if(ctx) {
                                     new Chart(ctx.getContext('2d'), {
                                         type: 'doughnut', 
-                                        data: { labels: ['Terpakai', 'Tersisa'], datasets: [{ data: [real, total-real<0?0:total-real], backgroundColor: ['#2ecc71', '#e2e8f0'], borderWidth: 0 }] },
+                                        data: { labels: ['Terpakai', 'Tersisa'], datasets: [{ data: [real, total-real<0?0:total-real], backgroundColor: ['var(--success)', '#e2e8f0'], borderWidth: 0 }] },
                                         options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom'}, datalabels: { display: false } } }
                                     });
                                 }
@@ -817,7 +839,7 @@
                                     kData.forEach(kpi => {
                                         let persen = kpi.target > 0 ? (kpi.capaian / kpi.target) * 100 : 0;
                                         if(persen > 100) persen = 100;
-                                        let colorClass = persen >= 100 ? '#2ecc71' : 'var(--theme-color)';
+                                        let colorClass = persen >= 100 ? 'var(--success)' : 'var(--primary)';
                                         
                                         kpiHtml += `
                                         <div class="kpi-card" style="border-radius: ${blockStyles.borderRadius};">
@@ -856,7 +878,7 @@
                                         let col = p.status==='Selesai'?'#166534':(p.status==='Progress'?'#92400e':'#475569');
                                         pHtml += `
                                         <div class="prog-item" style="border-radius: ${blockStyles.borderRadius};">
-                                            <h3 style="font-size:1.1rem; margin-bottom:8px; color:var(--theme-color);">${escapeHtml(p.nama_program)}</h3>
+                                            <h3 style="font-size:1.1rem; margin-bottom:8px; color:var(--primary);">${escapeHtml(p.nama_program)}</h3>
                                             <p style="font-size:0.85rem; color:#64748b; margin-bottom: 12px; display:flex; align-items:center; gap:6px;"><i class="fa-regular fa-calendar"></i> ${escapeHtml(p.tanggal_pelaksanaan) || 'Belum diatur'}</p>
                                             <span class="badge-status" style="background:${bg}; color:${col};">${escapeHtml(p.status)}</span>
                                         </div>`;
@@ -888,7 +910,7 @@
                 }, 500);
 
             } catch(e) {
-                document.getElementById('loader').innerHTML = `<h2 style="color:var(--red); text-align:center;">Error saat merender halaman.<br>Terjadi kesalahan koneksi database.</h2>`;
+                document.getElementById('loader').innerHTML = `<h2 style="color:var(--error); text-align:center;">Error saat merender halaman.<br>Terjadi kesalahan koneksi database.</h2>`;
                 console.error(e);
             }
         });
