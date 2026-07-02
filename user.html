@@ -3994,7 +3994,7 @@
                     // "itu adalah" / "itu" / "itu ada" markers → strip to space
                     'itu adalah':' ','itu':' ','itu ada':' ','adalah':' ','yaitu':' ',
                     // Math operators
-                    '*':'kali','dikali':'kali','dibagi':'bagi','per':'/',
+                    'dikali':'kali','dibagi':'bagi','per':'/',
                 },
             },
 
@@ -4086,7 +4086,7 @@
             normalizeText(text) {
                 let t = ' ' + text.toLowerCase() + ' ';
                 for (const [informal, formal] of Object.entries(this.DICTIONARY.NORMALIZE)) {
-                    const rx = new RegExp('\\b' + informal + '\\b', 'gi');
+                    const rx = new RegExp('\\b' + escapeRegex(informal) + '\\b', 'gi');
                     t = t.replace(rx, formal);
                 }
                 return t.trim();
@@ -4097,7 +4097,7 @@
                 // Add synonyms for matched words to enrich the text
                 for (const [key, entry] of Object.entries(this.DICTIONARY.SUBJECT)) {
                     for (const word of entry.id) {
-                        const rx = new RegExp('\\b' + word + '\\b', 'gi');
+                        const rx = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
                         if (rx.test(result)) {
                             // Append all synonyms for richer matching
                             const others = entry.id.filter(w => w !== word).concat(entry.en || []);
@@ -4107,7 +4107,7 @@
                 }
                 for (const [key, entry] of Object.entries(this.DICTIONARY.ACTION)) {
                     for (const word of entry.id) {
-                        const rx = new RegExp('\\b' + word + '\\b', 'gi');
+                        const rx = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
                         if (rx.test(result)) {
                             const others = entry.id.filter(w => w !== word).concat(entry.en || []);
                             result += ' ' + others.join(' ');
@@ -5330,6 +5330,10 @@
                 } catch (e) {}
             },
         };
+
+        function escapeRegex(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
 
     </script>
 </body>
