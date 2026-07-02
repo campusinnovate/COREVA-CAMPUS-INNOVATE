@@ -3789,6 +3789,86 @@
             fabX: -1, fabY: -1, // -1 = not initialized, use default
             dragBoundFn: null, dragEndFn: null,
 
+            // ── Kamus Bahasa Indonesia (Dictionary) ──
+            DICTIONARY: {
+                SUBJECT: {
+                    rab:         { id:['rab','anggaran','rincian anggaran','biaya','dana','budget'], en:['budget','rab','cost'] },
+                    realisasi:   { id:['realisasi','pengeluaran','belanja','pemakaian dana','dana keluar'], en:['realization','spending','expense'] },
+                    kpi:         { id:['kpi','indikator','target','capaian','ukuran','tolok ukur'], en:['kpi','indicator','target'] },
+                    absensi:     { id:['absen','absensi','presensi','kehadiran','hadir'], en:['attendance','presence'] },
+                    program:     { id:['program','event','kegiatan','acara','proker','program kerja','agenda'], en:['program','event','activity'] },
+                    jadwal:      { id:['jadwal','schedule','agenda','rapat','meeting','pertemuan'], en:['schedule','agenda','meeting'] },
+                    divisi:      { id:['divisi','departemen','dept','bagian','unit','seksi','bidang'], en:['division','department','section'] },
+                    folder:      { id:['folder','direktori','berkas','map'], en:['folder','directory'] },
+                    surat:       { id:['surat','dokumen','pengajuan','digital office','arsip','naskah'], en:['letter','document','memo'] },
+                    notulensi:   { id:['notulensi','notulen','catatan rapat','risalah','minutes'], en:['minutes','notes'] },
+                    dashboard:   { id:['dashboard','dasbor','beranda','home','utama'], en:['dashboard','home'] },
+                    data:        { id:['data','informasi','laporan','report'], en:['data','information','report'] },
+                },
+                ACTION: {
+                    buat:    { id:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi'], en:['make','create','add','input','fill'] },
+                    hapus:   { id:['hapus','delete','hilang','buang','remove','menghapus','membuang'], en:['delete','remove','erase'] },
+                    ubah:    { id:['ubah','edit','koreksi','revisi','perbaiki','ganti','update','memperbarui'], en:['edit','change','update','modify'] },
+                    lihat:   { id:['lihat','tampilkan','buka','ke','pindah','menu','tab','tunjuk','menuju','navigasi'], en:['view','show','open','go','navigate'] },
+                    cari:    { id:['cari','temukan','filter','sortir','mencari'], en:['search','find','filter'] },
+                    export:  { id:['export','download','unduh','simpan','cetak','print'], en:['export','download','save','print'] },
+                    setuju:  { id:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui'], en:['approve','confirm','verify'] },
+                    tolak:   { id:['tolak','reject','batal','tidak setuju','menolak'], en:['reject','decline','cancel'] },
+                },
+                TIME: {
+                    besok:     { id:['besok','esok','bsk','keesokan'], en:['tomorrow'] },
+                    lusa:      { id:['lusa','lusa depan'], en:['day after tomorrow'] },
+                    kemarin:   { id:['kemarin','kmrn','kemaren'], en:['yesterday'] },
+                    hari_ini:  { id:['hari ini','sekarang','skrg','hari ini juga','saat ini'], en:['today','now'] },
+                    minggu_dpn:{ id:['minggu depan','pekan depan','next week'], en:['next week'] },
+                    bulan_dpn: { id:['bulan depan','month depan'], en:['next month'] },
+                },
+                MODIFIER: {
+                    baru:    { id:['baru','anyar','fresh'], en:['new'] },
+                    lama:    { id:['lama','old','terdahulu'], en:['old'] },
+                    semua:   { id:['semua','seluruh','all','total','keseluruhan'], en:['all','every'] },
+                    aktif:   { id:['aktif','active','berjalan'], en:['active','ongoing'] },
+                    selesai: { id:['selesai','done','completed','lunas','tuntas'], en:['done','completed'] },
+                },
+                ENTITY: {
+                    dept:      { id:['divisi','departemen','dept','bagian','unit','org','organisasi'] },
+                    program:   { id:['program','event','kegiatan','acara','proker','prog'] },
+                    barang:    { id:['barang','nama barang','kebutuhan','item','bahan','alat'] },
+                    harga:     { id:['harga','nominal','biaya','cost','rp','jumlah uang','nilai'] },
+                    volume:    { id:['volume','jumlah','qty','kuantitas','banyak'] },
+                    satuan:    { id:['satuan','unit','per'] },
+                    tempat:    { id:['tempat','lokasi','di','venue','ruang','gedung'] },
+                    tanggal:   { id:['tanggal','tgl','date','hari','pada'] },
+                    waktu:     { id:['waktu','jam','pukul'] },
+                    status:    { id:['status','state','kondisi','keadaan'] },
+                    nama:      { id:['nama','judul','title','name'] },
+                    sumber:    { id:['sumber dana','dari','asal dana','funding'] },
+                    deskripsi: { id:['deskripsi','keterangan','detail','aktivitas','uraian','penjelasan'] },
+                    target:    { id:['target','goal','sasaran','objective'] },
+                    capaian:   { id:['capaian','achievement','hasil','pencapaian'] },
+                    tipe:      { id:['tipe','jenis','type','kategori','macam','sort'] },
+                    penerima:  { id:['penerima','tujuan','untuk','kepada'] },
+                    judul:     { id:['judul','title','perihal','subjek','topik'] },
+                },
+                NORMALIZE: {
+                    'ga':'tidak','gak':'tidak','nggak':'tidak','kaga':'tidak',
+                    'mau':'ingin','pengen':'ingin','kepingin':'ingin',
+                    'bikin':'buat','bikinin':'buat','ngebuat':'buat',
+                    'ngisi':'isi','nginput':'input','nambah':'tambah',
+                    'isiin':'isi','tambahin':'tambah','buatin':'buat',
+                    'cariin':'cari','liatin':'lihat','tunjukin':'tampilkan',
+                    'hapusin':'hapus','ilangin':'hapus','buangin':'hapus',
+                    'update':'perbarui','edit':'ubah','change':'ubah',
+                    'yuk':'ayo','mari':'ayo','ok':'oke','okay':'oke','okelah':'oke',
+                    'dah':'sudah','udah':'sudah','udh':'sudah','sdh':'sudah',
+                    'gini':'begini','gitu':'begitu','gt':'begitu',
+                    'dgn':'dengan','dg':'dengan','utk':'untuk','bg':'bagi',
+                    'jg':'juga','jga':'juga','aja':'saja',
+                    'tp':'tapi','tapi':'tetapi','krn':'karena','karna':'karena',
+                    'lg':'lagi','blm':'belum','saya':'aku','kami':'kita',
+                },
+            },
+
             // ── Intent Definitions ──
             INTENTS: {
                 ISI_RAB:      { s:['rab','anggaran','barang','kebutuhan'],                a:['isi','tambah','input','buat','catat','bikin'] },
@@ -3809,6 +3889,10 @@
                 HELP:         { s:['help','bantuan','panduan'],                         a:['help','bantuan','tolong'] },
                 WHOAMI:       { s:['siapa'], a:[] },
                 WHEREAMI:     { s:['dimana','posisi','halaman'],                        a:[] },
+                EDIT:         { s:['ubah','edit','ganti','koreksi','revisi','perbaiki'], a:['ubah','edit','ganti','update'] },
+                SEARCH:       { s:['cari','temukan','tampilkan data','mana'],            a:['cari','temukan','filter','lihat'] },
+                APPROVE:      { s:['setuju','acc','approve','konfirmasi','sahkan'],      a:['setuju','approve','konfirmasi','sahkan'] },
+                SUMMARY:      { s:['total','rekap','ringkasan','laporan','jumlah'],       a:['total','rekap','hitung','summary'] },
             },
 
             // ── Form Field Definitions ──
@@ -3857,6 +3941,138 @@
                 'database surat':'view-database-surat','db surat':'view-database-surat',
             },
 
+            // ── Dictionary NLP Methods ──
+            getAllDictTerms(category) {
+                const terms = [];
+                const cat = this.DICTIONARY[category];
+                if (!cat) return terms;
+                for (const [key, entry] of Object.entries(cat)) {
+                    terms.push(...(entry.id||[]), ...(entry.en||[]));
+                }
+                return [...new Set(terms)];
+            },
+            normalizeText(text) {
+                let t = ' ' + text.toLowerCase() + ' ';
+                for (const [informal, formal] of Object.entries(this.DICTIONARY.NORMALIZE)) {
+                    const rx = new RegExp('\\b' + informal + '\\b', 'gi');
+                    t = t.replace(rx, formal);
+                }
+                return t.trim();
+            },
+            expandSynonyms(text) {
+                const normalized = this.normalizeText(text);
+                let result = normalized;
+                // Add synonyms for matched words to enrich the text
+                for (const [key, entry] of Object.entries(this.DICTIONARY.SUBJECT)) {
+                    for (const word of entry.id) {
+                        const rx = new RegExp('\\b' + word + '\\b', 'gi');
+                        if (rx.test(result)) {
+                            // Append all synonyms for richer matching
+                            const others = entry.id.filter(w => w !== word).concat(entry.en || []);
+                            result += ' ' + others.join(' ');
+                        }
+                    }
+                }
+                for (const [key, entry] of Object.entries(this.DICTIONARY.ACTION)) {
+                    for (const word of entry.id) {
+                        const rx = new RegExp('\\b' + word + '\\b', 'gi');
+                        if (rx.test(result)) {
+                            const others = entry.id.filter(w => w !== word).concat(entry.en || []);
+                            result += ' ' + others.join(' ');
+                        }
+                    }
+                }
+                return result;
+            },
+            expandDictionary(text) {
+                return this.expandSynonyms(this.normalizeText(text));
+            },
+            smartEntityExtract(text, intent) {
+                const lower = ' ' + text.toLowerCase() + ' ';
+                const e = {};
+                // Build dynamic patterns from ENTITY dictionary
+                const nextLabelMap = {
+                    dept: ['program','event','kegiatan','proker','acara'],
+                    program: ['divisi','dept','departemen'],
+                    barang: ['volume','dengan','harga','nominal','rp'],
+                    harga: ['untuk','dari','divisi'],
+                };
+                for (const [key, cfg] of Object.entries(this.DICTIONARY.ENTITY)) {
+                    const labels = cfg.id || [];
+                    if (labels.length === 0) continue;
+                    const pattern = '(?:' + labels.join('|') + ')\\s+(\\S[\\w\\s]{0,40}?)(?=\\s+(?:' +
+                        (nextLabelMap[key]||['dan','untuk','dengan','serta','lalu']).join('|') + ')|$)';
+                    const rx = new RegExp(pattern, 'i');
+                    const m = text.match(rx);
+                    if (m) e[key] = m[1].trim();
+                }
+                // Fuzzy match against known data
+                if (!e.dept && this.known.depts.length) {
+                    for (const d of this.known.depts) {
+                        if (lower.includes(' ' + d.toLowerCase() + ' ')) { e.dept = d; break; }
+                    }
+                }
+                if (!e.program && this.known.progs.length) {
+                    for (const p of this.known.progs) {
+                        if (lower.includes(' ' + p.toLowerCase() + ' ')) { e.program = p; break; }
+                    }
+                }
+                // Extract all numbers
+                const nums = text.match(/\b\d[\d.,]*\b/g) || [];
+                if (nums.length > 0) {
+                    const clean = n => parseInt(n.replace(/[.,]/g,''));
+                    if (!e.volume && !e.harga && !e.target) { e.volume = clean(nums[0]); if (nums[1]) e.harga = clean(nums[1]); }
+                    if (intent === 'ISI_REALISASI' && !e.harga) e.harga = clean(nums[nums.length-1]);
+                }
+                // Absensi status detection
+                if (intent === 'ISI_ABSENSI') {
+                    if (/izin|sakit|cuti/i.test(lower) && !e.status) e.status = 'Izin';
+                    else if (/tidak\s*(?:hadir)?|tdk|alpha|bolos/i.test(lower) && !e.status) e.status = 'Tidak Hadir';
+                    else if (!e.status) e.status = 'Hadir';
+                    if (!e.deskripsi) {
+                        let desc = text.replace(/^(?:saya\s+mau\s+)?(?:absen|presensi|absensi)\s+(?:hadir|izin|tidak(?:\s+hadir)?|tdk|sakit)\s*/i,'').trim();
+                        if (!desc) desc = e.status;
+                        e.deskripsi = desc;
+                    }
+                }
+                // Navigation target
+                if (intent === 'NAVIGATE') {
+                    let t = text.replace(/^(?:buka|ke|menu|tab|pindah\s*ke|tampilkan|lihat|menuju)\s*/i,'').trim();
+                    e.target = t;
+                }
+                // Parse relative time words
+                const relativeDate = this.extractTimeWords(text);
+                if (relativeDate && !e.tanggal) e.tanggal = relativeDate;
+                return e;
+            },
+            extractTimeWords(text) {
+                const lower = text.toLowerCase();
+                if (/besok|esok|bsk/.test(lower)) {
+                    const d = new Date(); d.setDate(d.getDate() + 1);
+                    return d.toISOString().split('T')[0];
+                }
+                if (/lusa/.test(lower)) {
+                    const d = new Date(); d.setDate(d.getDate() + 2);
+                    return d.toISOString().split('T')[0];
+                }
+                if (/kemarin|kmrn/.test(lower)) {
+                    const d = new Date(); d.setDate(d.getDate() - 1);
+                    return d.toISOString().split('T')[0];
+                }
+                if (/hari ini|sekarang|skrg/.test(lower)) {
+                    return new Date().toISOString().split('T')[0];
+                }
+                if (/minggu depan|pekan depan/.test(lower)) {
+                    const d = new Date(); d.setDate(d.getDate() + 7);
+                    return d.toISOString().split('T')[0];
+                }
+                if (/bulan depan/.test(lower)) {
+                    const d = new Date(); d.setMonth(d.getMonth() + 1);
+                    return d.toISOString().split('T')[0];
+                }
+                return null;
+            },
+
             // ── Init & UI ──
             init() {
                 const fab = document.getElementById('aiFab');
@@ -3874,7 +4090,7 @@
                     if (this.isOpen) this.syncWidgetPosition();
                 });
                 setTimeout(() => {
-                    this.addMessage('Halo! Saya AI Assistant. Saya bisa bantu isi formulir, proses data dari Excel, dan paham bahasa Indonesia alami. Cukup ceritakan apa yang mau kamu lakukan! Ketik <b>help</b> untuk panduan.', false);
+                    this.addMessage('Halo! Saya AI Assistant v3 — sekarang paham bahasa gaul, sinonim, dan variasi kata! Cukup ceritakan apa yang mau kamu lakukan dengan bahasa sehari-hari. Ketik <b>help</b> untuk panduan lengkap.', false);
                 }, 500);
             },
             refreshKnownData() {
@@ -3934,6 +4150,7 @@
             // ── NLP Core ──
             processMessage(text) {
                 this.showTyping();
+                const enriched = this.expandDictionary(text);
                 setTimeout(() => {
                     this.hideTyping();
                     this.refreshKnownData();
@@ -3941,7 +4158,7 @@
 
                     // Handle clarification response
                     if (this.pending) {
-                        const extra = this.extractEntities(text, this.pending.intent);
+                        const extra = this.extractEntities(enriched, this.pending.intent);
                         Object.assign(this.pending.entities, extra);
                         const merged = this.pending.entities;
                         const allFilled = this.fillFormFields(this.pending.intent, merged);
@@ -3956,15 +4173,15 @@
                         return;
                     }
 
-                    const { intent, score } = this.classifyIntent(text);
+                    const { intent, score } = this.classifyIntent(enriched);
                     if (score < 1) {
                         const ctx = this.currentContext;
                         if (ctx === 'view-absensi') {
-                            const e = this.extractEntities(text, 'ISI_ABSENSI');
+                            const e = this.extractEntities(enriched, 'ISI_ABSENSI');
                             reply = this.handleAbsensi(e);
                         } else if (ctx === 'view-input-rab' || ctx === 'view-realisasi-anggaran' || ctx === 'view-kpi') {
                             const guess = ctx === 'view-input-rab' ? 'ISI_RAB' : ctx === 'view-realisasi-anggaran' ? 'ISI_REALISASI' : 'ISI_KPI';
-                            const e = this.extractEntities(text, guess);
+                            const e = this.extractEntities(enriched, guess);
                             const r = this.fillFormFields(guess, e);
                             reply = r.missing.length ? this.askClarification(guess, r.missing, e) : r.msg;
                         } else {
@@ -3975,7 +4192,7 @@
                         return;
                     }
 
-                    const entities = this.extractEntities(text, intent);
+                    const entities = this.extractEntities(enriched, intent);
                     reply = this.executeIntent(intent, entities);
                     this.addMessage(reply, false);
                     this.showQuickActions();
@@ -3983,89 +4200,48 @@
             },
 
             classifyIntent(text) {
-                const lower = text.toLowerCase();
+                const expanded = this.expandDictionary(text);
+                const lower = expanded.toLowerCase();
+                const origLower = text.toLowerCase();
                 let best = { intent: 'UNKNOWN', score: 0 };
                 for (const [name, cfg] of Object.entries(this.INTENTS)) {
                     let s = 0;
-                    for (const kw of cfg.s) { if (lower.includes(kw)) s += 4; }
+                    // Match substantive keywords (weigth 4)
+                    for (const kw of cfg.s) {
+                        if (lower.includes(kw)) s += 4;
+                        else if (origLower.includes(kw)) s += 3;
+                    }
+                    // Match action keywords (weight 3/2 with boundary)
                     for (const kw of cfg.a) {
                         const idx = lower.indexOf(kw);
                         if (idx === 0 || (idx > 0 && /[\s,.]/.test(lower[idx-1]))) s += 3;
                         else if (idx > 0) s += 2;
+                        else {
+                            const idx2 = origLower.indexOf(kw);
+                            if (idx2 === 0 || (idx2 > 0 && /[\s,.]/.test(origLower[idx2-1]))) s += 2;
+                            else if (idx2 > 0) s += 1;
+                        }
                     }
+                    // Context boost
                     const form = this.FORMS[name];
                     if (form && form.ctx === this.currentContext) s += 1;
+                    // Dictionary boost: match SUBJECT
+                    if (this.DICTIONARY && this.DICTIONARY.SUBJECT) {
+                        const subjKey = name.replace('ISI_','').toLowerCase();
+                        const dictEntry = this.DICTIONARY.SUBJECT[subjKey];
+                        if (dictEntry) {
+                            for (const w of [...(dictEntry.id||[]), ...(dictEntry.en||[])]) {
+                                if (origLower.includes(w)) { s += 2; break; }
+                            }
+                        }
+                    }
                     if (s > best.score) best = { intent: name, score: s };
                 }
                 return best;
             },
 
             extractEntities(text, intent) {
-                const lower = text.toLowerCase();
-                const e = {};
-                const labelRx = [
-                    {rx:/(?:divisi|departemen|dept|bagian)\s+(\S[\w\s]{0,40}?)(?=\s+(?:program|prog|event|kegiatan)\b|$)/i, k:'dept'},
-                    {rx:/(?:program|prog|event|kegiatan|acara)\s+(\S[\w\s]{0,40}?)(?=\s+(?:divisi|dept)\b|$)/i, k:'program'},
-                    {rx:/(?:barang|nama barang|kebutuhan)\s+(\S[\w\s]{0,40}?)(?=\s+(?:\d|volume|\d)|$)/i, k:'barang'},
-                    {rx:/(?:judul|nama)\s+(\S[\w\s]{0,40}?)(?=\s+(?:divisi|dept|program|event)\b|$)/i, k:'nama'},
-                    {rx:/(?:tempat|lokasi|di)\s+(\S[\w\s]{0,40}?)$/i, k:'tempat'},
-                    {rx:/(?:deskripsi|keterangan|detail|aktivitas)\s+(\S[\w\s]{0,60}?)$/i, k:'deskripsi'},
-                    {rx:/(?:sumber dana|dari)\s+(\S[\w\s]{0,40}?)$/i, k:'sumber'},
-                    {rx:/(?:volume|jumlah|qty)\s+(\d[\d.,]*)/i, k:'volume'},
-                    {rx:/(?:harga|nominal|biaya|rp)\s*\.?\s*(\d[\d.,]*)/i, k:'harga'},
-                    {rx:/(?:target)\s+(\d[\d.,]*)/i, k:'target'},
-                    {rx:/(?:satuan|per)\s+(\S[\w\s]{0,20}?)(?=\s+\d|$)/i, k:'satuan'},
-                    {rx:/(?:tipe|jenis)\s+(\S+)/i, k:'tipe'},
-                    {rx:/(?:tanggal|tgl)\s+(\S[\w\s]{0,20}?)(?=\s+\S|$)/i, k:'tanggal'},
-                    {rx:/(?:waktu|jam)\s+(\S[\w\s]{0,20}?)(?=\s+\S|$)/i, k:'waktu'},
-                    {rx:/status\s+(\S+)/i, k:'status'},
-                ];
-                for (const p of labelRx) { const m = text.match(p.rx); if (m) e[p.k] = m[1].trim(); }
-
-                // Extract all numbers
-                const nums = text.match(/\b\d[\d.,]*\b/g) || [];
-                if (nums.length > 0) {
-                    const clean = n => parseInt(n.replace(/[.,]/g,''));
-                    if (!e.volume && !e.harga && !e.target) { e.volume = clean(nums[0]); if (nums[1]) e.harga = clean(nums[1]); }
-                    if (intent === 'ISI_REALISASI' && !e.nominal) {
-                        e.nominal = clean(nums[nums.length-1]);
-                    }
-                    if (intent === 'ISI_ABSENSI' && !e.volume && nums.length === 1) {
-                        // ignore — it's probably a time
-                    }
-                }
-
-                // Fuzzy match against known data
-                if (!e.dept && this.known.depts.length) {
-                    for (const d of this.known.depts) {
-                        if (lower.includes(d.toLowerCase())) { e.dept = d; break; }
-                    }
-                }
-                if (!e.program && this.known.progs.length) {
-                    for (const p of this.known.progs) {
-                        if (lower.includes(p.toLowerCase())) { e.program = p; break; }
-                    }
-                }
-
-                // Absensi status detection
-                if (intent === 'ISI_ABSENSI') {
-                    if (/izin|sakit|cuti/i.test(lower) && !e.status) e.status = 'Izin';
-                    else if (/tidak\s*(?:hadir)?|tdk|alpha|bolos/i.test(lower) && !e.status) e.status = 'Tidak Hadir';
-                    else if (!e.status) e.status = 'Hadir';
-                    if (!e.deskripsi) {
-                        let desc = text.replace(/^(?:saya\s+mau\s+)?(?:absen|presensi|absensi)\s+(?:hadir|izin|tidak(?:\s+hadir)?|tdk|sakit)\s*/i,'').trim();
-                        if (!desc) desc = e.status;
-                        e.deskripsi = desc;
-                    }
-                }
-
-                // Navigation target
-                if (intent === 'NAVIGATE') {
-                    let t = text.replace(/^(?:buka|ke|menu|tab|pindah\s*ke|tampilkan|lihat|menuju)\s*/i,'').trim();
-                    e.target = t;
-                }
-
-                return e;
+                return this.smartEntityExtract(text, intent);
             },
 
             executeIntent(intent, entities) {
@@ -4083,12 +4259,64 @@
                     case 'DELETE': return '🗑️ Untuk menghapus data, buka halaman terkait, cari item yang ingin dihapus, lalu klik ikon 🗑️.';
                     case 'REFRESH': if (typeof refreshCurrentView === 'function') { refreshCurrentView(document.querySelector('.btn-action')); return '🔄 Memperbarui data...'; } return 'Silakan klik tombol Refresh di pojok kanan atas.';
                     case 'ISI_ABSENSI': return this.handleAbsensi(entities);
+                    case 'EDIT': {
+                        const r = this.fillFormFields(this.guessFormIntent(), entities);
+                        if (r.missing.length > 0) return this.askClarification(this.guessFormIntent(), r.missing, entities);
+                        return '✏️ ' + r.msg.replace('✅','').trim();
+                    }
+                    case 'SEARCH': return this.handleSearch(entities);
+                    case 'APPROVE': {
+                        if (currentUserRole !== 'admin') return '❌ Hanya admin yang bisa menyetujui.';
+                        return '✅ Konfirmasi: silakan buka halaman terkait dan setujui secara manual. Atau detailkan surat/item yang dimaksud.';
+                    }
+                    case 'SUMMARY': return this.handleSummary(entities);
                     default: {
                         const r = this.fillFormFields(intent, entities);
                         if (r.missing.length > 0) return this.askClarification(intent, r.missing, entities);
                         return r.msg;
                     }
                 }
+            },
+            guessFormIntent() {
+                const ctx = this.currentContext;
+                if (ctx === 'view-input-rab') return 'ISI_RAB';
+                if (ctx === 'view-realisasi-anggaran') return 'ISI_REALISASI';
+                if (ctx === 'view-kpi') return 'ISI_KPI';
+                if (ctx === 'view-absensi') return 'ISI_ABSENSI';
+                if (ctx === 'view-program-event') return 'ISI_PROGRAM';
+                if (ctx === 'view-timeline') return 'ISI_SCHEDULE';
+                if (ctx === 'view-notulensi') return 'ISI_FOLDER';
+                if (ctx === 'view-surat') return 'ISI_SURAT';
+                return 'ISI_RAB';
+            },
+            handleSearch(entities) {
+                const q = entities.nama || entities.barang || entities.program || entities.dept || '';
+                const ctx = this.currentContext;
+                const ctxLabel = this.getContextLabel(ctx);
+                let info = '🔍 Pencarian di <b>' + ctxLabel + '</b>';
+                if (q) info += ' untuk "' + this.escapeHtml(q) + '"';
+                info += '.<br><small>Silakan cari manual di halaman terkait atau gunakan filter yang tersedia.</small>';
+                if (q && typeof refreshCurrentView === 'function') {
+                    const inp = document.querySelector('input[type="text"], input[type="search"]');
+                    if (inp) { inp.value = q; inp.dispatchEvent(new Event('input',{bubbles:true})); }
+                }
+                return info;
+            },
+            handleSummary(entities) {
+                const ctx = this.currentContext;
+                const ctxLabel = this.getContextLabel(ctx);
+                let totals = '📊 Ringkasan <b>' + ctxLabel + '</b>:<br>';
+                if (ctx === 'view-rekap-rab' || ctx === 'view-input-rab') {
+                    totals += '• Lihat grafik dan total di halaman <b>Analitik Anggaran</b><br>';
+                } else if (ctx === 'view-absensi') {
+                    totals += '• Cek rekap absensi di tabel halaman ini<br>';
+                } else if (ctx === 'view-kpi') {
+                    totals += '• Lihat capaian KPI di tabel halaman ini<br>';
+                } else {
+                    totals += '• Data tersedia di halaman ini. Scroll ke bawah untuk melihat tabel.<br>';
+                }
+                totals += '<small>Ketik <i>buka [halaman]</i> untuk navigasi.</small>';
+                return totals;
             },
 
             handleAbsensi(entities) {
@@ -4470,16 +4698,24 @@
             // ── Helpers ──
             escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; },
             getHelpText() {
-                return '<b>🤖 AI Assistant — Bisa Pake Bahasa Alami!</b><br><br>' +
-                    '<b>📋 Contoh:</b><br>' +
+                return '<b>🤖 AI Assistant v3 — Paham Bahasa Alami!</b><br><br>' +
+                    '<b>📋 Contoh Isi Data:</b><br>' +
                     '• <i>"isi rab kreatif seminar snack 50 box 15000"</i><br>' +
                     '• <i>"saya mau input realisasi divisi humas acara pelantikan 2000000"</i><br>' +
                     '• <i>"buat kpi untuk divisi kreatif program seminar target 100 orang capaian 50"</i><br>' +
                     '• <i>"absen hadir hari ini"</i> atau <i>"presensi izin sakit"</i><br>' +
                     '• <i>"buat program baru kreatif seminar besok jam 9 di aula"</i><br>' +
                     '• <i>"jadwalin rapat evaluasi lusa"</i><br>' +
-                    '• <i>"buat divisi baru namanya Kreatif"</i><br>' +
-                    '• <i>"buka halaman rab"</i> atau <i>"ke dashboard"</i><br><br>' +
+                    '• <i>"buat divisi baru namanya Kreatif"</i><br><br>' +
+                    '<b>🔍 Fitur Baru:</b><br>' +
+                    '• <i>"ubah harga snack jadi 20000"</i> — edit data<br>' +
+                    '• <i>"cari barang kreatif"</i> — cari data<br>' +
+                    '• <i>"total rab divisi kreatif"</i> — ringkasan<br>' +
+                    '• <i>"setujui pengajuan"</i> — approve (admin)<br><br>' +
+                    '<b>🧠 Paham Bahasa Gaul:</b><br>' +
+                    '• <i>"bikinin rab kreatif snack 50 15000"</i><br>' +
+                    '• <i>"ngisi absen izin"</i><br>' +
+                    '• <i>"tambahin program seminar"</i><br><br>' +
                     '<b>🎤 Voice:</b> Klik mikrofon & bicara biasa<br>' +
                     '<b>📋 Paste Excel:</b> Salin dari Excel, klik Paste<br>' +
                     '<b>⚡ Quick Actions:</b> Tombol di atas input';
