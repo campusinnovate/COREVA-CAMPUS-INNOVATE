@@ -327,36 +327,39 @@
         /* AI FAB - Bottom Left */
         .ai-fab {
             position: fixed;
-            bottom: 30px;
-            left: 30px;
             width: 56px;
             height: 56px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--ai-primary), #1e40af);
             color: var(--ai-secondary);
             border: none;
-            cursor: pointer;
+            cursor: grab;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
             box-shadow: var(--ai-shadow);
-            z-index: 9998;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 9996;
+            transition: box-shadow 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.15s ease;
             touch-action: none;
             user-select: none;
+            will-change: left, top;
         }
+        .ai-fab:active { cursor: grabbing; }
         .ai-fab:hover {
-            transform: scale(1.1) translateY(-3px);
+            transform: scale(1.1);
             box-shadow: 0 15px 40px rgba(246,178,59,0.4);
         }
-        .ai-fab:active {
-            transform: scale(0.95);
+        .ai-fab.dragging {
+            transform: scale(1.15);
+            box-shadow: 0 20px 50px rgba(246,178,59,0.5);
+            transition: none;
         }
         .ai-fab.active {
             background: linear-gradient(135deg, var(--ai-secondary), #f59e0b);
             color: var(--ai-primary);
         }
+        .ai-fab.dragging.active { background: var(--ai-primary); color: var(--ai-secondary); }
         .ai-fab.listening {
             background: linear-gradient(135deg, var(--ai-error), #dc2626);
             color: white;
@@ -370,8 +373,6 @@
         /* AI Widget Panel */
         .ai-widget {
             position: fixed;
-            bottom: 100px;
-            left: 30px;
             width: 420px;
             height: 600px;
             max-height: 80vh;
@@ -387,7 +388,8 @@
             transform: translateY(20px) scale(0.95);
             opacity: 0;
             visibility: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0.4s;
+            will-change: top, left;
         }
         .ai-widget.active {
             transform: translateY(0) scale(1);
@@ -3781,6 +3783,11 @@
             currentContext: '', bulkData: null, recognition: null,
             storageKey: 'ai_chat_',
             pending: null, known: { depts: [], progs: [] },
+            isDragging: false, didDrag: false,
+            dragStartX: 0, dragStartY: 0,
+            fabStartX: 0, fabStartY: 0,
+            fabX: -1, fabY: -1, // -1 = not initialized, use default
+            dragBoundFn: null, dragEndFn: null,
 
             // ── Intent Definitions ──
             INTENTS: {
@@ -3853,10 +3860,19 @@
             // ── Init & UI ──
             init() {
                 const fab = document.getElementById('aiFab');
-                if (fab) fab.addEventListener('click', () => this.toggle());
+                if (fab) fab.addEventListener('click', (e) => {
+                    if (this.didDrag) { this.didDrag = false; return; }
+                    this.toggle();
+                });
                 this.storageKey = 'ai_chat_' + (globalWorkspaceId||'0') + '_' + (currentUserId||'0');
                 this.loadHistory(); this.showQuickActions(); this.detectContext();
                 this.refreshKnownData();
+                this.loadPosition();
+                this.initDrag();
+                window.addEventListener('resize', () => {
+                    this.loadPosition();
+                    if (this.isOpen) this.syncWidgetPosition();
+                });
                 setTimeout(() => {
                     this.addMessage('Halo! Saya AI Assistant. Saya bisa bantu isi formulir, proses data dari Excel, dan paham bahasa Indonesia alami. Cukup ceritakan apa yang mau kamu lakukan! Ketik <b>help</b> untuk panduan.', false);
                 }, 500);
@@ -3874,6 +3890,7 @@
                 if (w) w.classList.add('active'); if (f) f.classList.add('active');
                 const fi = document.getElementById('aiFabIcon'); if (fi) fi.className = 'fa-solid fa-xmark';
                 const inp = document.getElementById('aiInput'); if (inp) inp.focus();
+                this.syncWidgetPosition();
                 this.detectContext();
             },
             close() {
@@ -4466,6 +4483,117 @@
                     '<b>🎤 Voice:</b> Klik mikrofon & bicara biasa<br>' +
                     '<b>📋 Paste Excel:</b> Salin dari Excel, klik Paste<br>' +
                     '<b>⚡ Quick Actions:</b> Tombol di atas input';
+            },
+
+            // ── Draggable FAB ──
+            initDrag() {
+                const fab = document.getElementById('aiFab');
+                if (!fab) return;
+                const start = (e) => this.startDrag(e);
+                fab.addEventListener('mousedown', start);
+                fab.addEventListener('touchstart', start, { passive: true });
+            },
+            startDrag(e) {
+                if (this.isDragging) return;
+                // Don't drag if clicking to toggle (quick tap)
+                const pos = e.type === 'touchstart' ? e.touches[0] : e;
+                const fab = document.getElementById('aiFab');
+                if (!fab) return;
+                const rect = fab.getBoundingClientRect();
+                this.dragStartX = pos.clientX;
+                this.dragStartY = pos.clientY;
+                this.fabStartX = rect.left;
+                this.fabStartY = rect.top;
+                this.isDragging = true;
+                this.didDrag = false;
+                fab.classList.add('dragging');
+                // Bind move + end handlers
+                const move = (ev) => this.onDrag(ev);
+                const end = (ev) => { this.stopDrag(ev); };
+                this.dragBoundFn = move;
+                this.dragEndFn = end;
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', end);
+                document.addEventListener('touchmove', move, { passive: true });
+                document.addEventListener('touchend', end, { passive: true });
+            },
+            onDrag(e) {
+                if (!this.isDragging) return;
+                const pos = e.type === 'touchmove' ? e.touches[0] : e;
+                if (!pos) return;
+                const dx = pos.clientX - this.dragStartX;
+                const dy = pos.clientY - this.dragStartY;
+                let x = this.fabStartX + dx;
+                let y = this.fabStartY + dy;
+                // Clamp to viewport
+                const fabSize = 56;
+                const pad = 10;
+                x = Math.max(pad, Math.min(x, window.innerWidth - fabSize - pad));
+                y = Math.max(pad, Math.min(y, window.innerHeight - fabSize - pad));
+                this.didDrag = true;
+                this.setFabPosition(x, y);
+                this.syncWidgetPosition();
+            },
+            stopDrag(e) {
+                if (!this.isDragging) return;
+                this.isDragging = false;
+                const fab = document.getElementById('aiFab');
+                if (fab) fab.classList.remove('dragging');
+                if (this.dragBoundFn) {
+                    document.removeEventListener('mousemove', this.dragBoundFn);
+                    document.removeEventListener('mouseup', this.dragEndFn);
+                    document.removeEventListener('touchmove', this.dragBoundFn);
+                    document.removeEventListener('touchend', this.dragEndFn);
+                    this.dragBoundFn = null;
+                    this.dragEndFn = null;
+                }
+                this.savePosition();
+            },
+            setFabPosition(x, y) {
+                this.fabX = x; this.fabY = y;
+                const fab = document.getElementById('aiFab');
+                if (fab) { fab.style.left = x + 'px'; fab.style.top = y + 'px'; fab.style.bottom = 'auto'; }
+            },
+            syncWidgetPosition() {
+                const fab = document.getElementById('aiFab');
+                const widget = document.getElementById('aiWidget');
+                if (!fab || !widget) return;
+                const fr = fab.getBoundingClientRect();
+                const ww = widget.offsetWidth || 420;
+                const wh = widget.offsetHeight || 600;
+                const gap = 16;
+                let wx = fr.left + fr.width / 2 - ww / 2;
+                let wy = fr.top - wh - gap;
+                // Clamp widget horizontally
+                wx = Math.max(10, Math.min(wx, window.innerWidth - ww - 10));
+                // If not enough room above, show below
+                if (wy < 10) {
+                    wy = fr.bottom + gap;
+                }
+                widget.style.left = wx + 'px';
+                widget.style.top = wy + 'px';
+                widget.style.bottom = 'auto';
+            },
+            loadPosition() {
+                try {
+                    const saved = localStorage.getItem('ai_fab_pos_' + (globalWorkspaceId || '0'));
+                    if (saved) {
+                        const p = JSON.parse(saved);
+                        this.setFabPosition(p.x, p.y);
+                        setTimeout(() => this.syncWidgetPosition(), 50);
+                        return;
+                    }
+                } catch (e) {}
+                // Default: bottom-left
+                this.setFabPosition(30, window.innerHeight - 86);
+                setTimeout(() => this.syncWidgetPosition(), 50);
+            },
+            savePosition() {
+                if (this.fabX < 0 || this.fabY < 0) return;
+                try {
+                    localStorage.setItem('ai_fab_pos_' + (globalWorkspaceId || '0'),
+                        JSON.stringify({ x: this.fabX, y: this.fabY }));
+                } catch (e) {}
             },
         };
 
