@@ -1510,7 +1510,7 @@ async function submitRegistrationRequest(e) {
     const btn = document.getElementById('btn-register'); 
     btn.disabled = true; btn.innerText = "Mengirim Blok Data..."; 
     const { error } = await supabaseClient.from('registration_requests').insert([{
-        nama: name, dob: dob, email: email, password: password, organisasi: org, status: 'pending'
+        nama: name, dob: dob, email: email, password: password, organisasi: org, status: 'pending', terms_accepted: true
     }]);
     if (error) {
         window.showToast("Sistem Menolak Pengajuan", error.message, "error");
