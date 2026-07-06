@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workspace Dashboard - Campus Innovate</title>
-    <link rel="icon" type="image/png" href="coreva_logo.png">
+    <link rel="icon" type="image/png" href="Logo Coreva removebg.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3832,6 +3832,9 @@
             storageKey: 'ai_chat_',
             pending: null, known: { depts: [], progs: [] },
             lastIntent: null, lastSubject: '',
+            consecutiveFailCount: 0,
+            lastInputs: [],
+            repetitionCount: 0,
             isDragging: false, didDrag: false, touchInProgress: false,
             dragStartX: 0, dragStartY: 0,
             fabStartX: 0, fabStartY: 0,
@@ -4426,6 +4429,11 @@
             processMessage(text) {
                 this.showTyping();
                 const enriched = this.expandDictionary(text);
+
+                // Track last inputs for repetition detection
+                this.lastInputs.push(text);
+                if (this.lastInputs.length > 5) this.lastInputs.shift();
+
                 setTimeout(() => {
                     this.hideTyping();
                     this.refreshKnownData();
@@ -4499,6 +4507,25 @@
                     }
 
                     const { intent, score } = this.classifyIntent(enriched);
+
+                    // — Repetition / Consecutive Failure Detection —
+                    if (score < 1) {
+                        this.consecutiveFailCount++;
+                    } else {
+                        this.consecutiveFailCount = 0;
+                    }
+                    let similarCount = 0;
+                    const textLower = text.toLowerCase().trim();
+                    if (this.lastInputs.length >= 2) {
+                        const prev = this.lastInputs.slice(0, -1);
+                        for (const inp of prev) {
+                            const d = this.similarity(textLower, inp.toLowerCase().trim());
+                            if (d > 0.6) similarCount++;
+                        }
+                        if (similarCount >= 2) this.repetitionCount++;
+                        else this.repetitionCount = 0;
+                    }
+
                     if (score < 1) {
                         const ctx = this.currentContext;
                         if (ctx === 'view-absensi') {
@@ -4509,6 +4536,19 @@
                             const e = this.extractEntities(enriched, guess);
                             const r = this.fillFormFields(guess, e);
                             reply = r.missing.length ? this.askClarification(guess, r.missing, e) : r.msg;
+                        } else if (this.repetitionCount >= 2) {
+                            const quickSuggestions = this.getQuickActions(ctx).slice(0, 4);
+                            const suggestions = quickSuggestions.map(a => '• <b>' + a.label + '</b>').join('<br>');
+                            reply = 'Sepertinya Anda mengulangi pertanyaan yang sama. Berikut yang bisa saya bantu di halaman ini:<br>' + suggestions +
+                                   '<br><br>Atur ulang dengan <b>reset</b> atau ketik <b>help</b> untuk panduan lengkap.';
+                            this.repetitionCount = 0;
+                        } else if (this.consecutiveFailCount >= 3) {
+                            const ctxLabel = this.getContextLabel(ctx) || 'ini';
+                            reply = 'Saya masih belum paham. Coba gunakan format sederhana seperti:<br>' +
+                                    '• <i>"buat program [nama]"</i> atau <i>"isi rab [divisi] [barang] [jumlah] [harga]"</i><br>' +
+                                    '• Ketik <b>help</b> lihat panduan lengkap<br>' +
+                                    '• Atau klik tombol aksi di atas input teks ⚡';
+                            this.consecutiveFailCount = 0;
                         } else {
                             reply = 'Maaf, saya belum paham maksudnya. Coba ceritakan lebih jelas apa yang ingin dilakukan. Ketik <b>help</b> untuk panduan.';
                         }
@@ -4516,6 +4556,10 @@
                         this.showQuickActions();
                         return;
                     }
+
+                    // Reset failure counter on success
+                    this.consecutiveFailCount = 0;
+                    this.repetitionCount = 0;
 
                     // Route TOLONG → HELP if subject is generic
                     const finalIntent = (intent === 'TOLONG' && !this.getLastSubjectName()) ? 'HELP' : intent;
@@ -4717,7 +4761,8 @@
                     switchTab(sid);
                     return '✅ Ke <b>' + this.getContextLabel(this.NAV_MAP[target]) + '</b>.';
                 }
-                return 'Halaman <b>' + this.escapeHtml(target) + '</b> tidak ditemukan. Ketik <b>help</b> untuk daftar.';
+                const validPages = Object.keys(this.NAV_MAP).slice(0, 8).map(k => '• <b>' + k + '</b>').join('<br>');
+                return 'Halaman <b>' + this.escapeHtml(target) + '</b> tidak ditemukan. Halaman yang tersedia:<br>' + validPages + '<br><br>Coba: <i>buka [nama halaman]</i>';
             },
 
             similarity(a, b) {
@@ -5118,6 +5163,9 @@
                 this.resetContext();
                 this.currentContext = '';
                 this.bulkData = null;
+                this.consecutiveFailCount = 0;
+                this.lastInputs = [];
+                this.repetitionCount = 0;
                 const m = document.getElementById('aiChatMessages');
                 if (m) m.innerHTML = '<div class="ai-msg">Halo! Saya asisten AI. Ketik <b>help</b> untuk lihat panduan.</div>';
                 this.saveHistory();
