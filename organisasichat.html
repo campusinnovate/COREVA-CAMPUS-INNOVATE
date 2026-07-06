@@ -1675,12 +1675,69 @@ document.addEventListener('DOMContentLoaded', () => {
             const m = document.getElementById(modalId);
             if (m) m.classList.add('active');
         },
+        onFillField: (id, value) => {
+            const el = document.getElementById(id);
+            if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
+            return false;
+        },
         onGetQuickActions: () => [
             { label: 'Chat', icon: 'comments', type: 'navigate', target: 'chat' },
             { label: 'Agenda', icon: 'calendar-plus', type: 'navigate', target: 'agenda' },
             { label: 'Workspace', icon: 'layer-group', type: 'navigate', target: 'workspace' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic for chat page
+        handleIntent: (intent, entities) => {
+            const ctx = AI.currentContext || '';
+            const text = (entities.target || '').toLowerCase();
+            
+            // CREATE agenda/jadwal
+            if ((intent === 'CREATE' || intent === 'BUAT' || intent === 'TAMBAH') && 
+                (text.includes('agenda') || text.includes('jadwal') || text.includes('rapat') || text.includes('meeting'))) {
+                const modal = document.getElementById('modalScheduleAgenda');
+                if (modal) modal.classList.add('active');
+                return '✅ Membuka modal buat agenda/jadwal baru.';
+            }
+            
+            // NAVIGATE to specific tabs
+            if (intent === 'NAVIGATE') {
+                if (text.includes('chat') || text.includes('pesan') || text.includes('obrolan')) {
+                    if (typeof switchTab === 'function') switchTab('chat-tab');
+                    return '✅ Membuka <b>Chat</b>.';
+                }
+                if (text.includes('agenda') || text.includes('jadwal') || text.includes('kalender')) {
+                    if (typeof switchTab === 'function') switchTab('agenda-tab');
+                    return '✅ Membuka <b>Agenda</b>.';
+                }
+                if (text.includes('workspace') || text.includes('ruang kerja')) {
+                    if (typeof switchTab === 'function') switchTab('workspace-tab');
+                    return '✅ Membuka <b>Workspace</b>.';
+                }
+            }
+            
+            // SEND MESSAGE intent
+            if (intent === 'CREATE' && (text.includes('pesan') || text.includes('kirim') || text.includes('broadcast'))) {
+                return '💬 Ketik pesan di kolom chat lalu tekan Enter, atau gunakan @ untuk mention data.';
+            }
+            
+            return null;
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate') {
+                const navMap = { 'chat':'chat-tab', 'agenda':'agenda-tab', 'jadwal':'agenda-tab', 'workspace':'workspace-tab' };
+                const tabId = navMap[target];
+                if (tabId && typeof switchTab === 'function') {
+                    switchTab(tabId);
+                    return '✅ Membuka <b>' + target + '</b>.';
+                }
+            }
+            if (type === 'openModal' && target === 'modalScheduleAgenda') {
+                const m = document.getElementById('modalScheduleAgenda');
+                if (m) m.classList.add('active');
+                return '✅ Membuka modal buat agenda.';
+            }
+            return null;
+        },
     });
     AI.init();
 });

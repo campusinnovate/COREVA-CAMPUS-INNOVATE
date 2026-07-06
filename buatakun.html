@@ -235,6 +235,32 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Tips Password', icon: 'shield-keyhole', type: 'help' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic for registration page
+        handleIntent: (intent, entities) => {
+            const text = (entities.target || '').toLowerCase();
+            
+            if (intent === 'HELP' || intent === 'TOLONG' || text.includes('password') || text.includes('keamanan')) {
+                return '🔐 <b>Tips Password Aman:</b><br>' +
+                    '• Minimal 8 karakter (huruf besar, kecil, angka, simbol)<br>' +
+                    '• Jangan gunakan info pribadi (nama, tgl lahir, nomor hp)<br>' +
+                    '• Gunakan frasa acak: <i>"Bintang-Jatuh-7-Malam!"</i><br>' +
+                    '• Jangan pakai password sama di situs lain<br>' +
+                    '• Simpan di password manager (Bitwarden, 1Password, dll)';
+            }
+            
+            if (intent === 'NAVIGATE' && (text.includes('login') || text.includes('masuk'))) {
+                window.location.href = 'index.html';
+                return '👉 Mengalihkan ke halaman login...';
+            }
+            
+            return null;
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'help') {
+                return '🔐 <b>Tips Password Aman:</b><br>• Min 8 karakter (huruf besar/kecil, angka, simbol)<br>• Hindari info pribadi<br>• Gunakan frasa acak unik<br>• Password manager direkomendasikan';
+            }
+            return null;
+        },
     });
     AI.init();
 });

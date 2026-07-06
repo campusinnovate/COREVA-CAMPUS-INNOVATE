@@ -170,14 +170,14 @@
         .feature-tab-btn:not(.active):hover { background: rgba(255,255,255,.25); color: white; }
 
         /* SHOWCASE CONTAINER */
-        .showcase-container { background: var(--bg); border-radius: 0 16px 16px 16px; border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(10,48,85,.2); overflow: hidden; position: relative; min-height: 560px; }
-        .showcase-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+        .showcase-container { background: var(--bg); border-radius: 0 16px 16px 16px; border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(10,48,85,.2); overflow: hidden; position: relative; min-height: 560px; max-width: 100%; }
+        .showcase-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; gap: 8px; }
         .showcase-dots { display: flex; gap: 8px; }
-        .showcase-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .live-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; }
+        .showcase-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .live-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; flex-shrink: 0; }
         .live-badge i { color: var(--accent); animation: pulse 1.5s infinite; }
 
-        .showcase-panel { display: none; animation: fadeIn .4s ease; }
+        .showcase-panel { display: none; animation: fadeIn .4s ease; width: 100%; overflow-x: hidden; }
         .showcase-panel.active { display: flex; }
 
         /* =========================================
@@ -563,6 +563,7 @@
             .do-right-col { border-top: 1px solid var(--border); }
             .cal-showcase-layout { grid-template-columns: 1fr; }
             .cal-side-col { border-top: 1px solid var(--border); border-left: none; }
+            .showcase-container { min-height: 500px; }
         }
         @media (max-width: 768px) {
             .nav-links { position: fixed; top: 72px; left: 0; width: 100%; background: var(--bg); flex-direction: column; align-items: flex-start; padding: 24px 5%; border-bottom: 1px solid var(--border); display: none; }
@@ -587,6 +588,17 @@
             .trial-banner { padding: 40px 24px; text-align: center; justify-content: center; }
             .auth-container { padding: 32px 24px; }
             .cal-grid-showcase { display: none; }
+            .showcase-container { min-height: 450px; border-radius: 16px; }
+            .showcase-header { padding: 12px 16px; }
+            .dash-content { padding: 16px; }
+            .fin-summary-row { grid-template-columns: 1fr; gap: 10px; }
+            .m-table { font-size: 12px; }
+            .m-table th, .m-table td { padding: 10px 12px; }
+            .builder-canvas-viewport { padding: 8px; }
+            .do-left-col, .do-right-col { padding: 16px; }
+            .do-page-inner { padding: 16px; font-size: 12px; }
+            .cal-widget { margin: 0 -4px; }
+            .cal-add-form { padding: 12px; }
         }
         @media (max-width: 480px) {
             .msg-row { max-width: 92%; }
@@ -594,6 +606,66 @@
             .chat-input-text { font-size: 12px; }
             .chat-tool-btn { font-size: 12px; padding: 4px 8px; }
             .chat-send-btn { font-size: 11px; padding: 6px 14px; }
+            .feature-tab-btn { padding: 10px 12px; }
+            .kpi-card { padding: 16px; }
+            .kpi-card-val { font-size: 24px; }
+            .hero-content h1 { font-size: clamp(2rem,5vw,3.5rem); }
+            .showcase-container { min-height: 400px; }
+            .dash-tab-pane { inset: 16px; }
+            .chat-messages { padding: 10px; }
+            .chat-header-bar { padding: 12px 16px; }
+            .builder-tool-item { padding: 8px 10px; font-size: 11px; }
+            
+            /* Additional mobile fixes for horizontal scroll */
+            .m-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .m-table { min-width: 500px; }
+            .fin-summary-row { grid-template-columns: 1fr; }
+            .presensi-stats { grid-template-columns: 1fr; }
+            .chat-header-actions { gap: 4px; }
+            .chat-header-btn { width: 30px; height: 30px; font-size: 12px; }
+            .mention-dropdown-preview { left: -10px; right: -10px; max-width: calc(100vw - 20px); }
+            .builder-canvas-viewport { overflow-x: hidden; }
+            .canvas-block { min-width: 0; }
+            .prop-input { font-size: 11px; }
+            .prop-select { font-size: 11px; }
+            .do-page-inner { font-size: 10px; }
+            .cal-day-name { font-size: 9px; padding: 6px 0; }
+            .cal-date-s { font-size: 10px; }
+            .cal-event-s { font-size: 8px; padding: 1px 3px; }
+            .cal-agenda-item { padding: 8px 10px; }
+            .cal-agenda-item h5 { font-size: 11px; }
+            .cal-agenda-item p { font-size: 10px; }
+            .cal-input-fake { font-size: 11px; padding: 6px 8px; }
+            .cal-save-btn { padding: 8px; font-size: 11px; }
+            .hero-bg-glow { display: none; }
+            .shape-1, .shape-2, .shape-3 { display: none; }
+        }
+        
+        /* Prevent horizontal overflow on all screens */
+        .showcase-panel, .dash-content, .chat-main-col, .builder-canvas-col, .do-left-col, .do-right-col, .cal-main-col, .cal-side-col {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .m-table-wrap, .builder-canvas-viewport, .chat-messages {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Ensure all content stays within viewport */
+        * {
+            max-width: 100%;
+        }
+        
+        /* Fix for fixed position elements that might overflow */
+        .ai-widget {
+            max-width: calc(100vw - 20px);
+        }
+        
+        .showcase-toast-layer {
+            max-width: calc(100vw - 32px);
+            left: 16px;
+            right: 16px;
         }
     </style>
 </head>
@@ -2318,6 +2390,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
             return false;
         },
+        onOpenModal: (modalId) => {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.push(modal);
+            return false;
+        },
         onGetContextLabel: (ctx) => ctx || 'Beranda',
         onGetQuickActions: () => [
             { label: 'Login', icon: 'right-to-bracket', type: 'navigate', target: 'login' },
@@ -2325,6 +2402,25 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Fitur', icon: 'star', type: 'navigate', target: 'showcase' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic
+        handleIntent: (intent, entities) => {
+            const text = (entities.target || '').toLowerCase();
+            if (intent === 'UNKNOWN' || intent === 'TOLONG') {
+                return null; // Use default proactive suggestions
+            }
+            if (intent === 'NAVIGATE' && text.includes('fitur')) {
+                document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
+                return '👉 Scroll ke showcase fitur.';
+            }
+            return null;
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate' && target === 'showcase') {
+                document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
+                return '👉 Scroll ke showcase fitur.';
+            }
+            return null;
+        },
     });
     AI.init();
 });

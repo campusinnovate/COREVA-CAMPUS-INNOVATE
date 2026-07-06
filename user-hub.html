@@ -519,6 +519,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
             return false;
         },
+        onOpenModal: (modalId) => {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('active');
+        },
         onGetQuickActions: () => [
             { label: 'Lobby', icon: 'house', type: 'navigate', target: 'lobby' },
             { label: 'Workspace Saya', icon: 'layer-group', type: 'navigate', target: 'workspace' },
@@ -526,6 +530,30 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Profile', icon: 'user', type: 'navigate', target: 'profile' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic
+        handleIntent: (intent, entities) => {
+            const text = (entities.target || '').toLowerCase();
+            if (intent === 'CREATE' && (text.includes('workspace') || text.includes('organisasi'))) {
+                if (typeof switchTab === 'function') switchTab('tab-explore');
+                return '👉 Buka tab <b>Cari Workspace</b> untuk menemukan organisasi.';
+            }
+            if (intent === 'NAVIGATE' && (text.includes('profil') || text.includes('profile'))) {
+                if (typeof switchTab === 'function') switchTab('tab-profile');
+                return '✅ Membuka <b>Profil</b>.';
+            }
+            return null;
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate') {
+                const navMap = { 'lobby':'tab-lobby','workspace':'tab-my-workspace','join':'tab-join','cari':'tab-explore','profile':'tab-profile' };
+                const tabId = navMap[target];
+                if (tabId && typeof switchTab === 'function) {
+                    switchTab(tabId);
+                    return '✅ Membuka <b>' + target + '</b>.';
+                }
+            }
+            return null;
+        },
     });
     AI.init();
 });

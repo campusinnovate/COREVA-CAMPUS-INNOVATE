@@ -1887,7 +1887,7 @@ document.addEventListener('DOMContentLoaded', () => {
         storageKey: 'ai_superadmin',
         workspaceId: '0',
         pageUser: window.userEmail || 'superadmin',
-        welcomeMessage: '👋 Halo Super Admin! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Navigasi</b> — "buka dashboard", "ke workspace", dll<br>• <b>Monitoring</b> — cek statistik, lihat laporan<br>• <b>Approval</b> — bantu setujui/tolak pendaftaran admin<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        welcomeMessage: '👋 Halo Super Admin Super! AI Coreva siap bantu:<br><br>• <b>Navigasi</b> — "buka dashboard", "ke workspace"<br>• <b>Monitoring</b> — cek statistik, lihat laporan<br>• <b>Approval</b> — setujui/tolak pendaftaran admin<br>• <b>Bantuan</b> — ketik "help" panduan lengkap',
         onDetectContext: () => {
             const active = document.querySelector('.sidebar a.active, .sidebar .nav-link.active');
             return active ? active.textContent.trim() : 'Dashboard';
@@ -1903,6 +1903,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         },
         onOpenModal: (modalId) => { const m = document.getElementById(modalId); if (m) m.classList.add('active'); },
+        onFillField: (id, value) => { const el = document.getElementById(id); if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; } return false; },
         onSubmitForm: () => '✅ Silakan klik tombol Simpan di form.',
         onGetQuickActions: () => [
             { label: 'Dashboard', icon: 'gauge-high', type: 'navigate', target: 'dashboard' },
@@ -1911,6 +1912,49 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Laporan', icon: 'chart-simple', type: 'navigate', target: 'laporan' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic for superadmin
+        handleIntent: (intent, entities) => {
+            const text = (entities.target || '').toLowerCase();
+            
+            // APPROVE/REJECT admin registration
+            if (intent === 'APPROVE' || intent === 'SETUJUI' || intent === 'ACC') {
+                if (text.includes('admin') || text.includes('pendaftar') || text.includes('approval')) {
+                    const el = document.querySelector('#approval-section');
+                    if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Scroll ke <b>Approval Admin</b> untuk setujui pendaftaran.'; }
+                }
+            }
+            
+            if (intent === 'REJECT' || intent === 'TOLAK' || intent === 'BATAL') {
+                if (text.includes('admin') || text.includes('pendaftar') || text.includes('approval')) {
+                    const el = document.querySelector('#approval-section');
+                    if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '❌ Scroll ke <b>Approval Admin</b> untuk tolak pendaftaran.'; }
+                }
+            }
+            
+            // VIEW STATISTICS/REPORTS
+            if (intent === 'NAVIGATE' && (text.includes('statistik') || text.includes('laporan') || text.includes('report'))) {
+                const el = document.querySelector('#statistic-section, #report-section');
+                if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '📊 Membuka <b>Statistik/Laporan</b>.'; }
+            }
+            
+            // REFRESH data
+            if (intent === 'REFRESH' || text.includes('refresh') || text.includes('reload')) {
+                return '🔄 Silakan refresh halaman (F5) untuk data terbaru.';
+            }
+            
+            return null;
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate') {
+                const navMap = { 'dashboard':'#dashboard-section', 'workspace':'#workspace-section', 'approval':'#approval-section', 'laporan':'#report-section', 'statistik':'#statistic-section' };
+                const sel = navMap[target];
+                if (sel) {
+                    const el = document.querySelector(sel);
+                    if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Membuka <b>' + target + '</b>.'; }
+                }
+            }
+            return null;
+        },
     });
     AI.init();
 });

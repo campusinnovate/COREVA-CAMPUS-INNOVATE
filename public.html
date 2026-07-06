@@ -932,6 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return null;
         },
+        onFillField: (id, value) => { const el = document.getElementById(id); if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; } return false; },
         onGetQuickActions: () => [
             { label: 'Beranda', icon: 'house', type: 'navigate', target: 'beranda' },
             { label: 'Tentang', icon: 'info-circle', type: 'navigate', target: 'tentang' },
@@ -939,6 +940,31 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Kontak', icon: 'envelope', type: 'navigate', target: 'kontak' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic for public page
+        handleIntent: (intent, entities) => {
+            const text = (entities.target || '').toLowerCase();
+            
+            if (intent === 'SEARCH' || intent === 'CARI') {
+                return '🔍 Gunakan scroll atau menu navigasi untuk mencari informasi. Contoh: <i>"cari kegiatan seminar"</i>.';
+            }
+            
+            if (intent === 'HELP' || intent === 'TOLONG') {
+                return '🌐 <b>Portal Publik Organisasi</b><br>Saya bisa bantu navigasi:<br>• <b>Beranda</b> — informasi umum<br>• <b>Tentang Kami</b> — visi, misi, struktur<br>• <b>Kegiatan</b> — program & agenda<br>• <b>Galeri</b> — foto & dokumentasi<br>• <b>Kontak</b> — hubungi organisasi<br><br>Ketik: <i>"buka kegiatan"</i>, <i>"scroll ke kontak"</i>, dll.';
+            }
+            
+            return null;
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate') {
+                const navMap = { 'beranda':'hero-section', 'tentang':'about-section', 'kegiatan':'activities-section', 'kontak':'contact-section', 'galeri':'gallery-section' };
+                const sel = navMap[target];
+                if (sel) {
+                    const el = document.getElementById(sel);
+                    if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Scroll ke <b>' + target + '</b>.'; }
+                }
+            }
+            return null;
+        },
     });
     AI.init();
 });

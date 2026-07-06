@@ -1917,6 +1917,80 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Anggota', icon: 'users', type: 'navigate', target: 'anggota' },
             { label: 'Bantuan', icon: 'circle-question', type: 'help' },
         ],
+        // Enhanced smart logic for admin page
+        handleIntent: (intent, entities) => {
+            const ctx = AI.currentContext || '';
+            const text = (entities.target || '').toLowerCase();
+            
+            // Context-aware CREATE actions
+            if (intent === 'CREATE' || intent === 'BUAT' || intent === 'TAMBAH') {
+                if (ctx.includes('kpi')) {
+                    if (typeof openModal === 'function') openModal('kpiModal');
+                    return '✅ Membuka modal buat KPI baru.';
+                }
+                if (ctx.includes('rab') || ctx.includes('anggaran')) {
+                    if (typeof openModal === 'function') openModal('rabModal');
+                    return '✅ Membuka modal buat item RAB baru.';
+                }
+                if (ctx.includes('program') || ctx.includes('proker')) {
+                    if (typeof openModal === 'function') openModal('programModal');
+                    return '✅ Membuka modal buat program kerja baru.';
+                }
+                if (ctx.includes('surat') || ctx.includes('digital')) {
+                    if (typeof openModal === 'function') openModal('modalAjukanSurat');
+                    return '✅ Membuka modal ajukan surat baru.';
+                }
+                if (ctx.includes('absensi') || ctx.includes('presensi')) {
+                    return '📱 Gunakan fitur scan QR code di halaman Presensi untuk absen.';
+                }
+                if (ctx.includes('divisi') || ctx.includes('departemen') || ctx.includes('struktur')) {
+                    if (typeof openModal === 'function') openModal('deptModal');
+                    return '✅ Membuka modal tambah divisi baru.';
+                }
+                if (ctx.includes('notulensi') || ctx.includes('notulen')) {
+                    if (typeof openModal === 'function') openModal('notulenModal');
+                    return '✅ Membuka modal buat notulensi baru.';
+                }
+            }
+            
+            // Context-aware APPROVE/REJECT for digital office
+            if ((intent === 'APPROVE' || intent === 'SETUJUI' || intent === 'ACC') && ctx.includes('surat')) {
+                if (typeof openModal === 'function') openModal('modalAksiSurat');
+                return '✅ Buka dokumen di Digital Office untuk review & TTD.';
+            }
+            
+            // CALCULATE intent for RAB/KPI
+            if ((intent === 'CALCULATE' || intent === 'HITUNG' || intent === 'ITUNG') && (ctx.includes('rab') || ctx.includes('kpi'))) {
+                return '🧮 Total & persentase dihitung otomatis di tabel. Klik refresh untuk update.';
+            }
+            
+            return null; // Use default handler
+        },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate') {
+                const navMap = { 'kpi':'view-kpi','rab':'view-rab','program':'view-prog','surat':'view-surat','absensi':'view-absen','anggota':'view-data-pengguna' };
+                const viewId = navMap[target];
+                if (viewId && typeof switchTab === 'function') {
+                    switchTab(viewId);
+                    return '✅ Membuka <b>' + target + '</b>.';
+                }
+            }
+            if (type === 'openModal' && typeof openModal === 'function') {
+                openModal(target);
+                return '✅ Membuka modal <b>' + target + '</b>.';
+            }
+            return null;
+        },
+        // Register custom intents for admin
+        intents: {
+            BUAT_KPI: { s:['kpi'], a:['buat','tambah','bikin','input'] },
+            BUAT_RAB: { s:['rab','anggaran','biaya'], a:['buat','tambah','input','isi'] },
+            BUAT_PROGRAM: { s:['program','proker','kegiatan','event'], a:['buat','tambah','bikin','jadwalkan'] },
+            AJUKAN_SURAT: { s:['surat','pengajuan','dokumen'], a:['ajukan','buat','kirim','submit'] },
+            SCAN_ABSEN: { s:['absen','presensi','kehadiran','scan'], a:['absen','scan','hadir','checkin'] },
+            SETUJUI_SURAT: { s:['surat','digital office','ttd','tanda tangan'], a:['setujui','acc','approve','konfirmasi'] },
+            TOLAK_SURAT: { s:['surat','digital office','ttd'], a:['tolak','reject','batal'] },
+        },
     });
     AI.init();
 });

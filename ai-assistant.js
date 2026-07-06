@@ -218,6 +218,14 @@ function AIAssistantCreate(pageConfig) {
     SEARCH: { s:['cari','temukan','tampilkan data','mana','cari data','dimana data'], a:['cari','temukan','filter','lihat'] },
     RESET: { s:['reset','ulang','mulai ulang','fresh','baru lagi','reset konteks','kembali ke awal','clear'], a:['reset','ulang','clear','fresh'] },
     TOLONG: { s:['tolong','bantu','bantuin','minta tolong','mohon','please help'], a:['tolong','bantu','minta'] },
+    CREATE: { s:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi','bikinin','buatin','bikinkan','daftarin','buat baru','tambah baru'], a:['buat','bikin','tambah','input','isi','daftar','catat'] },
+    EDIT: { s:['ubah','edit','koreksi','revisi','perbaiki','ganti','update','memperbarui','ngedit','ngubah','rubah'], a:['ubah','edit','ganti','update'] },
+    APPROVE: { s:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui','setujui','accin'], a:['setuju','acc','approve','konfirmasi'] },
+    REJECT: { s:['tolak','reject','batal','tidak setuju','menolak','nampol','ngegas','gak setuju','no'], a:['tolak','reject','batal'] },
+    CONFIRM: { s:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti','konfir','yakinin'], a:['konfirmasi','pastikan','yakin'] },
+    CALCULATE: { s:['itung','hitung','kalkulasi','jumlahin','totalin','ngehitung','ngitung','jumlahkan','total','totalkan'], a:['itung','hitung','jumlah','total'] },
+    NOTE: { s:['catat','catetin','nulis','nyatet','mencatat','noted','take note'], a:['catat','catetin','note'] },
+    NEXT: { s:['lanjut','terus','next','selanjutnya','berikutnya','continue','lanjutin','terusin','gas','gaskeun','anvin'], a:['lanjut','next','continue'] },
   };
 
   // ── NLP Methods ──
@@ -289,12 +297,17 @@ function AIAssistantCreate(pageConfig) {
     return d.innerHTML;
   };
 
+  // ── Context-aware intent classification ──
   self.classifyIntent = function(text) {
     const expanded = self.expandDictionary(text);
     const lower = expanded.toLowerCase();
     const origLower = text.toLowerCase();
     let best = { intent: 'UNKNOWN', score: 0 };
     const allIntents = Object.assign({}, self.INTENTS, cfg.intents || {});
+    
+    // Context boost keywords
+    const contextBoosts = self.getContextBoosts();
+    
     for (const [name, intentCfg] of Object.entries(allIntents)) {
       let s = 0;
       let subjectMatchCount = 0;
@@ -312,9 +325,49 @@ function AIAssistantCreate(pageConfig) {
           else if (idx2 > 0) s += 1;
         }
       }
+      // Context boost
+      if (contextBoosts[name]) s += contextBoosts[name];
       if (s > best.score) best = { intent: name, score: s };
     }
     return best;
+  };
+
+  self.getContextBoosts = function() {
+    const ctx = self.currentContext || '';
+    const boosts = {};
+    // Page-specific context boosts
+    if (cfg.pageName === 'admin' || cfg.pageName === 'user-hub') {
+      boosts.CREATE = 2;
+      boosts.EDIT = 2;
+      boosts.APPROVE = 1;
+      boosts.REJECT = 1;
+      boosts.NAVIGATE = 1;
+    }
+    if (cfg.pageName === 'organisasichat') {
+      boosts.CREATE = 2; // buat agenda
+      boosts.NAVIGATE = 1;
+    }
+    if (cfg.pageName === 'superadmin') {
+      boosts.APPROVE = 2;
+      boosts.REJECT = 2;
+      boosts.NAVIGATE = 1;
+    }
+    // Current context boosts
+    if (ctx.includes('kpi') || ctx.includes('rab') || ctx.includes('anggaran')) {
+      boosts.CREATE = 1;
+      boosts.EDIT = 1;
+      boosts.CALCULATE = 2;
+    }
+    if (ctx.includes('surat') || ctx.includes('digital office')) {
+      boosts.APPROVE = 2;
+      boosts.REJECT = 2;
+      boosts.CONFIRM = 1;
+    }
+    if (ctx.includes('jadwal') || ctx.includes('kalender') || ctx.includes('agenda')) {
+      boosts.CREATE = 2;
+      boosts.NAVIGATE = 1;
+    }
+    return boosts;
   };
 
   self.extractTimeWords = function(text) {
@@ -349,7 +402,7 @@ function AIAssistantCreate(pageConfig) {
       .ai-fab.ai-fab-hidden { display: none; }
       .ai-fab.listening { animation: aiPulse 1s infinite; background: var(--ai-error) !important; }
       @keyframes aiPulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 70% { box-shadow: 0 0 0 15px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
-      .ai-widget { position: fixed; width: 420px; height: 600px; max-height: 80vh; background: var(--ai-bg); backdrop-filter: blur(20px); border: 1px solid var(--ai-border); border-radius: 20px; box-shadow: var(--ai-shadow); z-index: 9997; display: flex; flex-direction: column; overflow: hidden; transform: translateY(20px) scale(0.95); opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.175,0.885,0.32,1.275), transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275), visibility 0.4s; will-change: top, left; }
+      .ai-widget { position: fixed; width: 420px; max-width: calc(100vw - 20px); height: 600px; max-height: 80vh; background: var(--ai-bg); backdrop-filter: blur(20px); border: 1px solid var(--ai-border); border-radius: 20px; box-shadow: var(--ai-shadow); z-index: 9997; display: flex; flex-direction: column; overflow: hidden; transform: translateY(20px) scale(0.95); opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.175,0.885,0.32,1.275), transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275), visibility 0.4s; will-change: top, left; }
       .ai-widget.active { transform: translateY(0) scale(1); opacity: 1; visibility: visible; }
       .ai-widget.minimized { height: 60px; width: 320px; border-radius: 30px; }
       .ai-widget.minimized .ai-widget-body, .ai-widget.minimized .ai-widget-footer { display: none; }
@@ -430,6 +483,31 @@ function AIAssistantCreate(pageConfig) {
       .ai-field-highlight { animation: aiFieldPulse 1.5s ease-in-out 3; box-shadow: 0 0 0 3px rgba(246,178,59,0.5); border-color: var(--ai-secondary) !important; }
       @keyframes aiFieldPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.01); } }
       .ai-context-badge { display: none; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 500; }
+        @media (max-width: 480px) {
+          .ai-widget { width: calc(100vw - 20px); height: 70vh; max-height: 70vh; border-radius: 16px 16px 0 0; bottom: 0; top: auto; left: 10px; }
+          .ai-widget.active { transform: translateY(0) scale(1); }
+          .ai-widget-header { padding: 12px 16px; border-radius: 16px 16px 0 0; }
+          .ai-widget-title span { font-size: 0.9rem; }
+          .ai-chat-messages { padding: 12px; gap: 12px; }
+          .ai-message { max-width: 90%; }
+          .ai-message-bubble { padding: 10px 14px; font-size: 0.85rem; }
+          .ai-quick-actions { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 12px 10px; }
+          .ai-quick-action { padding: 10px 8px; }
+          .ai-quick-action i { font-size: 1.2rem; }
+          .ai-quick-action span { font-size: 0.7rem; }
+          .ai-widget-footer { padding: 10px 12px 12px; }
+          .ai-input-wrapper { padding: 6px 10px; border-radius: 12px; }
+          .ai-input-field textarea { font-size: 0.85rem; max-height: 60px; }
+          .ai-input-btn { width: 32px; height: 32px; font-size: 0.9rem; }
+          .ai-fab { width: 48px; height: 48px; font-size: 1.3rem; bottom: 16px; left: 16px; }
+          .ai-fab-restore { width: 36px; height: 36px; font-size: 1rem; bottom: 16px; left: 16px; }
+          .ai-bulk-content { width: 95%; max-height: 85vh; }
+          .ai-bulk-table { font-size: 0.7rem; }
+        }
+        @media (max-width: 360px) {
+          .ai-widget { width: calc(100vw - 12px); left: 6px; }
+          .ai-quick-actions { grid-template-columns: 1fr; }
+        }
     </style>
     <div class="ai-fab-restore" id="aiFabRestore" onclick="AI.restoreFab()" style="display:none;"><i class="fa-solid fa-robot"></i></div>
     <button class="ai-fab" id="aiFab" title="AI Assistant"><i class="fa-solid fa-robot" id="aiFabIcon"></i></button>
@@ -454,6 +532,7 @@ function AIAssistantCreate(pageConfig) {
           <div class="ai-input-actions">
             <button class="ai-input-btn secondary" onclick="AI.pasteFromClipboard()" title="Paste"><i class="fa-solid fa-paste"></i></button>
             <button class="ai-input-btn voice" id="aiFooterVoiceBtn" onclick="AI.toggleVoice()" title="Voice"><i class="fa-solid fa-microphone"></i></button>
+            <button class="ai-input-btn secondary" id="aiFooterFabToggleBtn" onclick="AI.toggleFab()" title="Sembunyikan/Munculkan FAB"><i class="fa-solid fa-eye-slash"></i></button>
             <button class="ai-input-btn send" onclick="AI.sendMessage()" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
           </div>
         </div>
@@ -670,6 +749,22 @@ function AIAssistantCreate(pageConfig) {
 
   // ── Process Message ──
   self.processMessage = function(text) {
+    // Validate input first
+    const validation = self.validateInput(text);
+    if (!validation.valid) {
+      if (validation.reason === 'empty') return;
+      if (validation.reason === 'too_long') {
+        self.addMessage('⚠️ Pesan terlalu panjang (maks 2000 karakter). Dipotong otomatis.', false);
+        text = validation.text;
+      } else if (validation.reason === 'too_short') {
+        self.addMessage('⚠️ Pesan terlalu pendek.', false);
+        return;
+      } else if (validation.reason === 'suspicious') {
+        self.addMessage('⚠️ Input tidak valid.', false);
+        return;
+      }
+    }
+    
     self.showTyping();
     const enriched = self.expandDictionary(text);
     self.lastInputs.push(text);
@@ -699,12 +794,28 @@ function AIAssistantCreate(pageConfig) {
           reply = 'Saya masih belum paham. Coba format sederhana:<br>• <i>"buka [menu]"</i> untuk navigasi<br>• <i>"bantuan"</i> untuk panduan<br>• Atau klik tombol aksi di atas input teks';
           self.consecutiveFailCount = 0;
         } else {
-          reply = 'Maaf, saya belum paham. Ketik <b>help</b> untuk panduan.';
+          // Try default handler for unknown intent
+          reply = self.defaultHandleIntent(intent, { target: enriched });
+          if (!reply) reply = 'Maaf, saya belum paham. Ketik <b>help</b> untuk panduan.';
         }
       } else {
         self.consecutiveFailCount = 0;
         self.repetitionCount = 0;
-        reply = self.executeIntent(intent, { target: enriched });
+        // First try page-specific handler
+        if (cfg.handleIntent) {
+          reply = cfg.handleIntent(intent, { target: enriched });
+        }
+        // Fallback to enhanced executeIntent
+        if (!reply) {
+          reply = self.executeIntent(intent, { target: enriched });
+        }
+        // Last resort: default handler
+        if (!reply) {
+          reply = self.defaultHandleIntent(intent, { target: enriched });
+        }
+        if (!reply) {
+          reply = 'Saya paham Anda ingin <b>' + intent + '</b>. Silakan detailkan atau ketik <b>help</b>.';
+        }
       }
       self.addMessage(reply, false);
       self.showQuickActions();
@@ -719,6 +830,10 @@ function AIAssistantCreate(pageConfig) {
   };
 
   self.executeIntent = function(intent, entities) {
+    const ctx = self.currentContext || '';
+    const text = entities.target || '';
+    const lower = text.toLowerCase();
+    
     switch (intent) {
       case 'GREET': {
         const h = new Date().getHours();
@@ -728,22 +843,147 @@ function AIAssistantCreate(pageConfig) {
       case 'HELP': return self.getHelpText();
       case 'WHOAMI': return cfg.pageUser ? 'Anda <b>' + cfg.pageUser + '</b>' + (cfg.pageRole?' ('+cfg.pageRole+')':'') + '.' : 'Belum ada data pengguna.';
       case 'WHEREAMI': return 'Anda di halaman <b>' + (cfg.onGetContextLabel ? cfg.onGetContextLabel(self.currentContext) : cfg.pageName) + '</b>.';
+      
       case 'NAVIGATE': {
         if (cfg.onNavigate) return cfg.onNavigate(entities.target);
         return 'Navigasi: bisa ke halaman yang tersedia.';
       }
-      case 'EXPORT': return '📊 Untuk export, buka halaman data lalu klik tombol Export.';
-      case 'DELETE': return '🗑️ Untuk menghapus, cari item lalu klik ikon hapus.';
-      case 'REFRESH': { if (cfg.onRefresh) return cfg.onRefresh(); return 'Silakan refresh manual.'; }
+      
+      case 'CREATE': case 'BUAT': case 'TAMBAH': {
+        // Handle create based on context
+        if (ctx.includes('kpi') || ctx.includes('rab') || ctx.includes('anggaran')) {
+          if (cfg.onOpenModal) { cfg.onOpenModal('kpiModal'); return '✅ Membuka modal Klik untuk buat KPI baru.'; }
+          return '📝 Buka halaman KPI lalu klik tombol <b>Tambah KPI</b>.';
+        }
+        if (ctx.includes('program') || ctx.includes('proker') || ctx.includes('event') || ctx.includes('kegiatan')) {
+          if (cfg.onOpenModal) { cfg.onOpenModal('programModal'); return '✅ Klik untuk buat program kerja baru.'; }
+          return '📅 Buka halaman Program lalu klik <b>Tambah Program</b>.';
+        }
+        if (ctx.includes('surat') || ctx.includes('digital office') || ctx.includes('dokumen')) {
+          if (cfg.onOpenModal) { cfg.onOpenModal('modalAjukanSurat'); return '✅ Klik untuk buat pengajuan surat baru.'; }
+          return '📄 Buka Digital Office lalu klik <b>Ajukan Surat</b>.';
+        }
+        if (ctx.includes('absensi') || ctx.includes('presensi')) {
+          return '✅ Gunakan fitur scan QR code di halaman Presensi untuk absen.';
+        }
+        if (ctx.includes('jadwal') || ctx.includes('kalender') || ctx.includes('agenda')) {
+          if (cfg.onOpenModal) { cfg.onOpenModal('modalScheduleAgenda'); return '✅ Buka modal buat jadwal baru.'; }
+          return '📅 Buka Kalender lalu klik <b>Tambah Jadwal</b>.';
+        }
+        if (ctx.includes('divisi') || ctx.includes('departemen') || ctx.includes('dept')) {
+          if (cfg.onOpenModal) { cfg.onOpenModal('deptModal'); return '✅ Klik untuk tambah divisi baru.'; }
+          return '👥 Buka Struktur Organisasi lalu klik <b>Tambah Divisi</b>.';
+        }
+        if (ctx.includes('sponsor') || ctx.includes('donasi')) {
+          return '🤝 Buka halaman Sponsor lalu klik <b>Tambah Sponsor</b>.';
+        }
+        if (ctx.includes('pendaftaran') || ctx.includes('registrasi')) {
+          return '📝 Buka halaman Pendaftaran lalu klik <b>Tambah Data</b>.';
+        }
+        if (ctx.includes('dokumentasi') || ctx.includes('foto')) {
+          return '📸 Buka Dokumentasi lalu klik <b>Upload Foto</b>.';
+        }
+        if (ctx.includes('notulensi') || ctx.includes('notulen')) {
+          return '📝 Buka Notulensi lalu klik <b>Buat Notulensi</b>.';
+        }
+        if (cfg.onOpenModal) {
+          return '➕ Apa yang ingin dibuat? Coba sebutkan: <b>KPI</b>, <b>Program</b>, <b>Surat</b>, <b>Jadwal</b>, <b>Divisi</b>, <b>Sponsor</b>, atau <b>Pendaftaran</b>.';
+        }
+        return '➕ Silakan detailkan apa yang ingin dibuat (KPI, Program, Surat, Jadwal, Divisi, dll).';
+      }
+      
+      case 'EDIT': case 'UBAH': case 'UPDATE': {
+        return '✏️ Untuk mengedit, buka halaman terkait lalu klik ikon <b>edit</b> pada item yang diinginkan.';
+      }
+      
+      case 'APPROVE': case 'SETUJUI': case 'ACC': {
+        if (ctx.includes('surat') || ctx.includes('digital office')) {
+          if (cfg.onOpenModal) { cfg.onOpenModal('modalAksiSurat'); return '✅ Buka dokumen lalu klik <b>Setujui & TTD</b>.'; }
+          return '✍️ Buka Digital Office, pilih surat, lalu klik <b>Review & TTD</b> → <b>Setujui</b>.';
+        }
+        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan')) {
+          return '✅ Buka RAB, pilih item, lalu klik tombol <b>ACC/Setujui</b>.';
+        }
+        if (ctx.includes('pendaftaran') || ctx.includes('registrasi')) {
+          return '✅ Buka Pendaftaran, pilih data, lalu klik <b>Terima</b>.';
+        }
+        if (cfg.pageName === 'superadmin') {
+          if (cfg.onOpenModal) { cfg.onOpenModal('approvalModal'); return '✅ Buka halaman Approval untuk setujui pendaftaran admin.'; }
+          return '✅ Buka halaman <b>Approval Admin</b> untuk menyetujui/menolak pendaftaran.';
+        }
+        return '✅ Pilih item lalu klik tombol <b>Setujui/ACC</b> pada baris tersebut.';
+      }
+      
+      case 'REJECT': case 'TOLAK': case 'BATAL': {
+        if (ctx.includes('surat') || ctx.includes('digital office')) {
+          return '❌ Buka dokumen di Digital Office, klik <b>Review & TTD</b> lalu pilih <b>Tolak</b>.';
+        }
+        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan')) {
+          return '❌ Buka RAB, pilih item, lalu klik tombol <b>Tolak</b>.';
+        }
+        if (ctx.includes('pendaftaran') || ctx.includes('registrasi')) {
+          return '❌ Buka Pendaftaran, pilih data, lalu klik <b>Tolak</b>.';
+        }
+        if (cfg.pageName === 'superadmin') {
+          return '❌ Buka halaman <b>Approval Admin</b> untuk menolak pendaftaran.';
+        }
+        return '❌ Pilih item lalu klik tombol <b>Tolak/Batal</b>.';
+      }
+      
+      case 'CONFIRM': case 'KONFIRMASI': case 'YAKIN': {
+        if (self.pending && self.pending.confirm) {
+          const msg = self.pending.confirm();
+          self.pending = null;
+          return msg;
+        }
+        return '🤔 Apa yang ingin dikonfirmasi? Silakan detailkan.';
+      }
+      
+      case 'CALCULATE': case 'HITUNG': case 'ITUNG': {
+        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan') || ctx.includes('biaya')) {
+          return '🧮 Buka RAB → item biaya akan otomatis dihitung totalnya. Atau ketik: <i>"hitung total [item1] [item2]..."</i>';
+        }
+        if (ctx.includes('kpi') || ctx.includes('target') || ctx.includes('capaian')) {
+          return '📊 Persentase capaian = (Capaian / Target) × 100%. Buka halaman KPI untuk lihat otomatis.';
+        }
+        if (ctx.includes('absensi') || ctx.includes('presensi') || ctx.includes('kehadiran')) {
+          return '📈 Persentase kehadiran = (Hadir / Total) × 100%. Lihat dashboard Presensi untuk grafiknya.';
+        }
+        return '🧮 Bisa hitung: total RAB, persentase KPI, kehadiran, dll. Sebutkan konteksnya ya.';
+      }
+      
+      case 'EXPORT': return '📊 Untuk export, buka halaman data lalu klik tombol <b>Export/Download</b> (Excel/CSV/PDF).';
+      case 'DELETE': return '🗑️ Untuk menghapus, cari item lalu klik ikon <b>hapus</b> (🗑️).';
+      case 'REFRESH': { if (cfg.onRefresh) return cfg.onRefresh(); return '🔄 Silakan refresh manual (F5) atau klik tombol refresh di halaman.'; }
       case 'RESET': { self.resetAll(); return '🔄 Percakapan direset.'; }
       case 'TOLONG': return 'Iya, ada yang bisa dibantu? Coba sebutkan apa yang ingin dilakukan.';
+      
+      case 'SEARCH': case 'CARI': {
+        const searchTerm = lower.replace(/(cari|temukan|filter|lihat|temukan data|mana|dimana data)/gi, '').trim();
+        if (searchTerm) {
+          return '🔍 Mencari: <b>' + self.escapeHtml(searchTerm) + '</b>. Gunakan kolom pencarian di halaman ini atau ketik: <i>"cari [kata kunci]"</i>.';
+        }
+        return '🔍 Mau cari apa? Contoh: <i>"cari program seminar"</i>, <i>"cari anggaran tenda"</i>.';
+      }
+      
+      case 'VOICE': {
+        self.toggleVoice();
+        return '🎤 Voice input ' + (self.isListening ? 'diaktifkan' : 'dinonaktifkan') + '.';
+      }
+      
       default: {
         // Check page-specific intent handlers
         if (cfg.handleIntent) {
           const result = cfg.handleIntent(intent, entities);
           if (result) return result;
         }
-        return 'Saya paham Anda ingin <b>' + intent + '</b>. Silakan detailkan atau ketik <b>help</b>.';
+        
+        // Try to match with context-aware suggestions
+        const suggestions = self.getContextActionsHelp();
+        return 'Saya paham Anda ingin <b>' + intent + '</b>. ' + 
+               (suggestions !== '• <b>Bantuan</b> • <b>Navigasi</b>' ? 
+                 '<br>Mungkin ini membantu:<br>' + suggestions : 
+                 '<br>Silakan detailkan atau ketik <b>help</b>.');
       }
     }
   };
@@ -920,25 +1160,29 @@ function AIAssistantCreate(pageConfig) {
     const fab = document.getElementById('aiFab');
     const restore = document.getElementById('aiFabRestore');
     const btn = document.getElementById('aiFabToggleBtn');
+    const footerBtn = document.getElementById('aiFooterFabToggleBtn');
     if (!fab) return;
     if (fab.classList.contains('ai-fab-hidden')) { self.restoreFab(); }
     else {
       fab.classList.add('ai-fab-hidden');
       if (restore) restore.style.display = 'flex';
       if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      if (footerBtn) footerBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
       const key = 'ai_fab_hidden_' + (cfg.workspaceId || '0');
       try { localStorage.setItem(key, 'true'); } catch(e) {}
-      self.addMessage('🔘 FAB disembunyikan. Klik badge AI di pojok untuk memunculkan lagi.', false);
+      self.addMessage('🔘 FAB disembunyikan. Klik badge AI di pojok atau tombol di input untuk memunculkan lagi.', false);
     }
   };
   self.restoreFab = function() {
     const fab = document.getElementById('aiFab');
     const restore = document.getElementById('aiFabRestore');
     const btn = document.getElementById('aiFabToggleBtn');
+    const footerBtn = document.getElementById('aiFooterFabToggleBtn');
     if (!fab) return;
     fab.classList.remove('ai-fab-hidden');
     if (restore) restore.style.display = 'none';
     if (btn) btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+    if (footerBtn) footerBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
     const key = 'ai_fab_hidden_' + (cfg.workspaceId || '0');
     try { localStorage.setItem(key, 'false'); } catch(e) {}
   };
@@ -955,6 +1199,206 @@ function AIAssistantCreate(pageConfig) {
       '<b>🎤 Voice:</b> Klik ikon mikrofon<br>' +
       '<b>📋 Paste Excel:</b> Salin data, klik Paste<br>' +
       '<b>⚡ Quick Actions:</b> Tombol di atas input teks';
+  };
+
+  // ── Default Handlers (Smart Logic Enhancements) ──
+  
+  // Default handleIntent - untuk handle intent yang tidak dikenali secara global
+  self.defaultHandleIntent = function(intent, entities) {
+    const ctx = self.currentContext || '';
+    const text = (entities.target || '').toLowerCase();
+    
+    // Multi-turn conversation: check if we have pending action
+    if (self.pending && self.pending.intent) {
+      const pendingIntent = self.pending.intent;
+      if (intent === 'CONFIRM' || intent === 'SETUJUI' || intent === 'YAKIN' || intent === 'IYA' || intent === 'YA') {
+        if (self.pending.confirm) {
+          const result = self.pending.confirm();
+          self.pending = null;
+          return result;
+        }
+      }
+      if (intent === 'REJECT' || intent === 'TOLAK' || intent === 'BATAL' || intent === 'TIDAK' || intent === 'GAK') {
+        self.pending = null;
+        return '❌ Dibatalkan.';
+      }
+      // If user provides additional info for pending action
+      if (self.pending.collectField) {
+        const field = self.pending.collectField;
+        self.pending.data[field] = text;
+        self.pending.collectField = null;
+        return self.continuePendingAction();
+      }
+    }
+    
+    // Proactive context-aware suggestions
+    if (intent === 'UNKNOWN' || intent === 'TOLONG') {
+      return self.getProactiveSuggestions(ctx);
+    }
+    
+    return null; // Let page-specific handler take over
+  };
+
+  // Continue pending multi-turn action
+ 
+  self.continuePendingAction = function() {
+    if (!self.pending) return null;
+    
+    // Check if all required fields collected
+    const required = self.pending.requiredFields || [];
+    const missing = required.filter(f => !self.pending.data[f]);
+    
+    if (missing.length > 0) {
+      self.pending.collectField = missing[0];
+      const prompts = {
+        'nama': '📝 Nama apa?',
+        'judul': '📝 Judulnya apa?',
+        'tanggal': '📅 Tanggal berapa? (contoh: besok, 20 Mei, hari ini)',
+        'waktu': '🕐 Jam berapa? (contoh: 19:00, sore)',
+        'tempat': '📍 Di mana?',
+        'anggaran': '💰 Anggaran berapa? (contoh: 5 juta, 10.000.000)',
+        'target': '🎯 Target berapa?',
+        'satuan': '📏 Satuan apa? (orang, %, unit)',
+        'deskripsi': '📄 Deskripsinya?',
+        'penerima': '👤 Untuk siapa/kepada siapa?',
+        'divisi': '🏢 Divisi mana?',
+      };
+      return prompts[missing[0]] || 'Masukkan ' + missing[0] + ':';
+    }
+    
+    // Execute the pending action
+    if (self.pending.execute) {
+      const result = self.pending.execute(self.pending.data);
+      self.pending = null;
+      return result;
+    }
+    
+    self.pending = null;
+    return '✅ Selesai.';
+  };
+
+  // Proactive suggestions based on context
+  self.getProactiveSuggestions = function(ctx) {
+    const suggestions = [];
+    const page = cfg.pageName;
+    
+    if (page === 'admin' || page === 'user-hub') {
+      if (ctx.includes('kpi') || ctx.includes('rab')) {
+        suggestions.push('• <b>buat KPI baru</b> — tambah indikator performa');
+        suggestions.push('• <b>hitung total anggaran</b> — kalkulasi otomatis');
+      }
+      if (ctx.includes('program') || ctx.includes('proker')) {
+        suggestions.push('• <b>buat program kerja</b> — jadwal & detail kegiatan');
+        suggestions.push('• <b>cari program seminar</b> — filter data');
+      }
+      if (ctx.includes('surat') || ctx.includes('digital')) {
+        suggestions.push('• <b>ajukan surat baru</b> — pengajuan dokumen');
+        suggestions.push('• <b>setujui surat masuk</b> — approve digital office');
+      }
+    }
+    
+    if (page === 'superadmin') {
+      suggestions.push('• <b>lihat approval admin</b> — cek pendaftaran menunggu');
+      suggestions.push('• <b>setujui admin baru</b> — verifikasi akses organisasi');
+    }
+    
+    if (page === 'organisasichat') {
+      suggestions.push('• <b>buat agenda rapat</b> — jadwal pertemuan');
+      suggestions.push('• <b>kirim pesan ke grup</b> — broadcast announcement');
+    }
+    
+    if (page === 'index') {
+      suggestions.push('• <b>login</b> — masuk ke workspace');
+      suggestions.push('• <b>daftar</b> — ajukan trial 30 hari');
+      suggestions.push('• <b>lihat fitur</b> — showcase demo interaktif');
+    }
+    
+    if (!suggestions.length) {
+      suggestions.push('• <b>bantuan</b> — panduan lengkap');
+      suggestions.push('• <b>navigasi ke [halaman]</b> — pindah menu');
+    }
+    
+    return '💡 <b>Saran untuk konteks ini:</b><br>' + suggestions.slice(0, 4).join('<br>');
+  };
+
+  // Input validation & sanitization
+  self.validateInput = function(text) {
+    if (!text || !text.trim()) return { valid: false, reason: 'empty' };
+    const trimmed = text.trim();
+    
+    // Length check
+    if (trimmed.length > 2000) return { valid: false, reason: 'too_long', text: trimmed.substring(0, 2000) };
+    if (trimmed.length < 2) return { valid: false, reason: 'too_short' };
+    
+    // Basic XSS prevention - strip script tags
+    const sanitized = trimmed
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
+    
+    // Detect potential injection attempts
+    if (/<iframe|<object|<embed|eval\(|document\.cookie|localStorage/gi.test(trimmed)) {
+      return { valid: false, reason: 'suspicious' };
+    }
+    
+    return { valid: true, text: sanitized };
+  };
+
+  // Default onExecuteAction
+  self.defaultExecuteAction = function(actionType, actionTarget, data) {
+    switch (actionType) {
+      case 'navigate':
+        if (cfg.onNavigate && actionTarget) return cfg.onNavigate(actionTarget);
+        break;
+      case 'openModal':
+        if (cfg.onOpenModal && actionTarget) return cfg.onOpenModal(actionTarget);
+        break;
+      case 'fillForm':
+        if (cfg.onFillField && data?.field && data?.value) return cfg.onFillField(data.field, data.value);
+        break;
+      case 'submit':
+        if (cfg.onSubmitForm && actionTarget) return cfg.onSubmitForm(actionTarget);
+        break;
+      case 'refresh':
+        if (cfg.onRefresh) return cfg.onRefresh();
+        break;
+      case 'bulkInsert':
+        if (cfg.onBulkInsert && data) return cfg.onBulkInsert(data, {}, self.currentContext);
+        break;
+    }
+    return null;
+  };
+
+  // Register page-specific intents (called by page config)
+  self.registerIntents = function(customIntents) {
+    Object.assign(self.INTENTS, customIntents);
+  };
+
+  // Set pending action for multi-turn
+  self.setPendingAction = function(actionConfig) {
+    self.pending = {
+      intent: actionConfig.intent,
+      data: actionConfig.data || {},
+      requiredFields: actionConfig.requiredFields || [],
+      collectField: null,
+      confirm: actionConfig.confirm,
+      execute: actionConfig.execute,
+    };
+    // Start collecting first missing field
+    const missing = self.pending.requiredFields.filter(f => !self.pending.data[f]);
+    if (missing.length > 0) {
+      self.pending.collectField = missing[0];
+    }
+  };
+
+  // Smart context detection with caching
+  self.smartDetectContext = function() {
+    const now = Date.now();
+    if (self._lastContextDetect && (now - self._lastContextDetect) < 2000) {
+      return self.currentContext; // Cache for 2 seconds
+    }
+    self._lastContextDetect = now;
+    return self.detectContext();
   };
 
   // ── Draggable FAB ──
