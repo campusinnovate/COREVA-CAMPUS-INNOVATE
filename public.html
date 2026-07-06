@@ -634,9 +634,10 @@
                     }
                 });
 
+                const corevaLogo = '<img src="Logo Coreva removebg.png" style="height:28px; object-fit:contain; margin-right:4px;">';
                 let navBrandContent = logoUrl 
                     ? `<img src="${escapeHtml(logoUrl)}" style="height:35px; object-fit:contain;"> ${escapeHtml(orgName)}` 
-                    : `<i class="fa-solid fa-layer-group" style="color: var(--accent);"></i> ${escapeHtml(orgName)}`;
+                    : `${corevaLogo} ${escapeHtml(orgName)}`;
 
                 let blocksHTMLString = `
                     <div class="public-navbar">
@@ -915,5 +916,32 @@
             }
         });
     </script>
+<script src="ai-assistant.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.AI = AIAssistantCreate({
+        pageName: 'public',
+        storageKey: 'ai_public',
+        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Info organisasi</b> — tanya tentang visi, misi, kegiatan<br>• <b>Navigasi halaman</b> — "buka tentang kami", "ke kontak"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        onNavigate: (target) => {
+            const navMap = { 'tentang':'about-section','visi misi':'about-section','beranda':'hero-section','home':'hero-section','kontak':'contact-section','hubungi':'contact-section','kegiatan':'activities-section','program':'activities-section','galeri':'gallery-section','dokumentasi':'gallery-section' };
+            const sel = navMap[target.toLowerCase().trim()];
+            if (sel) {
+                const el = document.getElementById(sel);
+                if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Scroll ke <b>' + target + '</b>.'; }
+            }
+            return null;
+        },
+        onGetQuickActions: () => [
+            { label: 'Beranda', icon: 'house', type: 'navigate', target: 'beranda' },
+            { label: 'Tentang', icon: 'info-circle', type: 'navigate', target: 'tentang' },
+            { label: 'Kegiatan', icon: 'calendar', type: 'navigate', target: 'kegiatan' },
+            { label: 'Kontak', icon: 'envelope', type: 'navigate', target: 'kontak' },
+            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+        ],
+    });
+    AI.init();
+});
+</script>
 </body>
 </html>

@@ -288,7 +288,7 @@
     <!-- Navbar -->
     <nav class="hub-nav">
         <div class="logo">
-            <i class="fa-solid fa-chart-pie"></i> Campus <span>Innovate</span>
+            <img src="Logo Coreva removebg.png" alt="Coreva" style="height:28px; width:auto; object-fit:contain;"> Campus <span>Innovate</span>
         </div>
         <div class="hub-nav-right">
             <span class="user-badge" id="userBadge"><i class="fa-solid fa-user"></i> <span id="badgeName"></span></span>
@@ -492,5 +492,43 @@
         }
     </script>
 
+<script src="ai-assistant.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.AI = AIAssistantCreate({
+        pageName: 'user-hub',
+        storageKey: 'ai_user_hub',
+        pageUser: window.userEmail || 'user',
+        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Cari workspace</b> — "cari organisasi", "temukan UKM"<br>• <b>Gabung</b> — cara join workspace<br>• <b>Navigasi</b> — "buka workspace saya", "ke profil"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        onDetectContext: () => {
+            const active = document.querySelector('.nav-link.active, .menu-item.active');
+            return active ? active.textContent.trim() : 'Lobby';
+        },
+        onGetContextLabel: (ctx) => ctx || 'Lobby Anggota',
+        onNavigate: (target) => {
+            const navMap = { 'lobby':'tab-lobby','workspace':'tab-my-workspace','workspace saya':'tab-my-workspace','join':'tab-join','cari':'tab-explore','explore':'tab-explore','profile':'tab-profile','profil':'tab-profile' };
+            const tabId = navMap[target.toLowerCase().trim()];
+            if (tabId && typeof switchTab === 'function') {
+                switchTab(tabId);
+                return '✅ Membuka <b>' + target + '</b>.';
+            }
+            return null;
+        },
+        onFillField: (id, value) => {
+            const el = document.getElementById(id);
+            if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
+            return false;
+        },
+        onGetQuickActions: () => [
+            { label: 'Lobby', icon: 'house', type: 'navigate', target: 'lobby' },
+            { label: 'Workspace Saya', icon: 'layer-group', type: 'navigate', target: 'workspace' },
+            { label: 'Cari', icon: 'magnifying-glass', type: 'navigate', target: 'cari' },
+            { label: 'Profile', icon: 'user', type: 'navigate', target: 'profile' },
+            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+        ],
+    });
+    AI.init();
+});
+</script>
 </body>
 </html>

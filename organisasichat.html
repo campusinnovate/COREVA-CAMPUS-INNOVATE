@@ -484,7 +484,7 @@
     </a>
 
     <nav class="app-sidebar">
-        <div class="logo" onclick="window.location.href='user-hub.html'" title="Kembali ke Dashboard"><i class="fa-solid fa-layer-group"></i></div>
+        <div class="logo" onclick="window.location.href='user-hub.html'" title="Kembali ke Dashboard"><img src="Logo Coreva removebg.png" alt="Coreva" style="height:28px; width:auto; object-fit:contain;"></div>
         <a href="#" class="nav-icon active" onclick="activateSidebar(this); switchTab('all', document.querySelectorAll('.chat-tab')[0])"><i class="fa-solid fa-message"></i><span>Obrolan</span></a>
         <a href="#" class="nav-icon" onclick="activateSidebar(this); switchChatFilter('teams')" title="Lihat Tim Divisi"><i class="fa-solid fa-users-rectangle"></i><span>Tim</span></a>
         <a href="#" class="nav-icon" onclick="openOrgChartModal(); activateSidebar(this)" title="Lihat Struktur Organisasi"><i class="fa-solid fa-sitemap"></i><span>Struktur</span></a>
@@ -1648,6 +1648,43 @@
             } catch (error) { showToast("Gagal", "Database Error.", "error"); }
         }
     </script>
+<script src="ai-assistant.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.AI = AIAssistantCreate({
+        pageName: 'organisasichat',
+        storageKey: 'ai_chat',
+        workspaceId: window.workspaceId || '0',
+        pageUser: window.userEmail || 'user',
+        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Kirim pesan</b> — "kirim pesan ke grup"<br>• <b>Agenda</b> — "buat agenda rapat", "jadwal hari ini"<br>• <b>Navigasi</b> — "buka workspace", "ke dashboard"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        onDetectContext: () => {
+            const active = document.querySelector('.sidebar .active, .nav-item.active');
+            return active ? active.textContent.trim() : 'Chat';
+        },
+        onGetContextLabel: (ctx) => ctx || 'Chat',
+        onNavigate: (target) => {
+            const navMap = { 'chat':'chat-tab','agenda':'agenda-tab','jadwal':'agenda-tab','workspace':'workspace-tab','dashboard':'dashboard-tab','anggaran':'rab-tab','rab':'rab-tab' };
+            const tabId = navMap[target.toLowerCase().trim()];
+            if (tabId && typeof switchTab === 'function') {
+                switchTab(tabId);
+                return '✅ Membuka <b>' + target + '</b>.';
+            }
+            return null;
+        },
+        onOpenModal: (modalId) => {
+            const m = document.getElementById(modalId);
+            if (m) m.classList.add('active');
+        },
+        onGetQuickActions: () => [
+            { label: 'Chat', icon: 'comments', type: 'navigate', target: 'chat' },
+            { label: 'Agenda', icon: 'calendar-plus', type: 'navigate', target: 'agenda' },
+            { label: 'Workspace', icon: 'layer-group', type: 'navigate', target: 'workspace' },
+            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+        ],
+    });
+    AI.init();
+});
+</script>
 </body>
 </html>
     

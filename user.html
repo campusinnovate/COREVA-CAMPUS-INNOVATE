@@ -836,7 +836,7 @@
     <div class="sidebar" id="sidebar">
         <div class="brand" style="flex-direction: column; gap: 12px; align-items: center; position: relative;">
             <div style="display: flex; align-items: center; background: white; border-radius: 10px; padding: 10px; width: 100%; justify-content: center;">
-                <img src="logo-campus-innovate.webp" alt="Logo Campus Innovate" style="max-height: 40px; width: auto;">
+                <img src="Logo Coreva removebg.png" alt="Coreva" style="max-height: 40px; width: auto; object-fit:contain;">
             </div>
             <div id="sidebar-workspace-name" style="font-size: 0.95rem; font-weight: bold; color: var(--accent); text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Memuat...</div>
             <button class="close-sidebar-btn" onclick="toggleMobileMenu()" style="position: absolute; right: 15px; top: 15px;"><i class="fa-solid fa-xmark"></i></button>
@@ -4417,6 +4417,82 @@
                 c.appendChild(d); c.scrollTop = c.scrollHeight;
                 this.saveHistory();
             },
+            // ── NEW: Clickable Action Buttons in Chat ──
+            // actions = [ { label, icon, type, target, data } ]
+            addActionMessage(text, actions) {
+                const c = document.getElementById('aiChatMessages'); if (!c) return;
+                const d = document.createElement('div');
+                d.className = 'ai-message ai';
+                const ts = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
+                let chipsHtml = '';
+                if (actions && actions.length) {
+                    chipsHtml = '<div class="ai-suggestions">';
+                    for (const a of actions) {
+                        const iconHtml = a.icon ? '<i class="fa-solid fa-' + a.icon + '"></i>' : '';
+                        const targetStr = a.target || '';
+                        const dataStr = a.data ? JSON.stringify(a.data).replace(/'/g,"\\'") : '{}';
+                        chipsHtml += '<div class="ai-suggestion-chip" onclick="AIAssistant.executeChatAction(\'' + a.type + '\',\'' + targetStr.replace(/'/g,"\\'") + '\',\'' + dataStr.replace(/'/g,"\\'") + '\')">' + iconHtml + this.escapeHtml(a.label) + '</div>';
+                    }
+                    chipsHtml += '</div>';
+                }
+                d.innerHTML = '<div class="ai-message-avatar">AI</div><div class="ai-message-content"><div class="ai-message-bubble">' + text + '</div>' + chipsHtml + '<div class="ai-message-time">' + ts + '</div></div>';
+                c.appendChild(d); c.scrollTop = c.scrollHeight;
+                this.saveHistory();
+            },
+            executeChatAction(type, target, dataStr) {
+                let data = {};
+                try { if (dataStr) data = JSON.parse(dataStr); } catch(e) {}
+                const w = document.getElementById('aiWidget');
+                if (w && !w.classList.contains('active')) this.open();
+                switch (type) {
+                    case 'navigate':
+                        if (target && typeof switchTab === 'function') {
+                            const sid = target.replace('view-','');
+                            switchTab(sid);
+                            this.addMessage('✅ Ke <b>' + this.getContextLabel(target) + '</b>.', false);
+                        } else {
+                            this.addMessage('Navigasi ke ' + target, false);
+                        }
+                        break;
+                    case 'fillForm':
+                        if (data.field && data.value) {
+                            this.fillField(data.field, data.value);
+                            this.addMessage('✅ Mengisi <b>' + data.field + '</b>', false);
+                        }
+                        break;
+                    case 'openModal':
+                        if (target && typeof openModal === 'function') {
+                            openModal(target);
+                            this.addMessage('✅ Membuka form', false);
+                        }
+                        break;
+                    case 'submit':
+                        this.addMessage(this.submitCurrentForm(), false);
+                        break;
+                    case 'refresh':
+                        if (typeof refreshCurrentView === 'function') {
+                            refreshCurrentView(document.querySelector('.btn-action'));
+                            this.addMessage('🔄 Memperbarui data...', false);
+                        } else { this.addMessage('🔄 Refresh...', false); }
+                        break;
+                    case 'help':
+                        this.addMessage(this.getHelpText(), false);
+                        break;
+                    case 'reset':
+                        this.resetAll();
+                        this.addMessage('🔄 Percakapan direset.', false);
+                        break;
+                    case 'voice':
+                        this.toggleVoice();
+                        break;
+                    case 'bulkPaste':
+                        this.pasteFromClipboard();
+                        break;
+                    default:
+                        this.addMessage('Aksi: ' + type + ' -> ' + target, false);
+                }
+                this.showQuickActions();
+            },
             showTyping() {
                 const c = document.getElementById('aiChatMessages'); if (!c) return;
                 const d = document.createElement('div'); d.className = 'ai-typing'; d.id = 'aiTyping';
@@ -5404,5 +5480,6 @@
         }
 
     </script>
+<script src="ai-assistant.js"></script>
 </body>
 </html>

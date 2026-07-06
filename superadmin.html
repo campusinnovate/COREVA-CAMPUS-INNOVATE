@@ -402,7 +402,7 @@
 
     <!-- Mobile Header -->
     <div class="mobile-header">
-        <h2><i class="fa-solid fa-server"></i> CI Super</h2>
+        <h2><img src="Logo Coreva removebg.png" alt="Coreva" style="height:28px; width:auto; object-fit:contain;"> CI Super</h2>
         <button class="menu-toggle" onclick="toggleMobileSidebar()" aria-label="Toggle menu">
             <i class="fa-solid fa-bars"></i>
         </button>
@@ -414,7 +414,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="sidebar-brand-icon"><img src="Logo Coreva removebg.png" alt="Coreva" style="height:36px; width:auto; object-fit:contain;"></div>
             <div class="sidebar-brand-text">
                 <h2>CI Super</h2>
                 <span>Panel Kontrol Utama</span>
@@ -1879,5 +1879,41 @@
             setTimeout(async () => { await supabaseClient.auth.signOut(); window.location.href='index.html'; }, 1000);
         }
     </script>
+<script src="ai-assistant.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.AI = AIAssistantCreate({
+        pageName: 'superadmin',
+        storageKey: 'ai_superadmin',
+        workspaceId: '0',
+        pageUser: window.userEmail || 'superadmin',
+        welcomeMessage: '👋 Halo Super Admin! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Navigasi</b> — "buka dashboard", "ke workspace", dll<br>• <b>Monitoring</b> — cek statistik, lihat laporan<br>• <b>Approval</b> — bantu setujui/tolak pendaftaran admin<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        onDetectContext: () => {
+            const active = document.querySelector('.sidebar a.active, .sidebar .nav-link.active');
+            return active ? active.textContent.trim() : 'Dashboard';
+        },
+        onGetContextLabel: (ctx) => ctx || 'Dashboard',
+        onNavigate: (target) => {
+            const navMap = { 'dashboard':'#dashboard-section','workspace':'#workspace-section','organisasi':'#workspace-section','admin':'#admin-section','approval':'#approval-section','approve':'#approval-section','statistik':'#statistic-section','stats':'#statistic-section','laporan':'#report-section','report':'#report-section' };
+            const sel = navMap[target.toLowerCase().trim()];
+            if (sel) {
+                const el = document.querySelector(sel);
+                if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Membuka <b>' + target + '</b>.'; }
+            }
+            return null;
+        },
+        onOpenModal: (modalId) => { const m = document.getElementById(modalId); if (m) m.classList.add('active'); },
+        onSubmitForm: () => '✅ Silakan klik tombol Simpan di form.',
+        onGetQuickActions: () => [
+            { label: 'Dashboard', icon: 'gauge-high', type: 'navigate', target: 'dashboard' },
+            { label: 'Workspace', icon: 'layer-group', type: 'navigate', target: 'workspace' },
+            { label: 'Approval', icon: 'check-double', type: 'navigate', target: 'approval' },
+            { label: 'Laporan', icon: 'chart-simple', type: 'navigate', target: 'laporan' },
+            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+        ],
+    });
+    AI.init();
+});
+</script>
 </body>
 </html>

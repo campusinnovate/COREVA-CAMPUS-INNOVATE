@@ -612,7 +612,7 @@
 </div>
 
 <nav class="navbar" id="navbar">
-    <div class="nav-brand"><i class="fa-solid fa-layer-group"></i> Campus Innovate</div>
+    <div class="nav-brand"><img src="Logo Coreva removebg.png" alt="Coreva" style="height:32px; width:auto; object-fit:contain;"> Campus Innovate</div>
     <div class="nav-links" id="nav-links">
         <a href="#beranda" onclick="toggleMobileNav()">Beranda</a>
         <a href="#showcase" onclick="toggleMobileNav()">Fitur</a>
@@ -2291,6 +2291,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const showcaseEl = document.getElementById('showcase');
     if (showcaseEl) showcaseObserver.observe(showcaseEl);
+});
+</script>
+<script src="ai-assistant.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.AI = AIAssistantCreate({
+        pageName: 'index',
+        storageKey: 'ai_index',
+        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu kamu:<br><br>• <b>Informasi fitur</b> — tanya tentang fitur Campus Innovate<br>• <b>Login / Daftar</b> — panduan masuk atau buat akun<br>• <b>Navigasi</b> — bantu pindah ke bagian tertentu<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        onNavigate: (target) => {
+            if (target === 'login') {
+                document.getElementById('loginEmail')?.focus();
+                return '👉 Silakan isi email & password di form login.';
+            } else if (target === 'register') {
+                document.getElementById('registerName')?.focus();
+                return '👉 Silakan isi data pendaftaran.';
+            } else if (target === 'showcase') {
+                document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
+                return '👉 Scroll ke showcase fitur.';
+            }
+            return null;
+        },
+        onFillField: (id, value) => {
+            const el = document.getElementById(id);
+            if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
+            return false;
+        },
+        onGetContextLabel: (ctx) => ctx || 'Beranda',
+        onGetQuickActions: () => [
+            { label: 'Login', icon: 'right-to-bracket', type: 'navigate', target: 'login' },
+            { label: 'Daftar', icon: 'user-plus', type: 'navigate', target: 'register' },
+            { label: 'Fitur', icon: 'star', type: 'navigate', target: 'showcase' },
+            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+        ],
+    });
+    AI.init();
 });
 </script>
 </body>
