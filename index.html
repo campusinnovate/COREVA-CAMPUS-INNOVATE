@@ -41,6 +41,42 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        /* PAGE TRANSITION OVERLAY */
+        .page-transition-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 9999999; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .page-transition-overlay.active { opacity: 1; visibility: visible; }
+        .page-transition-overlay .spinner { width: 50px; height: 50px; border: 4px solid rgba(245, 158, 11, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* VIEW SECTION ENTRANCE ANIMATION */
+        .view-section {
+            display: none;
+            animation: fadeSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .view-section.active {
+            display: block;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* STAGGERED CARD ENTRANCE */
+        .card-item {
+            animation: cardFadeUp 0.5s ease-out forwards;
+            opacity: 0;
+        }
+        .card-item:nth-child(1) { animation-delay: 0.05s; }
+        .card-item:nth-child(2) { animation-delay: 0.1s; }
+        .card-item:nth-child(3) { animation-delay: 0.15s; }
+        .card-item:nth-child(4) { animation-delay: 0.2s; }
+        .card-item:nth-child(5) { animation-delay: 0.25s; }
+        .card-item:nth-child(6) { animation-delay: 0.3s; }
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         html { scroll-behavior: smooth; }
         body { background: var(--bg); color: var(--text); overflow-x: hidden; font-size: 16px; line-height: 1.6; }
         ::selection { background: var(--accent); color: var(--primary); }
@@ -170,14 +206,14 @@
         .feature-tab-btn:not(.active):hover { background: rgba(255,255,255,.25); color: white; }
 
         /* SHOWCASE CONTAINER */
-        .showcase-container { background: var(--bg); border-radius: 0 16px 16px 16px; border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(10,48,85,.2); overflow: hidden; position: relative; min-height: 560px; max-width: 100%; }
+        .showcase-container { background: var(--bg); border-radius: 0 16px 16px 16px; border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(10,48,85,.2); overflow: hidden; position: relative; min-height: 560px; max-width: 100%; width: 100%; }
         .showcase-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; gap: 8px; }
         .showcase-dots { display: flex; gap: 8px; }
         .showcase-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
         .live-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; flex-shrink: 0; }
         .live-badge i { color: var(--accent); animation: pulse 1.5s infinite; }
 
-        .showcase-panel { display: none; animation: fadeIn .4s ease; width: 100%; overflow-x: hidden; }
+        .showcase-panel { display: none; animation: fadeIn .4s ease; width: 100%; overflow: hidden; max-width: 100%; }
         .showcase-panel.active { display: flex; }
 
         /* =========================================
@@ -352,19 +388,19 @@
         /* =========================================
            SHOWCASE 3 – WEB BUILDER
         ========================================= */
-        .builder-layout { display: grid; grid-template-columns: 200px 1fr 260px; min-height: 520px; width: 100%; }
-        .builder-tools-col { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+        .builder-layout { display: grid; grid-template-columns: 200px 1fr 260px; min-height: 520px; width: 100%; max-width: 100%; overflow: hidden; }
+        .builder-tools-col { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .builder-tools-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 10px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
-        .builder-tool-item { background: white; border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px; cursor: grab; transition: .2s; }
+        .builder-tool-item { background: white; border: 1px solid var(--border); padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px; cursor: grab; transition: .2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .builder-tool-item:hover, .builder-tool-item.dragging { border-color: var(--accent); background: rgba(246,178,59,.08); transform: translateX(3px); }
         .builder-tool-item.dragging { opacity: .5; }
 
-        .builder-canvas-col { display: flex; flex-direction: column; background: #e8ecf0; }
-        .builder-canvas-toolbar { background: white; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
-        .builder-canvas-toolbar-title { font-size: 13px; font-weight: 700; color: var(--primary); }
-        .builder-canvas-viewport { flex: 1; padding: 12px; overflow: hidden; display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .builder-canvas-col { display: flex; flex-direction: column; background: #e8ecf0; min-width: 0; overflow: hidden; }
+        .builder-canvas-toolbar { background: white; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .builder-canvas-toolbar-title { font-size: 13px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+        .builder-canvas-viewport { flex: 1; padding: 12px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 8px; position: relative; width: 100%; max-width: 100%; }
 
-        .canvas-block { background: white; border-radius: 10px; border: 2px solid transparent; position: relative; overflow: hidden; transition: all .3s; cursor: pointer; }
+        .canvas-block { background: white; border-radius: 10px; border: 2px solid transparent; position: relative; overflow: hidden; transition: all .3s; cursor: pointer; max-width: 100%; width: 100%; }
         .canvas-block:hover { border-color: rgba(246,178,59,.4); }
         .canvas-block.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(246,178,59,.2); }
         .canvas-block.dropping { animation: dropIn .4s ease; }
@@ -373,7 +409,7 @@
         .canvas-block-action { background: white; border: 1px solid var(--border); width: 26px; height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--primary); cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
         .canvas-block-action.del { color: var(--error); }
 
-        .block-hero-preview { background: linear-gradient(135deg,var(--primary),#1e40af); padding: 30px 20px; text-align: center; color: white; }
+        .block-hero-preview { background: linear-gradient(135deg,var(--primary),#1e40af); padding: 30px 20px; text-align: center; color: white; max-width: 100%; overflow: hidden; word-wrap: break-word; }
         .block-hero-preview h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
         .block-hero-preview p { font-size: 12px; opacity: .7; }
         .block-text-preview { padding: 16px 20px; }
@@ -389,7 +425,7 @@
 
         .builder-drag-ghost { position: absolute; pointer-events: none; z-index: 9999; background: white; border: 2px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 700; color: var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,.2); opacity: 0; display: flex; align-items: center; gap: 8px; }
 
-        .builder-props-col { background: white; border-left: 4px solid var(--accent); padding: 16px; overflow: hidden; }
+        .builder-props-col { background: white; border-left: 4px solid var(--accent); padding: 16px; overflow-y: auto; overflow-x: hidden; min-width: 0; max-width: 260px; }
         .builder-props-title { font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
         .prop-row { margin-bottom: 12px; }
         .prop-label { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; }
@@ -557,7 +593,7 @@
 
         /* RESPONSIVE */
         @media (max-width: 1024px) {
-            .builder-layout { grid-template-columns: 180px 1fr; }
+            .builder-layout { grid-template-columns: 180px 1fr; max-width: 100%; overflow: hidden; }
             .builder-props-col { display: none; }
             .do-layout { grid-template-columns: 1fr; }
             .do-right-col { border-top: 1px solid var(--border); }
@@ -652,11 +688,6 @@
             -webkit-overflow-scrolling: touch;
         }
         
-        /* Ensure all content stays within viewport */
-        * {
-            max-width: 100%;
-        }
-        
         /* Fix for fixed position elements that might overflow */
         .ai-widget {
             max-width: calc(100vw - 20px);
@@ -670,6 +701,8 @@
     </style>
 </head>
 <body>
+
+<div class="page-transition-overlay" id="pageTransitionOverlay"><div class="spinner"></div></div>
 
 <div id="toast-container"></div>
 
@@ -2373,16 +2406,10 @@ document.addEventListener('DOMContentLoaded', () => {
         storageKey: 'ai_index',
         welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu kamu:<br><br>• <b>Informasi fitur</b> — tanya tentang fitur Campus Innovate<br>• <b>Login / Daftar</b> — panduan masuk atau buat akun<br>• <b>Navigasi</b> — bantu pindah ke bagian tertentu<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
         onNavigate: (target) => {
-            if (target === 'login') {
-                document.getElementById('loginEmail')?.focus();
-                return '👉 Silakan isi email & password di form login.';
-            } else if (target === 'register') {
-                document.getElementById('registerName')?.focus();
-                return '👉 Silakan isi data pendaftaran.';
-            } else if (target === 'showcase') {
-                document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
-                return '👉 Scroll ke showcase fitur.';
-            }
+            if (target === 'login') { openAuth('login'); return 'Membuka form login.'; }
+            else if (target === 'register') { openAuth('register'); return 'Membuka form pendaftaran.'; }
+            else if (target === 'fitur') { document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); return 'Scroll ke showcase fitur.'; }
+            else if (target === 'showcase') { document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); return 'Scroll ke showcase fitur.'; }
             return null;
         },
         onFillField: (id, value) => {
@@ -2391,39 +2418,43 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         },
         onOpenModal: (modalId) => {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.push(modal);
-            return false;
+            if (typeof openAuth === 'function') { openAuth(modalId); }
         },
         onGetContextLabel: (ctx) => ctx || 'Beranda',
         onGetQuickActions: () => [
-            { label: 'Login', icon: 'right-to-bracket', type: 'navigate', target: 'login' },
-            { label: 'Daftar', icon: 'user-plus', type: 'navigate', target: 'register' },
-            { label: 'Fitur', icon: 'star', type: 'navigate', target: 'showcase' },
-            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+            { id: 'nav_login', label: 'Login', icon: 'fa-solid fa-right-to-bracket' },
+            { id: 'nav_register', label: 'Daftar', icon: 'fa-solid fa-user-plus' },
+            { id: 'nav_fitur', label: 'Fitur', icon: 'fa-solid fa-star' },
         ],
-        // Enhanced smart logic
         handleIntent: (intent, entities) => {
             const text = (entities.target || '').toLowerCase();
-            if (intent === 'UNKNOWN' || intent === 'TOLONG') {
-                return null; // Use default proactive suggestions
-            }
+            if (intent === 'UNKNOWN') return null;
             if (intent === 'NAVIGATE' && text.includes('fitur')) {
                 document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
-                return '👉 Scroll ke showcase fitur.';
+                return 'Scroll ke showcase fitur.';
             }
             return null;
         },
         onExecuteAction: (type, target, data) => {
             if (type === 'navigate' && target === 'showcase') {
                 document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
-                return '👉 Scroll ke showcase fitur.';
+                return 'Scroll ke showcase fitur.';
             }
             return null;
         },
     });
     AI.init();
 });
+function navigateWithTransition(url) {
+    const overlay = document.getElementById('pageTransitionOverlay');
+    if (overlay) { overlay.classList.add('active'); setTimeout(() => { window.location.href = url; }, 350); }
+    else { window.location.href = url; }
+}
+function initPageTransition() {
+    document.body.style.opacity = '0';
+    requestAnimationFrame(() => { document.body.style.transition = 'opacity 0.4s ease'; document.body.style.opacity = '1'; });
+}
+document.addEventListener('DOMContentLoaded', initPageTransition);
 </script>
 </body>
 </html>

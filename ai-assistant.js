@@ -1,421 +1,450 @@
-// ── AI Assistant Core — Shared Engine ──
-// Include this in any page, then call: AIAssistant.init(pageConfig)
+// ── AI Assistant Core v2 — Clean Engine ──
+// Merged from user.html inline AI & shared engine
+// Includes: NLP, Form Filling, Supabase Live Data, Tutorial Overlay
 
 function AIAssistantCreate(pageConfig) {
   const cfg = Object.assign({
     pageName: 'default',
     storageKey: 'ai_chat_default',
     welcomeMessage: 'Halo! Saya AI Assistant Coreva. Ada yang bisa dibantu?',
-    pageUser: null,
-    pageRole: null,
-    workspaceId: null,
-    // Page-specific handlers (override these)
-    onNavigate: null,     // function(target) -> string
-    onFillField: null,    // function(id, value) -> boolean
-    onSubmitForm: null,   // function(intent) -> string
-    onRefresh: null,      // function() -> string
-    onDetectContext: null,// function() -> string
-    onGetContextLabel: null,// function(ctx) -> string
-    onGetQuickActions: null,// function(ctx) -> array
-    onGetSubmitFn: null,  // function(intent) -> function|null
-    onFieldHighlight: null,// function(el) -> void
-    onExecuteAction: null,// function(actionType, actionTarget) -> void
-    onOpenModal: null,    // function(modalId) -> void
-    onBulkInsert: null,   // function(data, fieldMap, ctx) -> Promise
-    onGetFieldMapping: null,// function(ctx) -> object
-    onGetKnownData: null, // function() -> void
+    pageUser: null, pageRole: null, workspaceId: null,
+    supabase: null,
+    onNavigate: null, onFillField: null, onSubmitForm: null,
+    onRefresh: null, onDetectContext: null, onGetContextLabel: null,
+    onGetQuickActions: null, onGetSubmitFn: null, onFieldHighlight: null,
+    onExecuteAction: null, onOpenModal: null, onBulkInsert: null,
+    onGetFieldMapping: null, handleIntent: null, intents: {},
+    forms: {}, navMap: {},
   }, pageConfig);
 
   const self = {
-    config: cfg,
-    isOpen: false, isMinimized: false, isListening: false,
+    config: cfg, isOpen: false, isMinimized: false, isListening: false,
     currentContext: '', bulkData: null, recognition: null,
-    storageKey: cfg.storageKey,
-    pending: null, known: { depts: [], progs: [] },
-    lastIntent: null, lastSubject: '',
-    consecutiveFailCount: 0, lastInputs: [], repetitionCount: 0,
+    storageKey: cfg.storageKey, pending: null,
+    known: { depts: [], progs: [], data: {} },
+    lastIntent: null, lastSubject: '', lastInputs: [],
     isDragging: false, didDrag: false, touchInProgress: false,
-    dragStartX: 0, dragStartY: 0,
-    fabStartX: 0, fabStartY: 0,
-    fabX: -1, fabY: -1,
-    dragBoundFn: null, dragEndFn: null, dragTimeout: null,
+    dragStartX: 0, dragStartY: 0, fabStartX: 0, fabStartY: 0,
+    fabX: -1, fabY: -1, dragBoundFn: null, dragEndFn: null, dragTimeout: null,
+    supabase: cfg.supabase,
   };
 
-  // ── DICTIONARY ──
-  self.DICTIONARY = {
-    SUBJECT: {
-      rab: { id:['rab','anggaran','rincian anggaran','biaya','dana','budget','penganggaran','alokasi dana'], en:['budget','rab','cost','allocation'] },
-      realisasi: { id:['realisasi','pengeluaran','belanja','pemakaian dana','dana keluar','pencairan','spending'], en:['realization','spending','expense','disbursement'] },
-      kpi: { id:['kpi','indikator','target','capaian','ukuran','tolok ukur','metrik','standar kerja'], en:['kpi','indicator','target','metric'] },
-      absensi: { id:['absen','absensi','presensi','kehadiran','hadir','check in','checkin','masuk','datang'], en:['attendance','presence','checkin'] },
-      program: { id:['program','event','kegiatan','acara','proker','program kerja','agenda','inisiatif','project','rencana kerja'], en:['program','event','activity','initiative'] },
-      jadwal: { id:['jadwal','schedule','agenda','rapat','meeting','pertemuan','rundown','timeline'], en:['schedule','agenda','meeting','timeline'] },
-      divisi: { id:['divisi','departemen','dept','bagian','unit','seksi','bidang','subdivisi'], en:['division','department','section','unit'] },
-      folder: { id:['folder','direktori','berkas','map','direktori file'], en:['folder','directory'] },
-      surat: { id:['surat','dokumen','pengajuan','digital office','arsip','naskah','surat menyurat','surat resmi'], en:['letter','document','memo','official letter'] },
-      notulensi: { id:['notulensi','notulen','catatan rapat','risalah','minutes','hasil rapat'], en:['minutes','meeting notes'] },
-      dashboard: { id:['dashboard','dasbor','beranda','home','utama','halaman utama'], en:['dashboard','home'] },
-      data: { id:['data','informasi','laporan','report','rekapan data'], en:['data','information','report'] },
-      tim: { id:['tim','team','anggota','personil','member','kru','panitia','kepanitiaan'], en:['team','member','crew','committee'] },
-      laporan: { id:['laporan','report','rekapan','rangkuman','ringkasan','laporan akhir','laporan kegiatan'], en:['report','summary','final report'] },
-      keuangan: { id:['keuangan','finansial','finance','pemasukan','uang','financial','neraca'], en:['finance','financial','balance'] },
-      sponsor: { id:['sponsor','sponsorship','donasi','donatur','mitra','fundraising','penggalangan dana'], en:['sponsor','donation','partner','fundraising'] },
-      dokumentasi: { id:['dokumentasi','foto','arsip foto','dokumentasi kegiatan','foto kegiatan'], en:['documentation','photo','archive'] },
-      pendaftaran: { id:['pendaftaran','registrasi','registration','form pendaftaran','daftar ulang','re-registrasi'], en:['registration','re-registration'] },
-      pengguna: { id:['pengguna','user','anggota','akun','profil','profile','login','log in'], en:['user','account','profile','login'] },
-      chat: { id:['chat','pesan','message','obrolan','diskusi','ngobrol','percakapan'], en:['chat','message','conversation'] },
-      workspace: { id:['workspace','organisasi','ruang kerja','kelompok','group','tim kerja'], en:['workspace','organization','group'] },
-      help: { id:['help','bantuan','panduan','cara pakai','tips','tutorial','petunjuk','gimana cara','bagaimana cara'], en:['help','guide','tutorial'] },
+  // ── COMPACT KEYWORD MAP ──
+  const KW = {
+    NAV: {
+      dashboard:['dashboard','dasbor','beranda','home','utama'],
+      program:['program','proker','kegiatan','event','acara'],
+      rab:['rab','anggaran','biaya','keuangan'],
+      realisasi:['realisasi','pengeluaran','belanja'],
+      kpi:['kpi','indikator','target','capaian'],
+      surat:['surat','dokumen','digital office','arsip'],
+      absensi:['absen','absensi','presensi','kehadiran'],
+      jadwal:['jadwal','schedule','agenda','kalender'],
+      divisi:['divisi','departemen','dept','bagian'],
+      notulensi:['notulensi','notulen','catatan rapat'],
+      sponsor:['sponsor','donasi','mitra'],
+      dokumentasi:['dokumentasi','foto','arsip foto'],
+      pendaftaran:['pendaftaran','registrasi'],
+      pengguna:['pengguna','user','anggota','akun'],
+      chat:['chat','pesan','obrolan'],
+      workspace:['workspace','organisasi','ruang kerja'],
+      approval:['approval','persetujuan','verifikasi'],
+      statistik:['statistik','laporan','report'],
+      help:['help','bantuan','panduan','tutorial'],
+      profil:['profil','profile','akun'],
     },
-    ACTION: {
-      buat: { id:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi','bikinin','buatin','bikinkan','daftarin'], en:['make','create','add','input','fill'] },
-      hapus: { id:['hapus','delete','hilang','buang','remove','menghapus','membuang','ngapus','hapusin'], en:['delete','remove','erase'] },
-      ubah: { id:['ubah','edit','koreksi','revisi','perbaiki','ganti','update','memperbarui','ngedit','ngubah','rubah'], en:['edit','change','update','modify'] },
-      lihat: { id:['lihat','tampilkan','buka','ke','pindah','menu','tab','tunjuk','menuju','navigasi','lihatin','nampilin','perlihatkan'], en:['view','show','open','go','navigate'] },
-      cari: { id:['cari','temukan','filter','sortir','mencari','nyari','cariin','nemuin','carikan'], en:['search','find','filter','locate'] },
-      export: { id:['export','download','unduh','simpan','cetak','print','exportir','downloadin','nyimpen'], en:['export','download','save','print'] },
-      setuju: { id:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui','setujui','accin'], en:['approve','confirm','verify','authorize'] },
-      tolak: { id:['tolak','reject','batal','tidak setuju','menolak','nampol','ngegas','gak setuju','no'], en:['reject','decline','cancel','disagree'] },
-      reset: { id:['reset','ulang','kembali','restart','fresh','reset ulang','resetting'], en:['reset','restart','clear'] },
-      submit: { id:['submit','simpan','kirim','proses','eksekusi','save','terbitkan','publikasi','prosesin','jalanin','nyimpen'], en:['submit','save','publish','execute','process'] },
-      selesai: { id:['selesai','tuntas','done','beres','kelar','rampung','finish','beresin','selesain','tuntasin'], en:['done','finish','complete','finalize'] },
-      lanjut: { id:['lanjut','terus','next','selanjutnya','berikutnya','continue','lanjutin','terusin','gas','gaskeun','anvin'], en:['next','continue','proceed','go ahead'] },
-      tanya: { id:['tanya','tanyakan','bertanya','tebak','tanya jawab','nanya','nanyain'], en:['ask','question','inquiry','inquire'] },
-      konfirmasi: { id:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti','konfir','yakinin'], en:['confirm','sure','certain'] },
-      tolong: { id:['tolong','bantu','bantuin','minta tolong','mohon','mohon bantuan','please help','plis','pleas','bantuin dong'], en:['help','please','assist'] },
-      itung: { id:['itung','hitung','kalkulasi','jumlahin','totalin','ngehitung','ngitung','jumlahkan','total','totalkan'], en:['calculate','sum','total','compute'] },
-      catat: { id:['catat','catetin','nulis','nyatet','mencatat','noted','take note'], en:['note','record','write down'] },
+    ACT: {
+      buat:['buat','bikin','tambah','input','isi','daftar','catat','baru'],
+      hapus:['hapus','delete','hilang','buang','remove'],
+      ubah:['ubah','edit','ganti','update','revisi','perbaiki','koreksi'],
+      lihat:['lihat','buka','tampilkan','pindah','ke','menu','tab','navigasi'],
+      cari:['cari','temukan','filter','mana'],
+      setuju:['setuju','acc','approve','sahkan','konfirmasi','verifikasi'],
+      tolak:['tolak','reject','batal','tidak setuju'],
+      submit:['submit','simpan','kirim','proses','publikasi'],
+      export:['export','download','unduh','cetak','print'],
+      hitung:['hitung','kalkulasi','jumlah','total'],
+      reset:['reset','ulang','kembali','restart','clear','fresh'],
+      tolong:['tolong','bantu','minta tolong','mohon'],
     },
     TIME: {
-      besok: { id:['besok','esok','bsk','keesokan','besoknya'], en:['tomorrow'] },
-      lusa: { id:['lusa','lusa depan','besok lusa'], en:['day after tomorrow'] },
-      kemarin: { id:['kemarin','kmrn','kemaren','kmren','harian kemarin'], en:['yesterday'] },
-      hari_ini: { id:['hari ini','sekarang','skrg','hari ini juga','saat ini','sekarangan','sekarang jg'], en:['today','now','currently'] },
-      minggu_dpn: { id:['minggu depan','pekan depan','next week','minggu besok','minggu mendatang'], en:['next week'] },
-      bulan_dpn: { id:['bulan depan','month depan','bulan besok','bulan mendatang','bulan dpn'], en:['next month'] },
-      tadi_pagi: { id:['tadi','tadi pagi','pagi tadi','barusan','sebentar lagi','tadi siang','tadi malem','tadi malam'], en:['earlier','just now','this morning','a moment ago'] },
-      nanti: { id:['nanti','nanti sore','nanti malem','nanti malam','nanti siang','nanti pagi'], en:['later','this evening','tonight'] },
-      minggu_lalu: { id:['minggu lalu','pekan lalu','last week','minggu kemarin','minggu kmrn'], en:['last week'] },
-      bulan_lalu: { id:['bulan lalu','last month','bulan kemarin','bulan kmrn'], en:['last month'] },
-      tahun_lalu: { id:['tahun lalu','tahun kmrn','tahun kemarin','last year','taun lalu'], en:['last year'] },
-      tahun_dpn: { id:['tahun depan','next year','taun depan','tahun besok','tahun mendatang'], en:['next year'] },
-    },
-    MODIFIER: {
-      baru: { id:['baru','anyar','fresh','terbaru','newest','paling baru'], en:['new','newest','latest'] },
-      lama: { id:['lama','old','terdahulu','lama-lama','terlama','paling lama'], en:['old','oldest','earliest'] },
-      semua: { id:['semua','seluruh','all','total','keseluruhan','semuanya','semua data','sekalian'], en:['all','every','entire'] },
-      aktif: { id:['aktif','active','berjalan','ongoing','berlangsung','berjalan'], en:['active','ongoing','running'] },
-      selesai: { id:['selesai','done','completed','lunas','tuntas','beres','rampung','finish'], en:['done','completed','finished'] },
-      urgent: { id:['urgent','penting','mendesak','darurat','prioritas','critical','kritis','genting','segera'], en:['urgent','critical','priority','immediate'] },
-      tertunda: { id:['tertunda','pending','delay','tertunda','ditunda','nanti dulu','tunda'], en:['pending','delayed','postponed','deferred'] },
-      tertinggi: { id:['tertinggi','paling besar','max','maksimal','paling mahal','terbesar','terbanyak'], en:['highest','maximum','largest','biggest'] },
-      terendah: { id:['terendah','paling kecil','min','minimal','paling murah','terkecil','tersedikit'], en:['lowest','minimum','smallest','cheapest'] },
-    },
-    ENTITY: {
-      dept: { id:['divisi','departemen','dept','bagian','unit','org','organisasi','biro','sekretariat'] },
-      program: { id:['program','event','kegiatan','acara','proker','prog','project','inisiatif'] },
-      barang: { id:['barang','nama barang','kebutuhan','item','bahan','alat','perlengkapan','logistik'] },
-      harga: { id:['harga','nominal','biaya','cost','rp','jumlah uang','nilai','total bayar','tagihan'] },
-      volume: { id:['volume','jumlah','qty','kuantitas','banyaknya','banyak','total item'] },
-      satuan: { id:['satuan','unit','per','satuan ukur','ukuran'] },
-      tempat: { id:['tempat','lokasi','di','venue','ruang','gedung','aula','ruangan','lapangan'] },
-      tanggal: { id:['tanggal','tgl','date','hari','pada','saat','waktu pelaksanaan'] },
-      waktu: { id:['waktu','jam','pukul','jam mulai','jam selesai'] },
-      status: { id:['status','state','kondisi','keadaan','kehadiran','posisi'] },
-      nama: { id:['nama','judul','title','name','nama kegiatan','nama acara'] },
-      sumber: { id:['sumber dana','dari','asal dana','funding','sumber','dana dari','sponsorship','kas','anggaran dari'] },
-      deskripsi: { id:['deskripsi','keterangan','detail','aktivitas','uraian','penjelasan','desk','info tambahan','catatan'] },
-      target: { id:['target','goal','sasaran','objective','rencana','cita cita'] },
-      capaian: { id:['capaian','achievement','hasil','pencapaian','realisasi target','output'] },
-      tipe: { id:['tipe','jenis','type','kategori','macam','sort','klasifikasi'] },
-      penerima: { id:['penerima','tujuan','untuk','kepada','ditujukan ke','ditujukan kepada'] },
-      judul: { id:['judul','title','perihal','subjek','topik','mengenai','tentang'] },
-      rincian: { id:['rincian','detail','perincian','uraian','spesifikasi','komponen'] },
+      besok:['besok','esok','bsk'],
+      lusa:['lusa'],
+      kemarin:['kemarin','kmrn'],
+      hari_ini:['hari ini','sekarang','skrg','hari ini'],
+      minggu_dpn:['minggu depan','pekan depan','next week'],
+      bulan_dpn:['bulan depan'],
+      minggu_lalu:['minggu lalu','pekan lalu','last week'],
+      bulan_lalu:['bulan lalu','last month'],
     },
     NORMALIZE: {
-      'ga':'tidak','gak':'tidak','nggak':'tidak','kaga':'tidak','ndak':'tidak','nda':'tidak','kagak':'tidak','enggak':'tidak','ngga':'tidak',
-      'mau':'ingin','pengen':'ingin','kepingin':'ingin','pgn':'ingin','pengen banget':'ingin','pengen bgt':'ingin',
-      'bikin':'buat','bikinin':'buat','ngebuat':'buat','buatin':'buat','bikinkan':'buat',
-      'ngisi':'isi','nginput':'input','nambah':'tambah','ngisiin':'isi','ngisikan':'isi','masukin':'isi',
-      'isiin':'isi','tambahin':'tambah','nambahin':'tambah','nambain':'tambah','nambahin lagi':'tambah','plus':'tambah',
-      'cariin':'cari','nyari':'cari','nyarinya':'cari','nemuin':'temukan','carikan':'cari',
-      'liatin':'lihat','tunjukin':'tampilkan','nampilin':'tampilkan','lihatin':'lihat','perlihatkan':'tampilkan',
-      'hapusin':'hapus','ilangin':'hapus','buangin':'hapus','ngapus':'hapus','ngapusin':'hapus','nyingkirin':'hapus',
-      'update':'perbarui','edit':'ubah','change':'ubah','revisi':'ubah','koreksi':'ubah','ngedit':'edit','ngubah':'ubah','rubah':'ubah','ngganti':'ganti','ngerubah':'ubah',
-      'yuk':'ayo','mari':'ayo','ok':'oke','okay':'oke','okelah':'oke','okeh':'oke','okke':'oke','siap':'oke','sip':'oke','siap bos':'oke',
-      'dah':'sudah','udah':'sudah','udh':'sudah','sdh':'sudah','udahan':'sudah','lah':'sudah','udah ah':'sudah',
-      'gini':'begini','gitu':'begitu','gt':'begitu','gituloh':'begitu',
-      'dgn':'dengan','dg':'dengan','utk':'untuk','bg':'bagi',
-      'jg':'juga','jga':'juga','aja':'saja','doang':'saja','tok':'saja','wae':'saja','k thok':'saja',
-      'tp':'tapi','tapi':'tetapi','tpi':'tetapi','tapinya':'tetapi',
-      'krn':'karena','karna':'karena','krena':'karena','soalnya':'karena','sebab':'karena','dikarenakan':'karena','krna':'karena',
-      'lg':'lagi','blm':'belum','blom':'belum','belom':'belum','saya':'aku','kami':'kita',
-      'gua':'saya','gue':'saya','gw':'saya','lo':'kamu','lu':'kamu','elo':'kamu','aing':'saya','koe':'kamu',
-      'kak':'kakak','kaka':'kakak','mas':'kakak','mba':'kakak','mbak':'kakak','bro':'kawan','bang':'kakak','sis':'kakak','kaks':'kakak',
-      'makasih':'terima kasih','trims':'terima kasih','thx':'terima kasih','matur':'terima kasih','matur suwun':'terima kasih','suwun':'terima kasih','tq':'terima kasih','thanks':'terima kasih',
-      'sip':'oke','siap':'oke','siap bos':'oke','otw':'dalam perjalanan','ots':'dalam perjalanan',
-      'mantap':'bagus','keren':'bagus','top':'bagus','jos':'bagus','gila':'luar biasa','gokil':'luar biasa','gilak':'luar biasa','keren abis':'bagus','kren':'bagus','mantab':'bagus',
-      'btw':'omong-omong','ngomong-ngomong':'omong-omong','by the way':'omong-omong','omong2':'omong-omong',
-      'skip':'lewati','lewatkan':'lewati','miss':'lewat','skiping':'lewati','skip aja':'lewatkan',
-      'on progress':'berjalan','pending':'tertunda','cancel':'batal','cancelled':'batal','on going':'berjalan',
-      'anvin':'lanjutkan','gas':'lanjut','gaskeun':'lanjut','gas pol':'lanjut','full sen':'lanjut','keun':'lanjut','gaspol':'lanjut','gas terus':'lanjut',
-      'wkwk':'haha','wkwkwk':'haha','wqwqwq':'haha','haha':'haha','awokawok':'haha','wkwkwkwk':'haha',
-      'sgt':'sangat','bgt':'banget','banget':'sangat','skali':'sekali','sangattt':'sangat','bgt':'sangat','bangeeet':'sangat','bangeet':'sangat','super':'sangat',
-      'msh':'masih','msih':'masih','msh ada':'masih ada','msi':'masih','masihh':'masih','masi':'masih',
-      'bs':'bisa','bsa':'bisa','gk bisa':'tidak bisa','gbs':'tidak bisa','kagak bisa':'tidak bisa','ora iso':'tidak bisa','ora':'tidak',
-      'plis':'tolong','please':'tolong','pls':'tolong','mohon':'tolong','plizz':'tolong','plisss':'tolong','bantu dong':'tolong','pleas':'tolong','pliss':'tolong',
-      'dlu':'dulu','duluan':'dulu','dluan':'dulu','dahulu':'dulu',
-      'dr':'dari','darimana':'dari mana','darimna':'dari mana',
-      'di mana':'dimana','di mn':'dimana','dimn':'dimana','dimana':'dimana',
-      'krna':'karena','kpn':'kapan','kapan':'kapan','kapan2':'kapan','kpn ya':'kapan',
-      'bgmn':'bagaimana','gmn':'bagaimana','gimana':'bagaimana','gi mana':'bagaimana','gmn dong':'bagaimana',
-      'knp':'kenapa','knpa':'kenapa','ngapain':'mengapa','kenape':'kenapa','knp sih':'kenapa',
-      'goceng':'5000','ceban':'10000','gopek':'500','cepek':'100','gocap':'50','noceng':'2000','pean':'1000',
-      'ribu':'000','ratus':'00',
-      'dong':'lah','sih':'lah','loh':'lah','lho':'lah','kok':'mengapa','kek':'saja','kan':'bukan','khan':'bukan',
-      'nyetuju':'setuju','nyetujui':'setuju','acc':'setuju','accin':'setuju','approve':'setuju','sah kan':'sahkan',
-      'prosesin':'proses','jalanin':'jalankan','eksekusi':'proses','running':'berjalan',
-      'nanya':'tanya','nanyain':'tanya','tanyain':'tanya',
-      'ngurangin':'kurang','ngurang':'kurang','kurangin':'kurang','minus':'kurang',
-      'ngeprint':'cetak','nyetak':'cetak','ngeprintin':'cetak',
-      'downloadin':'unduh','ngunduh':'unduh','download':'unduh',
-      'yg':'yang',
-      'selesai':'tuntas','beres':'tuntas','kelar':'tuntas','rampung':'tuntas','finish':'tuntas','tuntas':'selesai',
-      'itung':'hitung','ngitung':'hitung','ngehitung':'hitung','jumlahin':'jumlah','totalin':'total','totalkan':'jumlah','jumlahkan':'jumlah',
-      'catet':'catat','catetin':'catat','nulis':'catat','nyatet':'catat','noted':'catat',
-      'lanjutin':'lanjut','terusin':'lanjut','next':'lanjut','selanjutnya':'lanjut','berikutnya':'lanjut',
-      'divisinya':'divisi','programnya':'program','barangnya':'barang',
-      'jumlahnya':'jumlah','satuannya':'satuan','harganya':'harga',
-      'sumbernya':'sumber','namanya':'nama','hitungannya':'hitungan',
-      'kegiatannya':'kegiatan','kebutuhannya':'butuh','anggarannya':'anggaran',
-      'realisasinya':'realisasi','kpinya':'kpi','absensinya':'absensi',
-      'jadwalnya':'jadwal','foldernya':'folder','suratnya':'surat',
-      'targetnya':'target','capaiannya':'capaian','deskripsinya':'deskripsi',
-      'volumenya':'volume','tempatnya':'tempat','tanggalnya':'tanggal',
-      'waktunya':'waktu','statusnya':'status','tipenya':'tipe',
-      'rinciannya':'rincian','judulnya':'judul','penerimanya':'penerima',
-      'notulensinya':'notulensi','pesertanya':'peserta','timnya':'tim',
-      'laporannya':'laporan','dokumentasinya':'dokumentasi','evaluasinya':'evaluasi',
-      'pendaftarannya':'pendaftaran','sponsornya':'sponsor','konsumsinya':'konsumsi',
-      'dekorasinya':'dekorasi','perlengkapannya':'perlengkapan','transportasinya':'transportasi',
-      'proposalnya':'proposal','logistiknya':'logistik','dananya':'dana',
-      'pemasukannya':'pemasukan','pengeluarannya':'pengeluaran',
-      'itu adalah':' ','itu':' ','itu ada':' ','adalah':' ','yaitu':' ',
-      'dikali':'kali','dibagi':'bagi','per':'/',
+      'ga':'tidak','gak':'tidak','nggak':'tidak','gk':'tidak','tdk':'tidak',
+      'mau':'ingin','pengen':'ingin','pgn':'ingin',
+      'bikin':'buat','bikinin':'buat','buatin':'buat',
+      'cariin':'cari','nyari':'cari','carikan':'cari',
+      'liatin':'lihat','tunjukin':'tampilkan','nampilin':'tampilkan',
+      'hapusin':'hapus','ngapus':'hapus','ilangin':'hapus',
+      'edit':'ubah','update':'ubah','revisi':'ubah','koreksi':'ubah',
+      'makasih':'terima kasih','thanks':'terima kasih','trims':'terima kasih',
+      'siap':'oke','sip':'oke','ok':'oke','okay':'oke','okelah':'oke',
+      'ga bisa':'tidak bisa','gbs':'tidak bisa',
+      'tolong':'bantu','plis':'tolong','please':'tolong','pls':'tolong','mohon':'tolong',
+      'udah':'sudah','dah':'sudah','sdh':'sudah',
+      'aja':'saja','doang':'saja','dong':'lah','sih':'lah','loh':'lah',
+      'kak':'kakak','mas':'kakak','mbak':'kakak','bang':'kakak',
+      'gmn':'bagaimana','gimana':'bagaimana','bgmn':'bagaimana',
+      'knp':'kenapa','knpa':'kenapa',
+      'yg':'yang','dgn':'dengan','dg':'dengan','utk':'untuk','jg':'juga',
+      'tp':'tapi','tpi':'tapi','krn':'karena','karna':'karena',
+      'lg':'lagi','blm':'belum','blom':'belum',
+      'gw':'saya','gue':'saya','gua':'saya','lu':'kamu','lo':'kamu',
+      'gas':'lanjut','gaskeun':'lanjut','lanjutin':'lanjut','next':'lanjut',
+      'wkwk':'haha','wkwkwk':'haha',
+      'sgt':'sangat','bgt':'sangat','banget':'sangat',
+      'bs':'bisa','bsa':'bisa',
+      'dr':'dari','dulu':'dulu','dlu':'dulu',
     },
   };
 
-  // ── Base INTENTS ──
-  self.INTENTS = {
-    NAVIGATE: { s:[], a:['buka','ke','menu','tab','pindah','tampilkan','lihat','arahkan','antar','buka halaman'] },
-    EXPORT: { s:['export','download','unduh','excel','csv','cetak','print'], a:['export','download','unduh','cetak'] },
+  // ── INTENTS ──
+  const BASE_INTENTS = {
+    NAVIGATE: { s:['buka','ke','menu','tab','pindah','tampilkan','lihat','arahkan','navigasi'], a:['buka','ke','tampilkan','lihat','pindah'] },
+    CREATE: { s:['buat','bikin','tambah','input','isi','daftar','catat','baru'], a:['buat','bikin','tambah','input','isi','daftar'] },
+    EDIT: { s:['ubah','edit','ganti','update','revisi','perbaiki','koreksi'], a:['ubah','edit','ganti','update'] },
     DELETE: { s:['hapus','delete','hilang','buang','remove'], a:['hapus','delete','buang'] },
-    REFRESH: { s:['refresh','reload','perbarui','segar','muat ulang'], a:['refresh','reload','segar'] },
-    GREET: { s:['halo','hai','pagi','siang','sore','selamat','hey','hei','hi'], a:[] },
-    HELP: { s:['help','bantuan','panduan','cara pakai','tips','cara','gimana cara','bagaimana cara','langkah','tutorial','petunjuk'], a:['help','bantuan','tolong','guide','ajari'] },
-    WHOAMI: { s:['siapa','siapa saya','nama saya'], a:[] },
-    WHEREAMI: { s:['dimana','posisi','halaman','di halaman apa'], a:[] },
-    SEARCH: { s:['cari','temukan','tampilkan data','mana','cari data','dimana data'], a:['cari','temukan','filter','lihat'] },
-    RESET: { s:['reset','ulang','mulai ulang','fresh','baru lagi','reset konteks','kembali ke awal','clear'], a:['reset','ulang','clear','fresh'] },
-    TOLONG: { s:['tolong','bantu','bantuin','minta tolong','mohon','please help'], a:['tolong','bantu','minta'] },
-    CREATE: { s:['buat','bikin','tambah','input','isi','daftar','catat','membuat','menambah','mengisi','bikinin','buatin','bikinkan','daftarin','buat baru','tambah baru'], a:['buat','bikin','tambah','input','isi','daftar','catat'] },
-    EDIT: { s:['ubah','edit','koreksi','revisi','perbaiki','ganti','update','memperbarui','ngedit','ngubah','rubah'], a:['ubah','edit','ganti','update'] },
-    APPROVE: { s:['setuju','acc','approve','konfirmasi','sahkan','verifikasi','menyetujui','setujui','accin'], a:['setuju','acc','approve','konfirmasi'] },
-    REJECT: { s:['tolak','reject','batal','tidak setuju','menolak','nampol','ngegas','gak setuju','no'], a:['tolak','reject','batal'] },
-    CONFIRM: { s:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti','konfir','yakinin'], a:['konfirmasi','pastikan','yakin'] },
-    CALCULATE: { s:['itung','hitung','kalkulasi','jumlahin','totalin','ngehitung','ngitung','jumlahkan','total','totalkan'], a:['itung','hitung','jumlah','total'] },
-    NOTE: { s:['catat','catetin','nulis','nyatet','mencatat','noted','take note'], a:['catat','catetin','note'] },
-    NEXT: { s:['lanjut','terus','next','selanjutnya','berikutnya','continue','lanjutin','terusin','gas','gaskeun','anvin'], a:['lanjut','next','continue'] },
+    APPROVE: { s:['setuju','acc','approve','sahkan','konfirmasi','verifikasi','setujui'], a:['setuju','acc','approve'] },
+    REJECT: { s:['tolak','reject','batal','tidak setuju','menolak'], a:['tolak','reject','batal'] },
+    SEARCH: { s:['cari','temukan','filter','mana','cari data','dimana'], a:['cari','temukan','filter'] },
+    EXPORT: { s:['export','download','unduh','cetak','print','excel'], a:['export','download','unduh','cetak'] },
+    CALCULATE: { s:['hitung','kalkulasi','jumlah','total','itung','jumlahin'], a:['hitung','jumlah','total','itung'] },
+    GREET: { s:['halo','hai','pagi','siang','sore','selamat','hey','hi','helo'], a:[] },
+    HELP: { s:['help','bantuan','panduan','cara','tutorial','petunjuk','gimana cara','bagaimana cara'], a:['help','bantuan','panduan'] },
+    WHOAMI: { s:['siapa','siapa saya','nama saya','saya siapa'], a:[] },
+    WHEREAMI: { s:['dimana','posisi','halaman','di mana','di halaman apa'], a:[] },
+    REFRESH: { s:['refresh','reload','perbarui','segar','muat ulang'], a:['refresh','reload'] },
+    RESET: { s:['reset','ulang','mulai ulang','fresh','kembali ke awal','clear'], a:['reset','ulang','clear'] },
+    SUBMIT: { s:['submit','simpan','kirim','proses','publikasi','terbitkan','publish'], a:['submit','simpan','kirim','publish'] },
+    CONFIRM: { s:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti'], a:['konfirmasi','confirm','yakin'] },
+    HELP: { s:['help','bantuan','panduan','cara','tutorial','petunjuk','gimana cara','bagaimana cara','tips'], a:['help','bantuan','panduan'] },
   };
 
-  // ── NLP Methods ──
-  function escapeRegex(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
+  // ── UTILITY ──
+  function esc(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
-  self.getAllDictTerms = function(category) {
-    const terms = [];
-    const cat = self.DICTIONARY[category];
-    if (!cat) return terms;
-    for (const entry of Object.values(cat)) {
-      terms.push(...(entry.id||[]), ...(entry.en||[]));
-    }
-    return [...new Set(terms)];
-  };
-
+  // ── NORMALIZE TEXT ──
   self.normalizeText = function(text) {
     let t = ' ' + text.toLowerCase() + ' ';
-    for (const [informal, formal] of Object.entries(self.DICTIONARY.NORMALIZE)) {
-      const rx = new RegExp('\\b' + escapeRegex(informal) + '\\b', 'gi');
-      t = t.replace(rx, formal);
+    for (const [k, v] of Object.entries(KW.NORMALIZE)) {
+      t = t.replace(new RegExp('\\b' + esc(k) + '\\b', 'gi'), v);
     }
     return t.trim();
   };
 
-  self.expandSynonyms = function(text) {
-    const normalized = self.normalizeText(text);
-    const testBase = ' ' + normalized + ' ';
-    let result = normalized;
-    for (const entry of Object.values(self.DICTIONARY.SUBJECT)) {
-      for (const word of entry.id) {
-        const rx = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
-        if (rx.test(testBase)) {
-          const others = entry.id.filter(w => w !== word).concat(entry.en || []);
-          result += ' ' + others.join(' ');
-        }
+  // ── SMART ENTITY EXTRACTION (from user.html) ──
+  self.smartEntityExtract = function(text) {
+    const lower = ' ' + self.normalizeText(text) + ' ';
+    const entities = {};
+    const navKeys = Object.entries(KW.NAV);
+    // Find subject
+    for (const [key, words] of navKeys) {
+      for (const w of words) {
+        if (lower.includes(' ' + w + ' ')) { entities.subject = key; break; }
       }
+      if (entities.subject) break;
     }
-    for (const entry of Object.values(self.DICTIONARY.ACTION)) {
-      for (const word of entry.id) {
-        const rx = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
-        if (rx.test(testBase)) {
-          const others = entry.id.filter(w => w !== word).concat(entry.en || []);
-          result += ' ' + others.join(' ');
+    // Find action
+    for (const [key, words] of Object.entries(KW.ACT)) {
+      for (const w of words) {
+        if (lower.includes(' ' + w + ' ')) { entities.action = key; break; }
+      }
+      if (entities.action) break;
+    }
+    // Find time
+    for (const [key, words] of Object.entries(KW.TIME)) {
+      for (const w of words) {
+        if (lower.includes(' ' + w + ' ')) { entities.time = key; break; }
+      }
+      if (entities.time) break;
+    }
+    // Extract clean search term
+    const allWords = [...Object.values(KW.NAV).flat(), ...Object.values(KW.ACT).flat(), ...Object.values(KW.TIME).flat()];
+    let clean = text.toLowerCase();
+    for (const w of allWords) { clean = clean.replace(new RegExp(esc(w), 'gi'), ''); }
+    entities.searchTerm = clean.replace(/[\s,.]/g, ' ').trim();
+    return entities;
+  };
+
+  // ── EXPAND SYNONYMS ──
+  self.expandText = function(text) {
+    const n = self.normalizeText(text);
+    const lower = ' ' + n + ' ';
+    let result = n;
+    for (const words of Object.values(KW.NAV)) {
+      for (const w of words) {
+        if (lower.includes(' ' + w + ' ')) {
+          result += ' ' + words.filter(x => x !== w).join(' ');
         }
       }
     }
     return result;
   };
 
-  self.expandDictionary = function(text) {
-    return self.expandSynonyms(self.normalizeText(text));
-  };
-
-  self.similarity = function(a, b) {
-    const al = a.toLowerCase(), bl = b.toLowerCase();
-    if (al === bl) return 1;
-    if (al.includes(bl) || bl.includes(al)) return 0.8;
-    const words1 = al.split(/\s+/), words2 = bl.split(/\s+/);
-    let hits = 0;
-    for (const w of words1) { if (w.length > 2 && words2.includes(w)) hits++; }
-    return hits / Math.max(words1.length, words2.length);
-  };
-
-  self.escapeHtml = function(text) {
-    const d = document.createElement('div');
-    d.textContent = text;
-    return d.innerHTML;
-  };
-
-  // ── Context-aware intent classification ──
+  // ── CLASSIFY INTENT ──
   self.classifyIntent = function(text) {
-    const expanded = self.expandDictionary(text);
-    const lower = expanded.toLowerCase();
-    const origLower = text.toLowerCase();
+    const expanded = ' ' + self.expandText(text) + ' ';
+    const allIntents = Object.assign({}, BASE_INTENTS, cfg.intents || {});
     let best = { intent: 'UNKNOWN', score: 0 };
-    const allIntents = Object.assign({}, self.INTENTS, cfg.intents || {});
-    
-    // Context boost keywords
-    const contextBoosts = self.getContextBoosts();
-    
-    for (const [name, intentCfg] of Object.entries(allIntents)) {
+    for (const [name, ic] of Object.entries(allIntents)) {
       let s = 0;
-      let subjectMatchCount = 0;
-      for (const kw of intentCfg.s) {
-        if (lower.includes(kw)) { s += 4; subjectMatchCount++; }
-        else if (origLower.includes(kw)) { s += 3; subjectMatchCount++; }
-      }
-      for (const kw of intentCfg.a) {
-        const idx = lower.indexOf(kw);
-        if (idx === 0 || (idx > 0 && /[\s,.]/.test(lower[idx-1]))) s += 3;
-        else if (idx > 0) s += 2;
-        else {
-          const idx2 = origLower.indexOf(kw);
-          if (idx2 === 0 || (idx2 > 0 && /[\s,.]/.test(origLower[idx2-1]))) s += 2;
-          else if (idx2 > 0) s += 1;
-        }
-      }
-      // Context boost
-      if (contextBoosts[name]) s += contextBoosts[name];
+      for (const kw of ic.s) { if (expanded.includes(' ' + kw + ' ')) s += 4; else if (expanded.includes(kw)) s += 2; }
+      for (const kw of ic.a) { if (expanded.includes(' ' + kw + ' ')) s += 3; else if (expanded.includes(kw)) s += 1; }
       if (s > best.score) best = { intent: name, score: s };
     }
     return best;
   };
 
-  self.getContextBoosts = function() {
-    const ctx = self.currentContext || '';
-    const boosts = {};
-    // Page-specific context boosts
-    if (cfg.pageName === 'admin' || cfg.pageName === 'user-hub') {
-      boosts.CREATE = 2;
-      boosts.EDIT = 2;
-      boosts.APPROVE = 1;
-      boosts.REJECT = 1;
-      boosts.NAVIGATE = 1;
+  // ── TIME RESOLVER ──
+  self.resolveTime = function(timeKey) {
+    const d = new Date();
+    switch (timeKey) {
+      case 'besok': d.setDate(d.getDate() + 1); break;
+      case 'lusa': d.setDate(d.getDate() + 2); break;
+      case 'kemarin': d.setDate(d.getDate() - 1); break;
+      case 'hari_ini': break;
+      case 'minggu_dpn': d.setDate(d.getDate() + 7); break;
+      case 'bulan_dpn': d.setMonth(d.getMonth() + 1); break;
+      case 'minggu_lalu': d.setDate(d.getDate() - 7); break;
+      case 'bulan_lalu': d.setMonth(d.getMonth() - 1); break;
+      default: return null;
     }
-    if (cfg.pageName === 'organisasichat') {
-      boosts.CREATE = 2; // buat agenda
-      boosts.NAVIGATE = 1;
-    }
-    if (cfg.pageName === 'superadmin') {
-      boosts.APPROVE = 2;
-      boosts.REJECT = 2;
-      boosts.NAVIGATE = 1;
-    }
-    // Current context boosts
-    if (ctx.includes('kpi') || ctx.includes('rab') || ctx.includes('anggaran')) {
-      boosts.CREATE = 1;
-      boosts.EDIT = 1;
-      boosts.CALCULATE = 2;
-    }
-    if (ctx.includes('surat') || ctx.includes('digital office')) {
-      boosts.APPROVE = 2;
-      boosts.REJECT = 2;
-      boosts.CONFIRM = 1;
-    }
-    if (ctx.includes('jadwal') || ctx.includes('kalender') || ctx.includes('agenda')) {
-      boosts.CREATE = 2;
-      boosts.NAVIGATE = 1;
-    }
-    return boosts;
+    return d.toISOString().split('T')[0];
   };
 
-  self.extractTimeWords = function(text) {
-    const lower = text.toLowerCase();
-    if (/besok|esok|bsk/.test(lower)) { const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; }
-    if (/lusa/.test(lower)) { const d = new Date(); d.setDate(d.getDate()+2); return d.toISOString().split('T')[0]; }
-    if (/kemarin|kmrn/.test(lower)) { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
-    if (/hari ini|sekarang|skrg/.test(lower)) { return new Date().toISOString().split('T')[0]; }
-    if (/minggu depan|pekan depan/.test(lower)) { const d = new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; }
-    if (/bulan depan/.test(lower)) { const d = new Date(); d.setMonth(d.getMonth()+1); return d.toISOString().split('T')[0]; }
+  // ── SUPABASE DATA ACCESS ──
+  self.supabase = cfg.supabase || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+
+  self.fetchContextData = async function(context) {
+    if (!self.supabase || !cfg.workspaceId) return null;
+    const ws = cfg.workspaceId;
+    const cacheKey = 'ai_data_' + ws + '_' + context;
+    const cached = self.known.data[cacheKey];
+    if (cached && Date.now() - cached.ts < 30000) return cached.data;
+    try {
+      let data = null;
+      if (context === 'program' || context === 'proker') {
+        const { data: d } = await self.supabase.from('programs').select('nama_program, status').eq('workspace_id', ws).limit(5);
+        data = d;
+      } else if (context === 'rab' || context === 'anggaran') {
+        const { data: d } = await self.supabase.from('rab_items').select('nama_barang, jumlah, harga').eq('workspace_id', ws).limit(5);
+        data = d;
+      } else if (context === 'divisi' || context === 'departemen') {
+        const { data: d } = await self.supabase.from('departments').select('nama_departemen').eq('workspace_id', ws).limit(10);
+        data = d;
+      } else if (context === 'kpi') {
+        const { data: d } = await self.supabase.from('kpis').select('nama_kpi, target, capaian').eq('workspace_id', ws).limit(5);
+        data = d;
+      } else if (context === 'surat') {
+        const { data: d } = await self.supabase.from('digital_office').select('perihal, status').eq('workspace_id', ws).limit(5);
+        data = d;
+      }
+      if (data) {
+        self.known.data[cacheKey] = { data, ts: Date.now() };
+        return data;
+      }
+    } catch(e) {}
     return null;
   };
 
-  // ── Widget HTML ──
+  // ── TUTORIAL OVERLAY SYSTEM ──
+  const TUTORIAL_HTML = `
+    <style>
+      .ai-tutorial-overlay { position: fixed; inset: 0; background: rgba(10,48,85,0.7); backdrop-filter: blur(4px); z-index: 100000; display: none; align-items: center; justify-content: center; }
+      .ai-tutorial-overlay.active { display: flex; }
+      .ai-tutorial-card { background: white; border-radius: 20px; padding: 32px; max-width: 480px; width: 90%; box-shadow: 0 30px 60px rgba(0,0,0,0.3); animation: tutorialIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); position: relative; }
+      @keyframes tutorialIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      .ai-tutorial-card .tut-step { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
+      .ai-tutorial-card .tut-num { width: 32px; height: 32px; background: var(--primary,#0A3055); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+      .ai-tutorial-card .tut-content { flex: 1; }
+      .ai-tutorial-card .tut-content h4 { font-size: 14px; font-weight: 700; color: var(--primary,#0A3055); margin-bottom: 4px; }
+      .ai-tutorial-card .tut-content p { font-size: 13px; color: #475569; line-height: 1.5; }
+      .ai-tutorial-card .tut-title { font-size: 18px; font-weight: 800; color: var(--primary,#0A3055); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+      .ai-tutorial-card .tut-title i { color: var(--accent,#f59e0b); }
+      .ai-tutorial-card .tut-actions { display: flex; gap: 10px; margin-top: 24px; }
+      .ai-tutorial-card .tut-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+      .ai-tutorial-card .tut-btn.primary { background: var(--primary,#0A3055); color: white; }
+      .ai-tutorial-card .tut-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(10,48,85,0.3); }
+      .ai-tutorial-card .tut-btn.secondary { background: #f1f5f9; color: #475569; }
+      .ai-tutorial-card .tut-btn.secondary:hover { background: #e2e8f0; }
+      .ai-highlight-field { animation: aiTutPulse 1.5s ease-in-out 3; box-shadow: 0 0 0 4px rgba(246,178,59,0.6) !important; border-color: var(--accent,#f59e0b) !important; position: relative; z-index: 100001 !important; }
+      @keyframes aiTutPulse { 0%,100% { box-shadow: 0 0 0 4px rgba(246,178,59,0.6); } 50% { box-shadow: 0 0 0 8px rgba(246,178,59,0.3); } }
+    </style>
+    <div class="ai-tutorial-overlay" id="aiTutorialOverlay">
+      <div class="ai-tutorial-card">
+        <div class="tut-title"><i class="fa-solid fa-graduation-cap"></i> <span id="tutTitle">Panduan</span></div>
+        <div id="tutSteps"></div>
+        <div class="tut-actions">
+          <button class="tut-btn secondary" id="tutPrevBtn" onclick="AI.tutorialPrev()" style="display:none;"><i class="fa-solid fa-arrow-left"></i> Sebelumnya</button>
+          <button class="tut-btn primary" id="tutNextBtn" onclick="AI.tutorialNext()">Selanjutnya <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="tut-btn secondary" id="tutCloseBtn" onclick="AI.tutorialClose()" style="display:none;">Tutup</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const TUTORIALS = {
+    'rab': {
+      title: 'Panduan Isi RAB',
+      steps: [
+        { field: 'rab-select-dept', title: 'Pilih Divisi', desc: 'Pilih divisi yang mengajukan anggaran. Contoh: Divisi Kominfo, PSDM, dll.' },
+        { field: 'input-nama-barang', title: 'Nama Barang/Kebutuhan', desc: 'Ketik nama barang atau jasa yang dibutuhkan. Contoh: "Sewa Tenda", "Snack Rapat".' },
+        { field: 'input-jumlah', title: 'Jumlah/Volume', desc: 'Masukkan jumlah barang yang dibutuhkan. Contoh: 50 (box), 10 (unit), 1 (paket).' },
+        { field: 'input-harga', title: 'Harga Satuan', desc: 'Masukkan harga per unit dalam Rupiah. Contoh: 15000 untuk Rp 15.000/box.' },
+        { field: 'input-sumber-dana', title: 'Sumber Dana', desc: 'Pilih sumber dana: Kas, Sponsor, atau Anggaran BEM.' },
+      ]
+    },
+    'kpi': {
+      title: 'Panduan Isi KPI',
+      steps: [
+        { field: 'input-nama-kpi', title: 'Nama Indikator', desc: 'Ketik nama indikator kinerja. Contoh: "Jumlah Peserta Seminar".' },
+        { field: 'input-target-kpi', title: 'Target', desc: 'Masukkan target yang ingin dicapai. Contoh: 100 (peserta), 90% (persentase).' },
+        { field: 'input-satuan-kpi', title: 'Satuan', desc: 'Pilih satuan: Orang, Persen, Unit, Kali, atau Rupiah.' },
+      ]
+    },
+    'program': {
+      title: 'Panduan Buat Program Kerja',
+      steps: [
+        { field: 'input-nama-program', title: 'Nama Program', desc: 'Ketik nama program kerja. Contoh: "Seminar Nasional IT 2025".' },
+        { field: 'input-tanggal-program', title: 'Tanggal Pelaksanaan', desc: 'Pilih tanggal kegiatan akan dilaksanakan.' },
+        { field: 'input-dept-program', title: 'Divisi Penanggung Jawab', desc: 'Pilih divisi yang bertanggung jawab atas program ini.' },
+      ]
+    },
+    'absensi': {
+      title: 'Panduan Absensi',
+      steps: [
+        { field: 'pre-status', title: 'Status Kehadiran', desc: 'Pilih status: Hadir, Izin, Sakit, atau Alpha.' },
+        { field: 'pre-keterangan', title: 'Keterangan (opsional)', desc: 'Tambahkan catatan jika perlu. Contoh: "Terlambat 10 menit".' },
+      ]
+    },
+    'surat': {
+      title: 'Panduan Pengajuan Surat',
+      steps: [
+        { field: 'input-perihal-surat', title: 'Perihal Surat', desc: 'Ketik perihal/judul surat. Contoh: "Permohonan Peminjaman Gedung".' },
+        { field: 'input-tujuan-surat', title: 'Tujuan Surat', desc: 'Ketik tujuan/penerima surat. Contoh: "Rektor Universitas Nusantara".' },
+        { field: 'input-isi-surat', title: 'Isi Surat', desc: 'Ketik isi/body surat secara lengkap.' },
+      ]
+    },
+    'jadwal': {
+      title: 'Panduan Tambah Jadwal',
+      steps: [
+        { field: 'input-judul-jadwal', title: 'Judul Kegiatan', desc: 'Ketik nama kegiatan. Contoh: "Rapat Evaluasi Bulanan".' },
+        { field: 'input-tanggal-jadwal', title: 'Tanggal', desc: 'Pilih tanggal kegiatan. Bisa juga ketik "besok" atau "20 Mei".' },
+        { field: 'input-waktu-jadwal', title: 'Waktu', desc: 'Masukkan jam mulai. Contoh: 19:00.' },
+      ]
+    },
+    'default': {
+      title: 'Panduan Umum',
+      steps: [
+        { field: null, title: 'Gunakan Menu Navigasi', desc: 'Pilih menu di sidebar kiri untuk berpindah antar halaman.' },
+        { field: null, title: 'Klik Tombol Aksi', desc: 'Setiap halaman punya tombol Tambah, Edit, atau Hapus untuk mengelola data.' },
+        { field: null, title: 'AI Assistant Siap Bantu', desc: 'Ketik perintah seperti "buat program baru" atau "isi RAB" untuk dibantu AI.' },
+      ]
+    }
+  };
+
+  self.tutorialState = { current: 0, steps: [], context: '' };
+
+  self.showTutorial = function(context) {
+    const tut = TUTORIALS[context] || TUTORIALS['default'];
+    self.tutorialState = { current: 0, steps: tut.steps, context };
+    self.renderTutorial();
+    const overlay = document.getElementById('aiTutorialOverlay');
+    if (overlay) overlay.classList.add('active');
+    self.highlightStepField(0);
+  };
+
+  self.renderTutorial = function() {
+    const titleEl = document.getElementById('tutTitle');
+    const stepsEl = document.getElementById('tutSteps');
+    const prevBtn = document.getElementById('tutPrevBtn');
+    const nextBtn = document.getElementById('tutNextBtn');
+    const closeBtn = document.getElementById('tutCloseBtn');
+    const state = self.tutorialState;
+    if (titleEl) titleEl.textContent = TUTORIALS[state.context]?.title || 'Panduan';
+    if (stepsEl) {
+      const step = state.steps[state.current];
+      stepsEl.innerHTML = `<div class="tut-step"><div class="tut-num">${state.current+1}</div><div class="tut-content"><h4>${step.title}</h4><p>${step.desc}</p></div></div>`;
+    }
+    if (prevBtn) prevBtn.style.display = state.current > 0 ? 'block' : 'none';
+    if (nextBtn) nextBtn.style.display = state.current < state.steps.length - 1 ? 'block' : 'none';
+    if (closeBtn) closeBtn.style.display = state.current >= state.steps.length - 1 ? 'block' : 'none';
+  };
+
+  self.tutorialNext = function() {
+    self.clearFieldHighlight();
+    if (self.tutorialState.current < self.tutorialState.steps.length - 1) {
+      self.tutorialState.current++;
+      self.renderTutorial();
+      self.highlightStepField(self.tutorialState.current);
+    }
+  };
+
+  self.tutorialPrev = function() {
+    self.clearFieldHighlight();
+    if (self.tutorialState.current > 0) {
+      self.tutorialState.current--;
+      self.renderTutorial();
+      self.highlightStepField(self.tutorialState.current);
+    }
+  };
+
+  self.tutorialClose = function() {
+    self.clearFieldHighlight();
+    const overlay = document.getElementById('aiTutorialOverlay');
+    if (overlay) overlay.classList.remove('active');
+    self.tutorialState = { current: 0, steps: [], context: '' };
+  };
+
+  self.highlightStepField = function(idx) {
+    const step = self.tutorialState.steps[idx];
+    if (!step || !step.field) return;
+    const el = document.getElementById(step.field);
+    if (el) {
+      el.classList.add('ai-highlight-field');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  self.clearFieldHighlight = function() {
+    document.querySelectorAll('.ai-highlight-field').forEach(el => el.classList.remove('ai-highlight-field'));
+  };
+
+  // ── WIDGET HTML ──
   self.WIDGET_HTML = `
     <style id="ai-assistant-styles">
-      :root {
-        --ai-primary: #0a3055;
-        --ai-secondary: #f6b23b;
-        --ai-error: #ef4444;
-        --ai-bg: #f8fafc;
-        --ai-border: #e2e8f0;
-        --ai-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      }
+      :root { --ai-primary: #0a3055; --ai-secondary: #f6b23b; --ai-error: #ef4444; --ai-bg: #f8fafc; --ai-border: #e2e8f0; --ai-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
       .ai-fab-restore { position: fixed; bottom: 20px; left: 20px; z-index: 9998; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: var(--ai-secondary); border: none; display: none; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s; }
       .ai-fab-restore:hover { transform: scale(1.1); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
       .ai-fab { position: fixed; bottom: 24px; left: 30px; z-index: 9998; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; border: none; cursor: pointer; box-shadow: 0 6px 20px rgba(10,48,85,0.4); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); touch-action: none; }
       .ai-fab:hover { transform: scale(1.1) rotate(-10deg); box-shadow: 0 8px 30px rgba(10,48,85,0.5); }
       .ai-fab.active { transform: rotate(45deg) scale(0.9); background: var(--ai-error); }
       .ai-fab.active:hover { transform: rotate(45deg) scale(1); }
-      .ai-fab.dragging { transition: none !important; box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-      .ai-fab.ai-fab-hidden { display: none; }
+      .ai-fab.dragging { transition: none !important; }
       .ai-fab.listening { animation: aiPulse 1s infinite; background: var(--ai-error) !important; }
       @keyframes aiPulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 70% { box-shadow: 0 0 0 15px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
-      .ai-widget { position: fixed; width: 420px; max-width: calc(100vw - 20px); height: 600px; max-height: 80vh; background: var(--ai-bg); backdrop-filter: blur(20px); border: 1px solid var(--ai-border); border-radius: 20px; box-shadow: var(--ai-shadow); z-index: 9997; display: flex; flex-direction: column; overflow: hidden; transform: translateY(20px) scale(0.95); opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.175,0.885,0.32,1.275), transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275), visibility 0.4s; will-change: top, left; }
+      .ai-widget { position: fixed; width: 420px; max-width: calc(100vw - 20px); height: 600px; max-height: 80vh; background: var(--ai-bg); backdrop-filter: blur(20px); border: 1px solid var(--ai-border); border-radius: 20px; box-shadow: var(--ai-shadow); z-index: 9997; display: flex; flex-direction: column; overflow: hidden; transform: translateY(20px) scale(0.95); opacity: 0; visibility: hidden; transition: opacity 0.4s cubic-bezier(0.175,0.885,0.32,1.275), transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275), visibility 0.4s; }
       .ai-widget.active { transform: translateY(0) scale(1); opacity: 1; visibility: visible; }
       .ai-widget.minimized { height: 60px; width: 320px; border-radius: 30px; }
       .ai-widget.minimized .ai-widget-body, .ai-widget.minimized .ai-widget-footer { display: none; }
-      .ai-widget-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; border-radius: 20px 20px 0 0; cursor: grab; }
+      .ai-widget-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; border-radius: 20px 20px 0 0; cursor: grab; user-select: none; }
       .ai-widget.minimized .ai-widget-header { border-radius: 30px; }
-      .ai-widget-header:active { cursor: grabbing; }
       .ai-widget-title { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1rem; }
       .ai-widget-title i { font-size: 1.3rem; }
       .ai-widget-actions { display: flex; gap: 8px; }
       .ai-widget-btn { background: rgba(255,255,255,0.15); border: none; color: white; width: 32px; height: 32px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.85rem; }
       .ai-widget-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
       .ai-widget-btn.voice-btn.listening { background: var(--ai-error); animation: aiPulse 1s infinite; }
-      .ai-widget-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f8fafc; }
+      .ai-widget-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
       .ai-chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
       .ai-chat-messages::-webkit-scrollbar { width: 6px; }
       .ai-chat-messages::-webkit-scrollbar-thumb { background: var(--ai-secondary); border-radius: 3px; }
@@ -435,8 +464,6 @@ function AIAssistantCreate(pageConfig) {
       .ai-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
       .ai-suggestion-chip { background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
       .ai-suggestion-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(10,48,85,0.3); }
-      .ai-suggestion-chip.quick-action { background: white; color: var(--ai-primary); border: 1px solid var(--ai-border); }
-      .ai-suggestion-chip.quick-action:hover { border-color: var(--ai-primary); background: #eff6ff; }
       .ai-typing { display: flex; gap: 10px; align-self: flex-start; }
       .ai-typing .ai-message-bubble { padding: 12px 16px; background: white; border: 1px solid var(--ai-border); border-radius: 16px; border-bottom-left-radius: 4px; }
       .ai-typing-dots { display: flex; gap: 4px; }
@@ -465,50 +492,18 @@ function AIAssistantCreate(pageConfig) {
       .ai-input-btn.voice.listening { background: var(--ai-error); color: white; animation: aiPulse 1s infinite; }
       .ai-input-btn.send { background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; }
       .ai-input-btn.send:hover { box-shadow: 0 4px 12px rgba(10,48,85,0.3); }
-      .ai-bulk-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 99999; }
-      .ai-bulk-modal.active { display: flex; }
-      .ai-bulk-content { background: white; width: 90%; max-width: 700px; max-height: 80vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-      .ai-bulk-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--ai-border); }
-      .ai-bulk-header h3 { margin: 0; font-size: 1rem; }
-      .ai-bulk-preview { flex: 1; overflow: auto; padding: 16px 20px; }
-      .ai-bulk-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-      .ai-bulk-table th { background: var(--ai-bg); padding: 8px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--ai-border); position: sticky; top: 0; }
-      .ai-bulk-table th select { font-size: 0.7rem; margin-top: 4px; width: 100%; }
-      .ai-bulk-table td { padding: 6px 8px; border-bottom: 1px solid var(--ai-border); }
-      .ai-bulk-table tr:nth-child(even) td { background: #fafafa; }
-      .ai-bulk-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 16px 20px; border-top: 1px solid var(--ai-border); }
-      .ai-bulk-actions .btn-action { padding: 10px 24px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.85rem; transition: all 0.2s; }
-      .ai-bulk-actions .btn-action:first-child { background: #eee; color: var(--primary); }
-      .ai-bulk-actions .btn-action:last-child { background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; }
-      .ai-field-highlight { animation: aiFieldPulse 1.5s ease-in-out 3; box-shadow: 0 0 0 3px rgba(246,178,59,0.5); border-color: var(--ai-secondary) !important; }
-      @keyframes aiFieldPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.01); } }
       .ai-context-badge { display: none; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 500; }
-        @media (max-width: 480px) {
-          .ai-widget { width: calc(100vw - 20px); height: 70vh; max-height: 70vh; border-radius: 16px 16px 0 0; bottom: 0; top: auto; left: 10px; }
-          .ai-widget.active { transform: translateY(0) scale(1); }
-          .ai-widget-header { padding: 12px 16px; border-radius: 16px 16px 0 0; }
-          .ai-widget-title span { font-size: 0.9rem; }
-          .ai-chat-messages { padding: 12px; gap: 12px; }
-          .ai-message { max-width: 90%; }
-          .ai-message-bubble { padding: 10px 14px; font-size: 0.85rem; }
-          .ai-quick-actions { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 12px 10px; }
-          .ai-quick-action { padding: 10px 8px; }
-          .ai-quick-action i { font-size: 1.2rem; }
-          .ai-quick-action span { font-size: 0.7rem; }
-          .ai-widget-footer { padding: 10px 12px 12px; }
-          .ai-input-wrapper { padding: 6px 10px; border-radius: 12px; }
-          .ai-input-field textarea { font-size: 0.85rem; max-height: 60px; }
-          .ai-input-btn { width: 32px; height: 32px; font-size: 0.9rem; }
-          .ai-fab { width: 48px; height: 48px; font-size: 1.3rem; bottom: 16px; left: 16px; }
-          .ai-fab-restore { width: 36px; height: 36px; font-size: 1rem; bottom: 16px; left: 16px; }
-          .ai-bulk-content { width: 95%; max-height: 85vh; }
-          .ai-bulk-table { font-size: 0.7rem; }
-        }
-        @media (max-width: 360px) {
-          .ai-widget { width: calc(100vw - 12px); left: 6px; }
-          .ai-quick-actions { grid-template-columns: 1fr; }
-        }
+      @media (max-width: 480px) {
+        .ai-widget { width: calc(100vw - 20px); height: 70vh; max-height: 70vh; border-radius: 16px 16px 0 0; left: 10px; }
+        .ai-widget-header { padding: 12px 16px; border-radius: 16px 16px 0 0; }
+        .ai-chat-messages { padding: 12px; gap: 12px; }
+        .ai-message { max-width: 90%; }
+        .ai-message-bubble { padding: 10px 14px; font-size: 0.85rem; }
+        .ai-quick-actions { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 12px 10px; }
+        .ai-fab { width: 48px; height: 48px; font-size: 1.3rem; bottom: 16px; left: 16px; }
+      }
     </style>
+    ${TUTORIAL_HTML}
     <div class="ai-fab-restore" id="aiFabRestore" onclick="AI.restoreFab()" style="display:none;"><i class="fa-solid fa-robot"></i></div>
     <button class="ai-fab" id="aiFab" title="AI Assistant"><i class="fa-solid fa-robot" id="aiFabIcon"></i></button>
     <div class="ai-widget" id="aiWidget">
@@ -517,7 +512,7 @@ function AIAssistantCreate(pageConfig) {
         <div class="ai-widget-actions">
           <button class="ai-widget-btn voice-btn" id="aiVoiceBtn" onclick="AI.toggleVoice()" title="Voice"><i class="fa-solid fa-microphone"></i></button>
           <button class="ai-widget-btn" onclick="AI.minimize()" title="Minimize"><i class="fa-solid fa-window-minimize"></i></button>
-          <button class="ai-widget-btn" id="aiFabToggleBtn" onclick="AI.toggleFab()" title="Toggle FAB"><i class="fa-solid fa-eye-slash"></i></button>
+          <button class="ai-widget-btn" onclick="AI.toggleFab()" title="Toggle FAB"><i class="fa-solid fa-eye-slash"></i></button>
           <button class="ai-widget-btn" onclick="AI.resetAll()" title="Reset" style="color:#ff6b6b;"><i class="fa-solid fa-trash-can"></i></button>
           <button class="ai-widget-btn" onclick="AI.close()" title="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
@@ -528,102 +523,63 @@ function AIAssistantCreate(pageConfig) {
       </div>
       <div class="ai-widget-footer">
         <div class="ai-input-wrapper">
-          <div class="ai-input-field"><textarea id="aiInput" placeholder="Ketik perintah..." rows="1"></textarea></div>
+          <div class="ai-input-field"><textarea id="aiInput" placeholder="Ketik perintah... (contoh: buat program, isi RAB, bantuan)" rows="1"></textarea></div>
           <div class="ai-input-actions">
             <button class="ai-input-btn secondary" onclick="AI.pasteFromClipboard()" title="Paste"><i class="fa-solid fa-paste"></i></button>
             <button class="ai-input-btn voice" id="aiFooterVoiceBtn" onclick="AI.toggleVoice()" title="Voice"><i class="fa-solid fa-microphone"></i></button>
-            <button class="ai-input-btn secondary" id="aiFooterFabToggleBtn" onclick="AI.toggleFab()" title="Sembunyikan/Munculkan FAB"><i class="fa-solid fa-eye-slash"></i></button>
+            <button class="ai-input-btn secondary" onclick="AI.toggleFab()" title="Toggle FAB"><i class="fa-solid fa-eye-slash"></i></button>
             <button class="ai-input-btn send" onclick="AI.sendMessage()" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
           </div>
         </div>
       </div>
     </div>
-    <div class="ai-bulk-modal" id="aiBulkModal">
-      <div class="ai-bulk-content">
-        <div class="ai-bulk-header"><h3>Pratinjau Data Bulk Insert</h3><button class="ai-widget-btn" onclick="AI.closeBulkModal()"><i class="fa-solid fa-xmark"></i></button></div>
-        <div class="ai-bulk-preview" id="aiBulkPreview"></div>
-        <div class="ai-bulk-actions">
-          <button class="btn-action" onclick="AI.closeBulkModal()">Batal</button>
-          <button class="btn-action" onclick="AI.confirmBulkInsert()">Konfirmasi & Sisipkan</button>
-        </div>
-      </div>
-    </div>
   `;
 
-  // ── UI Methods ──
+  // ── UI METHODS ──
   self.injectWidget = function() {
     if (document.getElementById('aiFab')) return;
     const div = document.createElement('div');
     div.innerHTML = self.WIDGET_HTML;
     document.body.appendChild(div);
-    // Expose self as AI global
     window.AI = self;
-    // Auto-resize textarea
     const ta = document.getElementById('aiInput');
     if (ta) {
-      ta.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 80) + 'px';
-      });
-      ta.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); self.sendMessage(); }
-      });
+      ta.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 80) + 'px'; });
+      ta.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); self.sendMessage(); } });
     }
   };
 
   self.init = function() {
     self.injectWidget();
     const fab = document.getElementById('aiFab');
-    if (fab) fab.addEventListener('click', function(e) {
-      if (self.didDrag) { self.didDrag = false; return; }
-      self.toggle();
-    });
+    if (fab) fab.addEventListener('click', function(e) { if (self.didDrag) { self.didDrag = false; return; } self.toggle(); });
     self.storageKey = cfg.storageKey + '_' + (cfg.workspaceId || '0') + '_' + (cfg.pageUser || '0');
     self.loadHistory();
     self.showQuickActions();
     if (cfg.onDetectContext) self.detectContext();
     self.loadPosition();
     const key = 'ai_fab_hidden_' + (cfg.workspaceId || '0');
-    try {
-      if (localStorage.getItem(key) === 'true') {
-        if (fab) fab.classList.add('ai-fab-hidden');
-        const restore = document.getElementById('aiFabRestore');
-        if (restore) restore.style.display = 'flex';
-        const btn = document.getElementById('aiFabToggleBtn');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
-      }
-    } catch(e) {}
+    try { if (localStorage.getItem(key) === 'true') { if (fab) fab.classList.add('ai-fab-hidden'); const restore = document.getElementById('aiFabRestore'); if (restore) restore.style.display = 'flex'; } } catch(e) {}
     self.initDrag();
-    window.addEventListener('resize', function() {
-      self.loadPosition();
-      if (self.isOpen) self.syncWidgetPosition();
-    });
-    setTimeout(function() {
-      self.addMessage(cfg.welcomeMessage, false);
-    }, 500);
+    window.addEventListener('resize', function() { self.loadPosition(); if (self.isOpen) self.syncWidgetPosition(); });
+    setTimeout(function() { self.addMessage(cfg.welcomeMessage, false); }, 500);
   };
 
   self.toggle = function() { self.isOpen ? self.close() : self.open(); };
-
   self.open = function() {
-    self.isOpen = true;
-    const w = document.getElementById('aiWidget'), f = document.getElementById('aiFab');
+    self.isOpen = true; const w = document.getElementById('aiWidget'), f = document.getElementById('aiFab');
     if (w) w.classList.add('active'); if (f) f.classList.add('active');
     const fi = document.getElementById('aiFabIcon'); if (fi) fi.className = 'fa-solid fa-xmark';
     const inp = document.getElementById('aiInput'); if (inp) inp.focus();
-    self.syncWidgetPosition();
-    if (cfg.onDetectContext) self.detectContext();
+    self.syncWidgetPosition(); if (cfg.onDetectContext) self.detectContext();
   };
-
   self.close = function() {
-    self.isOpen = false;
-    const w = document.getElementById('aiWidget'), f = document.getElementById('aiFab');
-    if (w) { w.classList.remove('active','minimized'); } self.isMinimized = false;
+    self.isOpen = false; const w = document.getElementById('aiWidget'), f = document.getElementById('aiFab');
+    if (w) { w.classList.remove('active', 'minimized'); } self.isMinimized = false;
     if (f) f.classList.remove('active');
     const fi = document.getElementById('aiFabIcon'); if (fi) fi.className = 'fa-solid fa-robot';
     if (self.isListening) self.stopVoice();
   };
-
   self.minimize = function() {
     self.isMinimized = !self.isMinimized;
     const w = document.getElementById('aiWidget');
@@ -643,95 +599,58 @@ function AIAssistantCreate(pageConfig) {
     const c = document.getElementById('aiChatMessages'); if (!c) return;
     const d = document.createElement('div');
     d.className = 'ai-message ' + (isUser ? 'user' : 'ai');
-    const ts = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
-    d.innerHTML = '<div class="ai-message-avatar">' + (isUser ? 'U' : 'AI') + '</div><div class="ai-message-content"><div class="ai-message-bubble">' + (isUser ? self.escapeHtml(text) : text) + '</div><div class="ai-message-time">' + ts + '</div></div>';
+    const ts = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    d.innerHTML = '<div class="ai-message-avatar">' + (isUser ? 'U' : 'AI') + '</div><div class="ai-message-content"><div class="ai-message-bubble">' + (isUser ? escapeHtml(text) : text) + '</div><div class="ai-message-time">' + ts + '</div></div>';
     c.appendChild(d); c.scrollTop = c.scrollHeight;
     self.saveHistory();
   };
 
-  // ── NEW: Clickable Action Buttons in Chat ──
-  // actions = [ { label, icon, type, target, data } ]
   self.addActionMessage = function(text, actions) {
     const c = document.getElementById('aiChatMessages'); if (!c) return;
-    const d = document.createElement('div');
-    d.className = 'ai-message ai';
-    const ts = new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'});
-    let chipsHtml = '';
+    const d = document.createElement('div'); d.className = 'ai-message ai';
+    const ts = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    let chips = '';
     if (actions && actions.length) {
-      chipsHtml = '<div class="ai-suggestions">';
+      chips = '<div class="ai-suggestions">';
       for (const a of actions) {
-        const iconHtml = a.icon ? '<i class="fa-solid fa-' + a.icon + '"></i>' : '';
-        chipsHtml += '<div class="ai-suggestion-chip" onclick="AI.executeChatAction(\'' + escapeRegex(a.type) + '\',\'' + escapeRegex(a.target||'') + '\',\'' + escapeRegex(JSON.stringify(a.data||{})) + '\')">' + iconHtml + self.escapeHtml(a.label) + '</div>';
+        const icon = a.icon ? '<i class="fa-solid fa-' + a.icon + '"></i>' : '';
+        chips += '<div class="ai-suggestion-chip" onclick="AI.handleAction(\'' + a.type + '\',\'' + esc(a.target || '') + '\',\'' + esc(JSON.stringify(a.data || {})) + '\')">' + icon + escapeHtml(a.label) + '</div>';
       }
-      chipsHtml += '</div>';
+      chips += '</div>';
     }
-    d.innerHTML = '<div class="ai-message-avatar">AI</div><div class="ai-message-content"><div class="ai-message-bubble">' + text + '</div>' + chipsHtml + '<div class="ai-message-time">' + ts + '</div></div>';
+    d.innerHTML = '<div class="ai-message-avatar">AI</div><div class="ai-message-content"><div class="ai-message-bubble">' + text + '</div>' + chips + '<div class="ai-message-time">' + ts + '</div></div>';
     c.appendChild(d); c.scrollTop = c.scrollHeight;
     self.saveHistory();
   };
 
-  // ── Execute Chat Action ──
-  self.executeChatAction = function(type, target, dataStr) {
-    let data = {};
-    try { if (dataStr) data = JSON.parse(dataStr); } catch(e) {}
-    const w = document.getElementById('aiWidget');
-    if (w && !w.classList.contains('active')) self.open();
+  self.handleAction = function(type, target, dataStr) {
+    let data = {}; try { if (dataStr) data = JSON.parse(dataStr); } catch(e) {}
     switch (type) {
       case 'navigate':
-        if (cfg.onNavigate && target) {
-          const result = cfg.onNavigate(target);
-          self.addMessage(result || 'Navigasi ke ' + target, false);
-        } else {
-          self.addMessage('Navigasi: buka <b>' + self.escapeHtml(target) + '</b>', false);
-        }
+        if (cfg.onNavigate && target) { const r = cfg.onNavigate(target); self.addMessage(r || 'Navigasi ke ' + target, false); }
+        else self.addMessage('Navigasi: buka <b>' + escapeHtml(target) + '</b>', false);
         break;
-      case 'fillForm':
-        if (cfg.onFillField && data.field && data.value) {
-          cfg.onFillField(data.field, data.value);
-          self.addMessage('✅ Mengisi <b>' + self.escapeHtml(data.field) + '</b> dengan ' + self.escapeHtml(data.value), false);
-        }
+      case 'fill':
+        if (cfg.onFillField && data.field && data.value) { cfg.onFillField(data.field, data.value); self.addMessage('Mengisi <b>' + escapeHtml(data.field) + '</b> dengan ' + escapeHtml(data.value), false); }
         break;
-      case 'openModal':
-        if (cfg.onOpenModal && target) {
-          cfg.onOpenModal(target);
-          self.addMessage('✅ Membuka ' + self.escapeHtml(target), false);
-        }
+      case 'modal':
+        if (cfg.onOpenModal && target) { cfg.onOpenModal(target); self.addMessage('Membuka ' + escapeHtml(target), false); }
         break;
       case 'submit':
-        if (cfg.onSubmitForm && target) {
-          const result = cfg.onSubmitForm(target);
-          self.addMessage(result || '✅ Data dikirim', false);
-        } else {
-          self.addMessage('Klik tombol submit manual di form.', false);
-        }
+        if (cfg.onSubmitForm && target) { const r = cfg.onSubmitForm(target); self.addMessage(r || 'Data dikirim', false); }
+        else self.addMessage('Klik tombol submit manual di form.', false);
         break;
       case 'refresh':
-        if (cfg.onRefresh) {
-          const result = cfg.onRefresh();
-          self.addMessage(result || '🔄 Memperbarui...', false);
-        } else {
-          self.addMessage('🔄 Refresh halaman...', false);
-        }
+        if (cfg.onRefresh) { const r = cfg.onRefresh(); self.addMessage(r || 'Memperbarui...', false); }
+        else self.addMessage('Refresh halaman...', false);
         break;
-      case 'help':
-        self.addMessage(self.getHelpText(), false);
-        break;
-      case 'reset':
-        self.resetAll();
-        self.addMessage('🔄 Percakapan direset.', false);
-        break;
-      case 'voice':
-        self.toggleVoice();
-        break;
-      case 'bulkPaste':
-        self.pasteFromClipboard();
-        break;
+      case 'help': self.addMessage(self.getHelpText(), false); break;
+      case 'reset': self.resetAll(); self.addMessage('Percakapan direset.', false); break;
+      case 'tutorial': self.showTutorial(target || 'default'); break;
+      case 'voice': self.toggleVoice(); break;
       default:
-        if (cfg.onExecuteAction) {
-          cfg.onExecuteAction(type, target, data);
-        } else {
-          self.addMessage('Aksi: ' + type + ' -> ' + target, false);
-        }
+        if (cfg.onExecuteAction) cfg.onExecuteAction(type, target, data);
+        else self.addMessage('Aksi: ' + type + ' -> ' + target, false);
     }
     self.showQuickActions();
   };
@@ -742,298 +661,237 @@ function AIAssistantCreate(pageConfig) {
     d.innerHTML = '<div class="ai-message-avatar">AI</div><div class="ai-message-content"><div class="ai-message-bubble"><div class="ai-typing-dots"><span></span><span></span><span></span></div></div></div>';
     c.appendChild(d); c.scrollTop = c.scrollHeight;
   };
+  self.hideTyping = function() { const e = document.getElementById('aiTyping'); if (e) e.remove(); };
 
-  self.hideTyping = function() {
-    const e = document.getElementById('aiTyping'); if (e) e.remove();
-  };
-
-  // ── Process Message ──
+  // ── PROCESS MESSAGE ──
   self.processMessage = function(text) {
-    // Validate input first
-    const validation = self.validateInput(text);
-    if (!validation.valid) {
-      if (validation.reason === 'empty') return;
-      if (validation.reason === 'too_long') {
-        self.addMessage('⚠️ Pesan terlalu panjang (maks 2000 karakter). Dipotong otomatis.', false);
-        text = validation.text;
-      } else if (validation.reason === 'too_short') {
-        self.addMessage('⚠️ Pesan terlalu pendek.', false);
-        return;
-      } else if (validation.reason === 'suspicious') {
-        self.addMessage('⚠️ Input tidak valid.', false);
-        return;
-      }
-    }
+    const trimmed = text.trim();
+    if (!trimmed || trimmed.length < 2) { self.addMessage('Pesan terlalu pendek.', false); return; }
+    if (trimmed.length > 2000) { self.addMessage('Pesan terlalu panjang (maks 2000 karakter).', false); return; }
+    // XSS prevention
+    if (/<script|<iframe|<object|<embed|javascript:|on\w+\s*=/gi.test(trimmed)) { self.addMessage('Input tidak valid.', false); return; }
+    const sanitized = trimmed.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     
     self.showTyping();
-    const enriched = self.expandDictionary(text);
-    self.lastInputs.push(text);
-    if (self.lastInputs.length > 5) self.lastInputs.shift();
+    // Fetch context data for more intelligent responses
+    const entities = self.smartEntityExtract(sanitized);
+    if (entities.subject && cfg.workspaceId) {
+      self.fetchContextData(entities.subject).then(data => {
+        if (data) self.known.data['_' + entities.subject] = data;
+      }).catch(() => {});
+    }
     setTimeout(function() {
       self.hideTyping();
+      const { intent, score } = self.classifyIntent(sanitized);
       let reply;
-      const { intent, score } = self.classifyIntent(enriched);
-      // Failure tracking
-      if (score < 1) self.consecutiveFailCount++;
-      else self.consecutiveFailCount = 0;
-      let similarCount = 0;
-      const textLower = text.toLowerCase().trim();
-      if (self.lastInputs.length >= 2) {
-        const prev = self.lastInputs.slice(0, -1);
-        for (const inp of prev) {
-          if (self.similarity(textLower, inp.toLowerCase().trim()) > 0.6) similarCount++;
-        }
-        if (similarCount >= 2) self.repetitionCount++;
-        else self.repetitionCount = 0;
-      }
-      if (score < 1) {
-        if (self.repetitionCount >= 2) {
-          reply = 'Sepertinya Anda mengulangi pertanyaan yang sama. Berikut yang bisa saya bantu:<br>' + self.getContextActionsHelp() + '<br><br>Ketik <b>help</b> untuk panduan lengkap.';
-          self.repetitionCount = 0;
-        } else if (self.consecutiveFailCount >= 3) {
-          reply = 'Saya masih belum paham. Coba format sederhana:<br>• <i>"buka [menu]"</i> untuk navigasi<br>• <i>"bantuan"</i> untuk panduan<br>• Atau klik tombol aksi di atas input teks';
-          self.consecutiveFailCount = 0;
-        } else {
-          // Try default handler for unknown intent
-          reply = self.defaultHandleIntent(intent, { target: enriched });
-          if (!reply) reply = 'Maaf, saya belum paham. Ketik <b>help</b> untuk panduan.';
-        }
-      } else {
-        self.consecutiveFailCount = 0;
-        self.repetitionCount = 0;
-        // First try page-specific handler
-        if (cfg.handleIntent) {
-          reply = cfg.handleIntent(intent, { target: enriched });
-        }
-        // Fallback to enhanced executeIntent
-        if (!reply) {
-          reply = self.executeIntent(intent, { target: enriched });
-        }
-        // Last resort: default handler
-        if (!reply) {
-          reply = self.defaultHandleIntent(intent, { target: enriched });
-        }
-        if (!reply) {
-          reply = 'Saya paham Anda ingin <b>' + intent + '</b>. Silakan detailkan atau ketik <b>help</b>.';
-        }
-      }
+      // Try page-specific handler first
+      if (cfg.handleIntent) reply = cfg.handleIntent(intent, { target: sanitized, entities });
+      if (!reply) reply = self.executeIntent(intent, { target: sanitized, entities });
+      if (!reply) reply = self.defaultHandler(intent, { target: sanitized, entities });
+      if (!reply) reply = 'Saya paham Anda ingin <b>' + intent + '</b>. Silakan detailkan atau ketik <b>help</b>.';
       self.addMessage(reply, false);
       self.showQuickActions();
-    }, 300 + Math.random()*300);
+    }, 200 + Math.random() * 200);
   };
 
-  self.getContextActionsHelp = function() {
-    const actions = cfg.onGetQuickActions ? cfg.onGetQuickActions(self.currentContext) : [];
-    const top = actions.slice(0, 4);
-    if (top.length) return top.map(a => '• <b>' + a.label + '</b>').join('<br>');
-    return '• <b>Bantuan</b> • <b>Navigasi</b>';
-  };
-
-  self.executeIntent = function(intent, entities) {
+  // ── EXECUTE INTENT ──
+  self.executeIntent = function(intent, params) {
+    const text = (params.target || '').toLowerCase();
+    const entities = params.entities || {};
     const ctx = self.currentContext || '';
-    const text = entities.target || '';
-    const lower = text.toLowerCase();
     
     switch (intent) {
       case 'GREET': {
         const h = new Date().getHours();
-        const g = h<10?'Selamat pagi':h<15?'Selamat siang':h<18?'Selamat sore':'Selamat malam';
+        const g = h < 10 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
         return g + '! Ada yang bisa saya bantu?';
       }
       case 'HELP': return self.getHelpText();
-      case 'WHOAMI': return cfg.pageUser ? 'Anda <b>' + cfg.pageUser + '</b>' + (cfg.pageRole?' ('+cfg.pageRole+')':'') + '.' : 'Belum ada data pengguna.';
+      case 'WHOAMI': return cfg.pageUser ? 'Anda <b>' + cfg.pageUser + '</b>' + (cfg.pageRole ? ' (' + cfg.pageRole + ')' : '') + '.' : 'Belum ada data pengguna.';
       case 'WHEREAMI': return 'Anda di halaman <b>' + (cfg.onGetContextLabel ? cfg.onGetContextLabel(self.currentContext) : cfg.pageName) + '</b>.';
       
       case 'NAVIGATE': {
-        if (cfg.onNavigate) return cfg.onNavigate(entities.target);
-        return 'Navigasi: bisa ke halaman yang tersedia.';
+        const navTarget = entities.subject || entities.searchTerm;
+        if (cfg.onNavigate && navTarget) return cfg.onNavigate(navTarget);
+        if (cfg.onNavigate) return cfg.onNavigate(text);
+        return 'Bisa ke halaman yang tersedia.';
       }
       
-      case 'CREATE': case 'BUAT': case 'TAMBAH': {
-        // Handle create based on context
-        if (ctx.includes('kpi') || ctx.includes('rab') || ctx.includes('anggaran')) {
-          if (cfg.onOpenModal) { cfg.onOpenModal('kpiModal'); return '✅ Membuka modal Klik untuk buat KPI baru.'; }
-          return '📝 Buka halaman KPI lalu klik tombol <b>Tambah KPI</b>.';
-        }
-        if (ctx.includes('program') || ctx.includes('proker') || ctx.includes('event') || ctx.includes('kegiatan')) {
-          if (cfg.onOpenModal) { cfg.onOpenModal('programModal'); return '✅ Klik untuk buat program kerja baru.'; }
-          return '📅 Buka halaman Program lalu klik <b>Tambah Program</b>.';
-        }
-        if (ctx.includes('surat') || ctx.includes('digital office') || ctx.includes('dokumen')) {
-          if (cfg.onOpenModal) { cfg.onOpenModal('modalAjukanSurat'); return '✅ Klik untuk buat pengajuan surat baru.'; }
-          return '📄 Buka Digital Office lalu klik <b>Ajukan Surat</b>.';
-        }
-        if (ctx.includes('absensi') || ctx.includes('presensi')) {
-          return '✅ Gunakan fitur scan QR code di halaman Presensi untuk absen.';
-        }
-        if (ctx.includes('jadwal') || ctx.includes('kalender') || ctx.includes('agenda')) {
-          if (cfg.onOpenModal) { cfg.onOpenModal('modalScheduleAgenda'); return '✅ Buka modal buat jadwal baru.'; }
-          return '📅 Buka Kalender lalu klik <b>Tambah Jadwal</b>.';
-        }
-        if (ctx.includes('divisi') || ctx.includes('departemen') || ctx.includes('dept')) {
-          if (cfg.onOpenModal) { cfg.onOpenModal('deptModal'); return '✅ Klik untuk tambah divisi baru.'; }
-          return '👥 Buka Struktur Organisasi lalu klik <b>Tambah Divisi</b>.';
-        }
-        if (ctx.includes('sponsor') || ctx.includes('donasi')) {
-          return '🤝 Buka halaman Sponsor lalu klik <b>Tambah Sponsor</b>.';
-        }
-        if (ctx.includes('pendaftaran') || ctx.includes('registrasi')) {
-          return '📝 Buka halaman Pendaftaran lalu klik <b>Tambah Data</b>.';
-        }
-        if (ctx.includes('dokumentasi') || ctx.includes('foto')) {
-          return '📸 Buka Dokumentasi lalu klik <b>Upload Foto</b>.';
-        }
-        if (ctx.includes('notulensi') || ctx.includes('notulen')) {
-          return '📝 Buka Notulensi lalu klik <b>Buat Notulensi</b>.';
-        }
-        if (cfg.onOpenModal) {
-          return '➕ Apa yang ingin dibuat? Coba sebutkan: <b>KPI</b>, <b>Program</b>, <b>Surat</b>, <b>Jadwal</b>, <b>Divisi</b>, <b>Sponsor</b>, atau <b>Pendaftaran</b>.';
-        }
-        return '➕ Silakan detailkan apa yang ingin dibuat (KPI, Program, Surat, Jadwal, Divisi, dll).';
+      case 'CREATE': case 'BUAT': {
+        const subj = entities.subject || '';
+        if (subj === 'kpi') return self.createAction('kpi', 'KPI', 'modal-kpi');
+        if (subj === 'rab' || subj === 'anggaran') return self.createAction('rab', 'RAB', 'modal-rab');
+        if (subj === 'program' || subj === 'proker') return self.createAction('program', 'Program Kerja', 'modal-program');
+        if (subj === 'surat') return self.createAction('surat', 'Surat', 'modal-surat');
+        if (subj === 'jadwal') return self.createAction('jadwal', 'Jadwal', 'modal-jadwal');
+        if (subj === 'absensi') return 'Gunakan fitur scan QR code di halaman Presensi atau klik tombol Absen.';
+        if (subj === 'divisi') return self.createAction('divisi', 'Divisi', 'modal-divisi');
+        if (subj === 'notulensi') return self.createAction('notulensi', 'Notulensi', 'modal-notulen');
+        if (subj === 'sponsor') return 'Buka halaman Sponsor, klik Tambah Sponsor.';
+        if (subj === 'pendaftaran') return 'Buka halaman Pendaftaran, klik Tambah Data.';
+        // Offer tutorial if no specific context
+        self.showTutorial(subj || 'default');
+        return 'Mari saya pandu. ' + (subj ? 'Berikut panduan untuk <b>' + subj + '</b>:' : 'Silakan pilih menu di sidebar atau gunakan tombol quick action.');
       }
       
-      case 'EDIT': case 'UBAH': case 'UPDATE': {
-        return '✏️ Untuk mengedit, buka halaman terkait lalu klik ikon <b>edit</b> pada item yang diinginkan.';
+      case 'EDIT': return 'Untuk mengedit, buka halaman terkait lalu klik ikon <b>edit</b> pada item yang diinginkan.';
+      
+      case 'APPROVE': {
+        if (ctx.includes('surat') || ctx.includes('digital')) {
+          return 'Buka Digital Office, pilih surat, lalu klik Review & TTD -> Setujui.';
+        }
+        if (ctx.includes('rab') || ctx.includes('anggaran')) return 'Buka RAB, pilih item, lalu klik tombol ACC/Setujui.';
+        if (ctx.includes('pendaftaran')) return 'Buka Pendaftaran, pilih data, lalu klik Terima.';
+        if (cfg.pageName === 'superadmin') return 'Buka halaman Approval Admin untuk setujui pendaftaran.';
+        return 'Pilih item lalu klik tombol Setujui/ACC pada baris tersebut.';
       }
       
-      case 'APPROVE': case 'SETUJUI': case 'ACC': {
-        if (ctx.includes('surat') || ctx.includes('digital office')) {
-          if (cfg.onOpenModal) { cfg.onOpenModal('modalAksiSurat'); return '✅ Buka dokumen lalu klik <b>Setujui & TTD</b>.'; }
-          return '✍️ Buka Digital Office, pilih surat, lalu klik <b>Review & TTD</b> → <b>Setujui</b>.';
-        }
-        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan')) {
-          return '✅ Buka RAB, pilih item, lalu klik tombol <b>ACC/Setujui</b>.';
-        }
-        if (ctx.includes('pendaftaran') || ctx.includes('registrasi')) {
-          return '✅ Buka Pendaftaran, pilih data, lalu klik <b>Terima</b>.';
-        }
-        if (cfg.pageName === 'superadmin') {
-          if (cfg.onOpenModal) { cfg.onOpenModal('approvalModal'); return '✅ Buka halaman Approval untuk setujui pendaftaran admin.'; }
-          return '✅ Buka halaman <b>Approval Admin</b> untuk menyetujui/menolak pendaftaran.';
-        }
-        return '✅ Pilih item lalu klik tombol <b>Setujui/ACC</b> pada baris tersebut.';
+      case 'REJECT': {
+        if (ctx.includes('surat')) return 'Buka dokumen di Digital Office, klik Review & TTD lalu pilih Tolak.';
+        if (ctx.includes('rab')) return 'Buka RAB, pilih item, lalu klik tombol Tolak.';
+        if (cfg.pageName === 'superadmin') return 'Buka halaman Approval Admin untuk menolak.';
+        return 'Pilih item lalu klik tombol Tolak/Batal.';
       }
       
-      case 'REJECT': case 'TOLAK': case 'BATAL': {
-        if (ctx.includes('surat') || ctx.includes('digital office')) {
-          return '❌ Buka dokumen di Digital Office, klik <b>Review & TTD</b> lalu pilih <b>Tolak</b>.';
-        }
-        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan')) {
-          return '❌ Buka RAB, pilih item, lalu klik tombol <b>Tolak</b>.';
-        }
-        if (ctx.includes('pendaftaran') || ctx.includes('registrasi')) {
-          return '❌ Buka Pendaftaran, pilih data, lalu klik <b>Tolak</b>.';
-        }
-        if (cfg.pageName === 'superadmin') {
-          return '❌ Buka halaman <b>Approval Admin</b> untuk menolak pendaftaran.';
-        }
-        return '❌ Pilih item lalu klik tombol <b>Tolak/Batal</b>.';
+      case 'SEARCH': {
+        const term = entities.searchTerm || text.replace(/(cari|temukan|filter)/gi, '').trim();
+        if (term) return 'Mencari: <b>' + escapeHtml(term) + '</b>. Gunakan kolom pencarian di halaman ini.';
+        return 'Mau cari apa? Contoh: "cari program seminar".';
       }
       
-      case 'CONFIRM': case 'KONFIRMASI': case 'YAKIN': {
-        if (self.pending && self.pending.confirm) {
-          const msg = self.pending.confirm();
-          self.pending = null;
-          return msg;
-        }
-        return '🤔 Apa yang ingin dikonfirmasi? Silakan detailkan.';
+      case 'CALCULATE': {
+        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan')) return 'Total RAB dihitung otomatis di tabel. Buka halaman RAB untuk detail.';
+        if (ctx.includes('kpi')) return 'Persentase capaian = (Capaian / Target) x 100%. Buka halaman KPI.';
+        if (ctx.includes('absensi')) return 'Persentase kehadiran = (Hadir / Total) x 100%. Lihat dashboard Presensi.';
+        return 'Bisa menghitung: total RAB, persentase KPI, kehadiran, dll.';
       }
       
-      case 'CALCULATE': case 'HITUNG': case 'ITUNG': {
-        if (ctx.includes('rab') || ctx.includes('anggaran') || ctx.includes('keuangan') || ctx.includes('biaya')) {
-          return '🧮 Buka RAB → item biaya akan otomatis dihitung totalnya. Atau ketik: <i>"hitung total [item1] [item2]..."</i>';
-        }
-        if (ctx.includes('kpi') || ctx.includes('target') || ctx.includes('capaian')) {
-          return '📊 Persentase capaian = (Capaian / Target) × 100%. Buka halaman KPI untuk lihat otomatis.';
-        }
-        if (ctx.includes('absensi') || ctx.includes('presensi') || ctx.includes('kehadiran')) {
-          return '📈 Persentase kehadiran = (Hadir / Total) × 100%. Lihat dashboard Presensi untuk grafiknya.';
-        }
-        return '🧮 Bisa hitung: total RAB, persentase KPI, kehadiran, dll. Sebutkan konteksnya ya.';
+      case 'EXPORT': return 'Untuk export, buka halaman data lalu klik tombol Export/Download (Excel/CSV/PDF).';
+      case 'DELETE': return 'Untuk menghapus, cari item lalu klik ikon hapus.';
+      case 'REFRESH': if (cfg.onRefresh) return cfg.onRefresh(); return 'Silakan refresh manual (F5).';
+      case 'RESET': self.resetAll(); return 'Percakapan direset.';
+      case 'SUBMIT': {
+        if (cfg.onSubmitForm) return cfg.onSubmitForm(ctx);
+        return 'Klik tombol Simpan/Kirim di form untuk submit data.';
+      }
+      case 'CONFIRM': {
+        if (self.pending && self.pending.confirm) { const r = self.pending.confirm(); self.pending = null; return r; }
+        return 'Apa yang ingin dikonfirmasi? Silakan detailkan.';
       }
       
-      case 'EXPORT': return '📊 Untuk export, buka halaman data lalu klik tombol <b>Export/Download</b> (Excel/CSV/PDF).';
-      case 'DELETE': return '🗑️ Untuk menghapus, cari item lalu klik ikon <b>hapus</b> (🗑️).';
-      case 'REFRESH': { if (cfg.onRefresh) return cfg.onRefresh(); return '🔄 Silakan refresh manual (F5) atau klik tombol refresh di halaman.'; }
-      case 'RESET': { self.resetAll(); return '🔄 Percakapan direset.'; }
-      case 'TOLONG': return 'Iya, ada yang bisa dibantu? Coba sebutkan apa yang ingin dilakukan.';
-      
-      case 'SEARCH': case 'CARI': {
-        const searchTerm = lower.replace(/(cari|temukan|filter|lihat|temukan data|mana|dimana data)/gi, '').trim();
-        if (searchTerm) {
-          return '🔍 Mencari: <b>' + self.escapeHtml(searchTerm) + '</b>. Gunakan kolom pencarian di halaman ini atau ketik: <i>"cari [kata kunci]"</i>.';
-        }
-        return '🔍 Mau cari apa? Contoh: <i>"cari program seminar"</i>, <i>"cari anggaran tenda"</i>.';
-      }
-      
-      case 'VOICE': {
-        self.toggleVoice();
-        return '🎤 Voice input ' + (self.isListening ? 'diaktifkan' : 'dinonaktifkan') + '.';
-      }
-      
-      default: {
-        // Check page-specific intent handlers
-        if (cfg.handleIntent) {
-          const result = cfg.handleIntent(intent, entities);
-          if (result) return result;
-        }
-        
-        // Try to match with context-aware suggestions
-        const suggestions = self.getContextActionsHelp();
-        return 'Saya paham Anda ingin <b>' + intent + '</b>. ' + 
-               (suggestions !== '• <b>Bantuan</b> • <b>Navigasi</b>' ? 
-                 '<br>Mungkin ini membantu:<br>' + suggestions : 
-                 '<br>Silakan detailkan atau ketik <b>help</b>.');
-      }
+      default: return null;
     }
   };
 
-  // ── Voice ──
+  self.createAction = function(subject, label, modalId) {
+    // Try to open modal if handler exists
+    if (cfg.onOpenModal && modalId) { cfg.onOpenModal(modalId); return 'Membuka form <b>' + label + '</b>. ' + 'Klik tombol panduan untuk tutorial. [TUTORIAL:' + subject + ']'; }
+    if (cfg.onNavigate) return 'Buka halaman <b>' + label + '</b> lalu klik tombol Tambah ' + label + '.';
+    return 'Buka halaman terkait lalu klik tombol Tambah/Input.';
+  };
+
+  self.defaultHandler = function(intent, params) {
+    const text = (params.target || '').toLowerCase();
+    const entities = params.entities || {};
+    
+    // Multi-turn conversation
+    if (self.pending && self.pending.intent) {
+      if (intent === 'CONFIRM' || intent.includes('SETUJUI')) {
+        if (self.pending.confirm) { const r = self.pending.confirm(); self.pending = null; return r; }
+      }
+      if (intent === 'REJECT' || intent.includes('TOLAK') || text.includes('tidak') || text.includes('gak')) {
+        self.pending = null; return 'Dibatalkan.';
+      }
+      if (self.pending.collectField) {
+        self.pending.data[self.pending.collectField] = text;
+        self.pending.collectField = null;
+        return self.continuePending();
+      }
+    }
+    
+    // Tutorial trigger for CREATE-like intentions with subject
+    if (entities.subject && entities.subject !== 'help') {
+      self.showTutorial(entities.subject);
+      return 'Mari saya pandu mengisi <b>' + entities.subject + '</b>. Ikuti langkah-langkah berikut:';
+    }
+    
+    // Proactive context suggestions
+    if (intent === 'UNKNOWN') return self.getSuggestions();
+    
+    return null;
+  };
+
+  self.continuePending = function() {
+    if (!self.pending) return null;
+    const required = self.pending.requiredFields || [];
+    const missing = required.filter(f => !self.pending.data[f]);
+    if (missing.length > 0) {
+      self.pending.collectField = missing[0];
+      const prompts = {
+        nama: 'Nama apa?', judul: 'Judulnya apa?', tanggal: 'Tanggal berapa? (besok, 20 Mei)',
+        waktu: 'Jam berapa? (19:00)', tempat: 'Di mana?', anggaran: 'Anggaran berapa? (5 juta)',
+        target: 'Target berapa?', deskripsi: 'Deskripsinya?', divisi: 'Divisi mana?',
+        penerima: 'Untuk siapa?',
+      };
+      return prompts[missing[0]] || 'Masukkan ' + missing[0] + ':';
+    }
+    if (self.pending.execute) { const r = self.pending.execute(self.pending.data); self.pending = null; return r; }
+    self.pending = null; return 'Selesai.';
+  };
+
+  self.getSuggestions = function() {
+    const ctx = self.currentContext || '';
+    const page = cfg.pageName;
+    const s = [];
+    if (page === 'admin' || page === 'user-hub') {
+      if (ctx.includes('kpi') || ctx.includes('rab')) { s.push('buat KPI baru', 'hitung total anggaran'); }
+      if (ctx.includes('program')) { s.push('buat program kerja', 'cari program'); }
+      if (ctx.includes('surat')) { s.push('ajukan surat baru', 'setujui surat'); }
+    }
+    if (page === 'superadmin') { s.push('lihat approval admin', 'setujui admin baru'); }
+    if (page === 'index') { s.push('login', 'daftar', 'lihat fitur'); }
+    if (!s.length) { s.push('bantuan', 'navigasi ke halaman'); }
+    return 'Saran: ' + s.slice(0, 4).map(x => '<b>' + x + '</b>').join(', ') + '. Ketik help untuk panduan.';
+  };
+
+  // ── VOICE ──
   self.toggleVoice = function() { self.isListening ? self.stopVoice() : self.startVoice(); };
   self.startVoice = function() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      self.addMessage('Maaf, browser tidak support Voice Input.', false); return;
+      self.addMessage('Browser tidak support Voice Input.', false); return;
     }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     self.recognition = new SR();
-    self.recognition.lang = 'id-ID'; self.recognition.continuous = false;
-    self.recognition.interimResults = false;
+    self.recognition.lang = 'id-ID'; self.recognition.continuous = false; self.recognition.interimResults = false;
     self.isListening = true;
     const vb = document.getElementById('aiVoiceBtn'), fb = document.getElementById('aiFooterVoiceBtn'), fa = document.getElementById('aiFab');
     if (vb) vb.classList.add('listening'); if (fb) fb.classList.add('listening'); if (fa) fa.classList.add('listening');
     self.recognition.onresult = function(e) {
-      const t = e.results[0][0].transcript;
-      const inp = document.getElementById('aiInput');
+      const t = e.results[0][0].transcript; const inp = document.getElementById('aiInput');
       if (inp) { inp.value = t; inp.style.height = 'auto'; inp.focus(); }
       self.stopVoice();
-      if (inp) {
-        inp.dataset.voiceTs = Date.now();
-        setTimeout(function checkEdit() {
-          if (!inp || inp.dataset.voiceTs && (Date.now() - parseInt(inp.dataset.voiceTs)) >= 2000) {
-            if (inp && inp.value.trim()) self.sendMessage();
-          } else { setTimeout(checkEdit, 500); }
-        }, 2000);
-      }
+      setTimeout(function() { if (inp && inp.value.trim()) self.sendMessage(); }, 1500);
     };
-    self.recognition.onerror = function(e) { self.addMessage('Voice error: ' + e.error, false); self.stopVoice(); };
+    self.recognition.onerror = function() { self.stopVoice(); };
     self.recognition.onend = function() { self.stopVoice(); };
-    try { self.recognition.start(); } catch(err) { self.stopVoice(); }
+    try { self.recognition.start(); } catch(e) { self.stopVoice(); }
   };
   self.stopVoice = function() {
     self.isListening = false;
     const vb = document.getElementById('aiVoiceBtn'), fb = document.getElementById('aiFooterVoiceBtn'), fa = document.getElementById('aiFab');
     if (vb) vb.classList.remove('listening'); if (fb) fb.classList.remove('listening'); if (fa) fa.classList.remove('listening');
-    if (self.recognition) { try { self.recognition.stop(); } catch(e){} self.recognition = null; }
+    if (self.recognition) { try { self.recognition.stop(); } catch(e) {} self.recognition = null; }
   };
 
-  // ── Clipboard / Bulk ──
+  // ── CLIPBOARD / BULK ──
   self.pasteFromClipboard = async function() {
     try {
       const text = await navigator.clipboard.readText();
       if (!text || !text.trim()) { self.addMessage('Clipboard kosong.', false); return; }
+      const inp = document.getElementById('aiInput');
       if (text.includes('\t')) { self.handleBulkPaste(text); }
-      else { const inp = document.getElementById('aiInput'); if (inp) inp.value = text; if (inp) inp.focus(); self.open(); self.addMessage('📋 Teks dari clipboard sudah di tempel.', false); }
-    } catch(err) { self.addMessage('Tidak bisa akses clipboard. Gunakan Ctrl+V.', false); }
+      else { if (inp) inp.value = text; if (inp) inp.focus(); self.open(); self.addMessage('Teks dari clipboard sudah ditempel.', false); }
+    } catch(e) { self.addMessage('Tidak bisa akses clipboard. Gunakan Ctrl+V.', false); }
   };
   self.handleBulkPaste = function(text) {
     const lines = text.split('\n').filter(l => l.trim());
@@ -1041,88 +899,85 @@ function AIAssistantCreate(pageConfig) {
     const headers = lines[0].split('\t').map(h => h.trim());
     const rows = lines.slice(1).map(l => l.split('\t').map(c => c.trim()));
     self.bulkData = { headers, rows };
-    self.renderBulkPreview(headers, rows);
-    const modal = document.getElementById('aiBulkModal'); if (modal) modal.classList.add('active');
-  };
-  self.renderBulkPreview = function(headers, rows) {
     const fieldMap = cfg.onGetFieldMapping ? cfg.onGetFieldMapping(self.currentContext) : {};
-    let html = '<table class="ai-bulk-table"><thead><tr>';
-    headers.forEach(function(h,i) {
-      html += '<th>' + self.escapeHtml(h) + '<br><select data-col="' + i + '">';
-      html += '<option value="">— Pilih Field —</option>';
-      for (const [id, lbl] of Object.entries(fieldMap)) {
-        const sel = (h.toLowerCase().includes(lbl.toLowerCase())||lbl.toLowerCase().includes(h.toLowerCase()))?'selected':'';
-        html += '<option value="' + id + '" ' + sel + '>' + self.escapeHtml(lbl) + '</option>';
-      }
-      html += '</select></th>';
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:0.8rem;"><thead><tr>';
+    headers.forEach(function(h, i) {
+      html += '<th style="background:#f1f5f9;padding:8px;text-align:left;border-bottom:2px solid #e2e8f0;">' + escapeHtml(h) + '</th>';
     });
     html += '</tr></thead><tbody>';
-    rows.slice(0,20).forEach(function(r) {
-      html += '<tr>' + r.map(function(c) { return '<td>' + self.escapeHtml(c) + '</td>'; }).join('') + '</tr>';
+    rows.slice(0, 10).forEach(function(r) {
+      html += '<tr>' + r.map(function(c) { return '<td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;">' + escapeHtml(c) + '</td>'; }).join('') + '</tr>';
     });
-    if (rows.length > 20) html += '<tr><td colspan="' + headers.length + '" style="text-align:center;color:#999;">… +' + (rows.length-20) + ' baris</td></tr>';
+    if (rows.length > 10) html += '<tr><td colspan="' + headers.length + '" style="text-align:center;color:#999;">+' + (rows.length - 10) + ' baris</td></tr>';
     html += '</tbody></table>';
-    const p = document.getElementById('aiBulkPreview'); if (p) p.innerHTML = html;
-  };
-  self.closeBulkModal = function() { const m = document.getElementById('aiBulkModal'); if (m) m.classList.remove('active'); self.bulkData = null; };
-  self.confirmBulkInsert = async function() {
-    if (!self.bulkData) return;
-    const selects = document.querySelectorAll('#aiBulkPreview select');
-    const colMap = {};
-    selects.forEach(function(s) { const c = s.dataset.col; if (s.value) colMap[c] = s.value; });
-    const rows = self.bulkData.rows;
-    let ins = 0, errs = [];
-    for (const row of rows) {
-      const data = {};
-      for (const [ci, fid] of Object.entries(colMap)) data[fid] = row[parseInt(ci)]||'';
-      try {
-        if (cfg.onBulkInsert) {
-          await cfg.onBulkInsert(data, colMap, self.currentContext);
-          ins++;
-        } else { ins++; }
-      } catch(err) { errs.push(err.message); }
-    }
-    self.addMessage((ins?'✅ '+ins+' baris tersisip':'❌ Gagal') + (errs.length?' ('+errs.length+' error)':''), false);
-    if (ins && cfg.onRefresh) cfg.onRefresh();
-    self.closeBulkModal();
+    self.addMessage('Data bulk terdeteksi (' + rows.length + ' baris):<br>' + html + '<br>Ketik <b>konfirmasi</b> untuk menyisipkan, atau <b>batal</b> untuk membatalkan.', false);
+    self.pending = {
+      intent: 'BULK_INSERT', data: { headers, rows }, requiredFields: [],
+      confirm: async function() {
+        let ins = 0, errs = [];
+        for (const row of rows) {
+          const data = {};
+          headers.forEach((h, i) => { data[h] = row[i] || ''; });
+          try { if (cfg.onBulkInsert) { await cfg.onBulkInsert(data, null, self.currentContext); ins++; } else ins++; }
+          catch(e) { errs.push(e.message); }
+        }
+        self.addMessage((ins ? ins + ' baris tersisip' : 'Gagal') + (errs.length ? ' (' + errs.length + ' error)' : ''), false);
+        if (ins && cfg.onRefresh) cfg.onRefresh();
+        self.pending = null;
+      }
+    };
   };
 
-  // ── Quick Actions ──
+  // ── QUICK ACTIONS ──
   self.showQuickActions = function() {
     const c = document.getElementById('aiQuickActions'); if (!c) return;
-    const ctx = self.currentContext || (cfg.onDetectContext ? self.detectContext() : '');
+    const ctx = self.currentContext || (cfg.onDetectContext ? '' : '');
     const actions = self.getQuickActions(ctx);
     c.innerHTML = actions.map(function(a) {
-      return '<div class="ai-quick-action" onclick="AI.performQuickAction(\''+a.id+'\')"><i class="'+a.icon+'"></i><span>'+a.label+'</span></div>';
+      const dataAttr = a.data ? ' data-action=\'' + JSON.stringify(a).replace(/'/g, "&#39;") + '\'' : '';
+      return '<div class="ai-quick-action" onclick="AI.quickAction(\'' + a.id + '\')" title="' + (a.label || '') + '"><i class="' + (a.icon || 'fa-solid fa-circle') + '"></i><span>' + (a.label || '') + '</span></div>';
     }).join('');
   };
   self.getQuickActions = function(ctx) {
     const common = [
-      {id:'help',icon:'fa-solid fa-question-circle',label:'Bantuan'},
-      {id:'voice',icon:'fa-solid fa-microphone',label:'Voice'},
-      {id:'clipboard',icon:'fa-solid fa-paste',label:'Paste'},
+      { id: 'help', icon: 'fa-solid fa-question-circle', label: 'Bantuan' },
+      { id: 'voice', icon: 'fa-solid fa-microphone', label: 'Voice' },
+      { id: 'clipboard', icon: 'fa-solid fa-paste', label: 'Tempel' },
     ];
     const pageActions = cfg.onGetQuickActions ? cfg.onGetQuickActions(ctx) : [];
     return [...pageActions, ...common];
   };
-  self.performQuickAction = function(actionId) {
+  self.quickAction = function(id) {
     self.open();
-    const tips = {
-      'help': self.getHelpText(),
-      'voice': '🎤 Klik ikon mikrofon untuk voice input.',
-      'clipboard': '📋 Salin data dari Excel, lalu klik <b>Paste</b>.',
+    const builtIn = {
+      help: function() { self.addMessage(self.getHelpText(), false); },
+      voice: function() { self.toggleVoice(); self.addMessage('Voice ' + (self.isListening ? 'diaktifkan' : 'dinonaktifkan'), false); },
+      clipboard: function() { self.pasteFromClipboard(); },
     };
-    self.addMessage(tips[actionId] || 'Aksi: ' + actionId, false);
+    if (builtIn[id]) { builtIn[id](); return; }
+    // Handle nav_ prefixed actions from page config
+    const pageActions = cfg.onGetQuickActions ? cfg.onGetQuickActions(self.currentContext) : [];
+    const action = pageActions.find(function(a) { return a.id === id; });
+    if (action && action.id && action.id.startsWith('nav_')) {
+      const target = action.id.replace('nav_', '');
+      if (cfg.onNavigate) {
+        const result = cfg.onNavigate(target);
+        self.addMessage(result || 'Navigasi ke ' + target, false);
+      }
+      return;
+    }
+    // Custom action handler
+    if (typeof cfg.onQuickAction === 'function') {
+      const result = cfg.onQuickAction(id, action);
+      if (result) { self.addMessage(result, false); return; }
+    }
+    self.addMessage('Aksi: ' + id, false);
   };
 
-  // ── Context ──
+  // ── CONTEXT ──
   self.detectContext = function() {
-    if (cfg.onDetectContext) {
-      self.currentContext = cfg.onDetectContext();
-    } else {
-      const a = document.querySelector('.view-section.active');
-      self.currentContext = a ? a.id : '';
-    }
+    if (cfg.onDetectContext) { self.currentContext = cfg.onDetectContext(); }
+    else { const a = document.querySelector('.view-section.active'); self.currentContext = a ? a.id : ''; }
     self.updateContextBadge();
     self.showQuickActions();
     return self.currentContext;
@@ -1133,34 +988,23 @@ function AIAssistantCreate(pageConfig) {
     if (label) { b.textContent = label; b.style.display = 'inline'; } else { b.style.display = 'none'; }
   };
 
-  // ── History ──
-  self.saveHistory = function() {
-    try { localStorage.setItem(self.storageKey, document.getElementById('aiChatMessages').innerHTML); } catch(e) {}
-  };
-  self.loadHistory = function() {
-    try { const s = localStorage.getItem(self.storageKey); if (s) document.getElementById('aiChatMessages').innerHTML = s; } catch(e) {}
-  };
+  // ── HISTORY ──
+  self.saveHistory = function() { try { localStorage.setItem(self.storageKey, document.getElementById('aiChatMessages').innerHTML); } catch(e) {} };
+  self.loadHistory = function() { try { const s = localStorage.getItem(self.storageKey); if (s) document.getElementById('aiChatMessages').innerHTML = s; } catch(e) {} };
 
-  // ── Reset ──
-  self.resetContext = function() { self.pending = null; self.lastIntent = null; self.lastSubject = ''; };
+  // ── RESET ──
   self.resetAll = function() {
-    self.resetContext();
-    self.currentContext = '';
-    self.bulkData = null;
-    self.consecutiveFailCount = 0;
-    self.lastInputs = [];
-    self.repetitionCount = 0;
+    self.pending = null; self.lastIntent = null; self.lastSubject = ''; self.currentContext = '';
+    self.bulkData = null; self.lastInputs = [];
     const m = document.getElementById('aiChatMessages');
     if (m) m.innerHTML = '<div class="ai-msg">Halo! Saya AI Assistant Coreva. Ketik <b>help</b> untuk panduan.</div>';
     self.saveHistory();
   };
 
-  // ── FAB Hide/Show ──
+  // ── FAB HIDE/SHOW ──
   self.toggleFab = function() {
-    const fab = document.getElementById('aiFab');
-    const restore = document.getElementById('aiFabRestore');
-    const btn = document.getElementById('aiFabToggleBtn');
-    const footerBtn = document.getElementById('aiFooterFabToggleBtn');
+    const fab = document.getElementById('aiFab'), restore = document.getElementById('aiFabRestore');
+    const btn = document.getElementById('aiFabToggleBtn'), footerBtn = document.getElementById('aiFooterFabToggleBtn');
     if (!fab) return;
     if (fab.classList.contains('ai-fab-hidden')) { self.restoreFab(); }
     else {
@@ -1168,257 +1012,59 @@ function AIAssistantCreate(pageConfig) {
       if (restore) restore.style.display = 'flex';
       if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
       if (footerBtn) footerBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
-      const key = 'ai_fab_hidden_' + (cfg.workspaceId || '0');
-      try { localStorage.setItem(key, 'true'); } catch(e) {}
-      self.addMessage('🔘 FAB disembunyikan. Klik badge AI di pojok atau tombol di input untuk memunculkan lagi.', false);
+      try { localStorage.setItem('ai_fab_hidden_' + (cfg.workspaceId || '0'), 'true'); } catch(e) {}
     }
   };
   self.restoreFab = function() {
-    const fab = document.getElementById('aiFab');
-    const restore = document.getElementById('aiFabRestore');
-    const btn = document.getElementById('aiFabToggleBtn');
-    const footerBtn = document.getElementById('aiFooterFabToggleBtn');
+    const fab = document.getElementById('aiFab'), restore = document.getElementById('aiFabRestore');
+    const btn = document.getElementById('aiFabToggleBtn'), footerBtn = document.getElementById('aiFooterFabToggleBtn');
     if (!fab) return;
     fab.classList.remove('ai-fab-hidden');
     if (restore) restore.style.display = 'none';
     if (btn) btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
     if (footerBtn) footerBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-    const key = 'ai_fab_hidden_' + (cfg.workspaceId || '0');
-    try { localStorage.setItem(key, 'false'); } catch(e) {}
+    try { localStorage.setItem('ai_fab_hidden_' + (cfg.workspaceId || '0'), 'false'); } catch(e) {}
   };
 
-  // ── Help ──
+  // ── HELP ──
   self.getHelpText = function() {
-    return '<b>🤖 AI Assistant Coreva</b><br><br>' +
-      '<b>📋 Contoh Perintah:</b><br>' +
-      '• <i>"buka [halaman]"</i> — navigasi<br>' +
-      '• <i>"siapa saya"</i> — info akun<br>' +
-      '• <i>"dimana saya"</i> — posisi halaman<br>' +
-      '• <i>"bantuan"</i> — panduan ini<br>' +
-      '• <i>"reset"</i> — hapus chat<br><br>' +
-      '<b>🎤 Voice:</b> Klik ikon mikrofon<br>' +
-      '<b>📋 Paste Excel:</b> Salin data, klik Paste<br>' +
-      '<b>⚡ Quick Actions:</b> Tombol di atas input teks';
+    return '<b>AI Assistant Coreva</b><br><br>' +
+      '<b>Contoh Perintah:</b><br>' +
+      '- <i>"buat program baru"</i> — bikin program kerja<br>' +
+      '- <i>"isi RAB"</i> — panduan isi RAB<br>' +
+      '- <i>"buka KPI"</i> — navigasi ke KPI<br>' +
+      '- <i>"cari seminar"</i> — cari data<br>' +
+      '- <i>"siapa saya"</i> — info akun<br>' +
+      '- <i>"bantuan"</i> — panduan ini<br><br>' +
+      '<b>Voice:</b> Klik ikon mikrofon<br>' +
+      '<b>Tempel Excel:</b> Salin data, klik Tempel';
   };
 
-  // ── Default Handlers (Smart Logic Enhancements) ──
-  
-  // Default handleIntent - untuk handle intent yang tidak dikenali secara global
-  self.defaultHandleIntent = function(intent, entities) {
-    const ctx = self.currentContext || '';
-    const text = (entities.target || '').toLowerCase();
-    
-    // Multi-turn conversation: check if we have pending action
-    if (self.pending && self.pending.intent) {
-      const pendingIntent = self.pending.intent;
-      if (intent === 'CONFIRM' || intent === 'SETUJUI' || intent === 'YAKIN' || intent === 'IYA' || intent === 'YA') {
-        if (self.pending.confirm) {
-          const result = self.pending.confirm();
-          self.pending = null;
-          return result;
-        }
-      }
-      if (intent === 'REJECT' || intent === 'TOLAK' || intent === 'BATAL' || intent === 'TIDAK' || intent === 'GAK') {
-        self.pending = null;
-        return '❌ Dibatalkan.';
-      }
-      // If user provides additional info for pending action
-      if (self.pending.collectField) {
-        const field = self.pending.collectField;
-        self.pending.data[field] = text;
-        self.pending.collectField = null;
-        return self.continuePendingAction();
-      }
-    }
-    
-    // Proactive context-aware suggestions
-    if (intent === 'UNKNOWN' || intent === 'TOLONG') {
-      return self.getProactiveSuggestions(ctx);
-    }
-    
-    return null; // Let page-specific handler take over
-  };
-
-  // Continue pending multi-turn action
- 
-  self.continuePendingAction = function() {
-    if (!self.pending) return null;
-    
-    // Check if all required fields collected
-    const required = self.pending.requiredFields || [];
-    const missing = required.filter(f => !self.pending.data[f]);
-    
-    if (missing.length > 0) {
-      self.pending.collectField = missing[0];
-      const prompts = {
-        'nama': '📝 Nama apa?',
-        'judul': '📝 Judulnya apa?',
-        'tanggal': '📅 Tanggal berapa? (contoh: besok, 20 Mei, hari ini)',
-        'waktu': '🕐 Jam berapa? (contoh: 19:00, sore)',
-        'tempat': '📍 Di mana?',
-        'anggaran': '💰 Anggaran berapa? (contoh: 5 juta, 10.000.000)',
-        'target': '🎯 Target berapa?',
-        'satuan': '📏 Satuan apa? (orang, %, unit)',
-        'deskripsi': '📄 Deskripsinya?',
-        'penerima': '👤 Untuk siapa/kepada siapa?',
-        'divisi': '🏢 Divisi mana?',
-      };
-      return prompts[missing[0]] || 'Masukkan ' + missing[0] + ':';
-    }
-    
-    // Execute the pending action
-    if (self.pending.execute) {
-      const result = self.pending.execute(self.pending.data);
-      self.pending = null;
-      return result;
-    }
-    
-    self.pending = null;
-    return '✅ Selesai.';
-  };
-
-  // Proactive suggestions based on context
-  self.getProactiveSuggestions = function(ctx) {
-    const suggestions = [];
-    const page = cfg.pageName;
-    
-    if (page === 'admin' || page === 'user-hub') {
-      if (ctx.includes('kpi') || ctx.includes('rab')) {
-        suggestions.push('• <b>buat KPI baru</b> — tambah indikator performa');
-        suggestions.push('• <b>hitung total anggaran</b> — kalkulasi otomatis');
-      }
-      if (ctx.includes('program') || ctx.includes('proker')) {
-        suggestions.push('• <b>buat program kerja</b> — jadwal & detail kegiatan');
-        suggestions.push('• <b>cari program seminar</b> — filter data');
-      }
-      if (ctx.includes('surat') || ctx.includes('digital')) {
-        suggestions.push('• <b>ajukan surat baru</b> — pengajuan dokumen');
-        suggestions.push('• <b>setujui surat masuk</b> — approve digital office');
-      }
-    }
-    
-    if (page === 'superadmin') {
-      suggestions.push('• <b>lihat approval admin</b> — cek pendaftaran menunggu');
-      suggestions.push('• <b>setujui admin baru</b> — verifikasi akses organisasi');
-    }
-    
-    if (page === 'organisasichat') {
-      suggestions.push('• <b>buat agenda rapat</b> — jadwal pertemuan');
-      suggestions.push('• <b>kirim pesan ke grup</b> — broadcast announcement');
-    }
-    
-    if (page === 'index') {
-      suggestions.push('• <b>login</b> — masuk ke workspace');
-      suggestions.push('• <b>daftar</b> — ajukan trial 30 hari');
-      suggestions.push('• <b>lihat fitur</b> — showcase demo interaktif');
-    }
-    
-    if (!suggestions.length) {
-      suggestions.push('• <b>bantuan</b> — panduan lengkap');
-      suggestions.push('• <b>navigasi ke [halaman]</b> — pindah menu');
-    }
-    
-    return '💡 <b>Saran untuk konteks ini:</b><br>' + suggestions.slice(0, 4).join('<br>');
-  };
-
-  // Input validation & sanitization
-  self.validateInput = function(text) {
-    if (!text || !text.trim()) return { valid: false, reason: 'empty' };
-    const trimmed = text.trim();
-    
-    // Length check
-    if (trimmed.length > 2000) return { valid: false, reason: 'too_long', text: trimmed.substring(0, 2000) };
-    if (trimmed.length < 2) return { valid: false, reason: 'too_short' };
-    
-    // Basic XSS prevention - strip script tags
-    const sanitized = trimmed
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/on\w+\s*=/gi, '');
-    
-    // Detect potential injection attempts
-    if (/<iframe|<object|<embed|eval\(|document\.cookie|localStorage/gi.test(trimmed)) {
-      return { valid: false, reason: 'suspicious' };
-    }
-    
-    return { valid: true, text: sanitized };
-  };
-
-  // Default onExecuteAction
-  self.defaultExecuteAction = function(actionType, actionTarget, data) {
-    switch (actionType) {
-      case 'navigate':
-        if (cfg.onNavigate && actionTarget) return cfg.onNavigate(actionTarget);
-        break;
-      case 'openModal':
-        if (cfg.onOpenModal && actionTarget) return cfg.onOpenModal(actionTarget);
-        break;
-      case 'fillForm':
-        if (cfg.onFillField && data?.field && data?.value) return cfg.onFillField(data.field, data.value);
-        break;
-      case 'submit':
-        if (cfg.onSubmitForm && actionTarget) return cfg.onSubmitForm(actionTarget);
-        break;
-      case 'refresh':
-        if (cfg.onRefresh) return cfg.onRefresh();
-        break;
-      case 'bulkInsert':
-        if (cfg.onBulkInsert && data) return cfg.onBulkInsert(data, {}, self.currentContext);
-        break;
-    }
-    return null;
-  };
-
-  // Register page-specific intents (called by page config)
-  self.registerIntents = function(customIntents) {
-    Object.assign(self.INTENTS, customIntents);
-  };
-
-  // Set pending action for multi-turn
-  self.setPendingAction = function(actionConfig) {
+  // ── SET PENDING ACTION ──
+  self.setPendingAction = function(config) {
     self.pending = {
-      intent: actionConfig.intent,
-      data: actionConfig.data || {},
-      requiredFields: actionConfig.requiredFields || [],
-      collectField: null,
-      confirm: actionConfig.confirm,
-      execute: actionConfig.execute,
+      intent: config.intent, data: config.data || {},
+      requiredFields: config.requiredFields || [], collectField: null,
+      confirm: config.confirm, execute: config.execute,
     };
-    // Start collecting first missing field
     const missing = self.pending.requiredFields.filter(f => !self.pending.data[f]);
-    if (missing.length > 0) {
-      self.pending.collectField = missing[0];
-    }
+    if (missing.length > 0) self.pending.collectField = missing[0];
   };
 
-  // Smart context detection with caching
-  self.smartDetectContext = function() {
-    const now = Date.now();
-    if (self._lastContextDetect && (now - self._lastContextDetect) < 2000) {
-      return self.currentContext; // Cache for 2 seconds
-    }
-    self._lastContextDetect = now;
-    return self.detectContext();
-  };
+  // ── REGISTER CUSTOM INTENTS ──
+  self.registerIntents = function(custom) { Object.assign(BASE_INTENTS, custom); };
 
-  // ── Draggable FAB ──
+  // ── DRAGGABLE FAB ──
   self.initDrag = function() {
     const fab = document.getElementById('aiFab');
     if (!fab || fab.classList.contains('ai-fab-hidden')) return;
-    const start = function(e) { self.startDrag(e); };
-    fab.addEventListener('pointerdown', start);
-    fab.addEventListener('mousedown', start);
-    fab.addEventListener('touchstart', start);
+    fab.addEventListener('pointerdown', function(e) { self.startDrag(e); });
+    fab.addEventListener('mousedown', function(e) { self.startDrag(e); });
+    fab.addEventListener('touchstart', function(e) { self.startDrag(e); });
   };
   self.startDrag = function(e) {
-    if (e.pointerType === 'mouse' && self.touchInProgress) return;
-    if (e.type === 'mousedown' && self.touchInProgress) return;
     if (self.isDragging) return;
     e.preventDefault();
-    if (e.type === 'touchstart' || e.pointerType === 'touch') {
-      self.touchInProgress = true;
-      if (self.dragTimeout) { clearTimeout(self.dragTimeout); self.dragTimeout = null; }
-    }
     const pos = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
     if (!pos) return;
     const fab = document.getElementById('aiFab');
@@ -1431,13 +1077,10 @@ function AIAssistantCreate(pageConfig) {
     const move = function(ev) { self.onDrag(ev); };
     const end = function(ev) { self.stopDrag(ev); };
     self.dragBoundFn = move; self.dragEndFn = end;
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', end);
+    document.addEventListener('pointermove', move); document.addEventListener('pointerup', end);
     document.addEventListener('pointercancel', end);
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', end);
-    document.addEventListener('touchmove', move);
-    document.addEventListener('touchend', end);
+    document.addEventListener('mousemove', move); document.addEventListener('mouseup', end);
+    document.addEventListener('touchmove', move); document.addEventListener('touchend', end);
     document.addEventListener('touchcancel', end);
   };
   self.onDrag = function(e) {
@@ -1453,7 +1096,7 @@ function AIAssistantCreate(pageConfig) {
     self.setFabPosition(x, y);
     self.syncWidgetPosition();
   };
-  self.stopDrag = function(e) {
+  self.stopDrag = function() {
     if (!self.isDragging) return;
     self.isDragging = false;
     const fab = document.getElementById('aiFab');
@@ -1468,10 +1111,6 @@ function AIAssistantCreate(pageConfig) {
       document.removeEventListener('touchend', self.dragEndFn);
       document.removeEventListener('touchcancel', self.dragEndFn);
       self.dragBoundFn = null; self.dragEndFn = null;
-    }
-    if (self.touchInProgress) {
-      if (self.dragTimeout) clearTimeout(self.dragTimeout);
-      self.dragTimeout = setTimeout(function() { self.touchInProgress = false; self.dragTimeout = null; }, 500);
     }
     self.savePosition();
   };
@@ -1497,22 +1136,14 @@ function AIAssistantCreate(pageConfig) {
   self.loadPosition = function() {
     try {
       const saved = localStorage.getItem('ai_fab_pos_' + (cfg.workspaceId || '0'));
-      if (saved) {
-        const p = JSON.parse(saved);
-        self.setFabPosition(p.x, p.y);
-        setTimeout(function() { self.syncWidgetPosition(); }, 50);
-        return;
-      }
+      if (saved) { const p = JSON.parse(saved); self.setFabPosition(p.x, p.y); setTimeout(function() { self.syncWidgetPosition(); }, 50); return; }
     } catch(e) {}
     self.setFabPosition(30, window.innerHeight - 86);
     setTimeout(function() { self.syncWidgetPosition(); }, 50);
   };
   self.savePosition = function() {
     if (self.fabX < 0 || self.fabY < 0) return;
-    try {
-      localStorage.setItem('ai_fab_pos_' + (cfg.workspaceId || '0'),
-        JSON.stringify({ x: self.fabX, y: self.fabY }));
-    } catch(e) {}
+    try { localStorage.setItem('ai_fab_pos_' + (cfg.workspaceId || '0'), JSON.stringify({ x: self.fabX, y: self.fabY })); } catch(e) {}
   };
 
   return self;

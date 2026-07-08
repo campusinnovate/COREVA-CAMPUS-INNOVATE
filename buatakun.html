@@ -33,6 +33,41 @@
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        /* PAGE TRANSITION OVERLAY */
+        .page-transition-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 9999999; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .page-transition-overlay.active { opacity: 1; visibility: visible; }
+        .page-transition-overlay .spinner { width: 50px; height: 50px; border: 4px solid rgba(245, 158, 11, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* VIEW SECTION ENTRANCE ANIMATION */
+        .view-section {
+            display: none;
+            animation: fadeSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .view-section.active {
+            display: block;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* STAGGERED CARD ENTRANCE */
+        .card-item {
+            animation: cardFadeUp 0.5s ease-out forwards;
+            opacity: 0;
+        }
+        .card-item:nth-child(1) { animation-delay: 0.05s; }
+        .card-item:nth-child(2) { animation-delay: 0.1s; }
+        .card-item:nth-child(3) { animation-delay: 0.15s; }
+        .card-item:nth-child(4) { animation-delay: 0.2s; }
+        .card-item:nth-child(5) { animation-delay: 0.25s; }
+        .card-item:nth-child(6) { animation-delay: 0.3s; }
+        @keyframes cardFadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
         body { 
             background: var(--bg);
@@ -104,6 +139,8 @@
     </style>
 </head>
 <body>
+
+    <div class="page-transition-overlay" id="pageTransitionOverlay"><div class="spinner"></div></div>
 
     <div id="toast-container"></div>
 
@@ -217,9 +254,9 @@
             
             setTimeout(() => {
                 if (roleData && roleData.role === 'admin') {
-                    window.location.href = 'admin.html';
+                    navigateWithTransition('admin.html');
                 } else {
-                    window.location.href = 'user-hub.html';
+                    navigateWithTransition('user-hub.html');
                 }
             }, 2000);
         }
@@ -231,9 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pageName: 'buatakun',
         storageKey: 'ai_buatakun',
         welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Buat password</b> — panduan password yang aman<br>• <b>Tips keamanan</b> — saran password kuat<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        supabase: supabaseClient,
         onGetQuickActions: () => [
-            { label: 'Tips Password', icon: 'shield-keyhole', type: 'help' },
-            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+            { id: 'help_password', label: 'Tips Password', icon: 'fa-solid fa-shield-keyhole' },
+            { id: 'help_bantuan', label: 'Bantuan', icon: 'fa-solid fa-circle-question' },
         ],
         // Enhanced smart logic for registration page
         handleIntent: (intent, entities) => {
@@ -249,10 +287,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (intent === 'NAVIGATE' && (text.includes('login') || text.includes('masuk'))) {
-                window.location.href = 'index.html';
+                navigateWithTransition('index.html');
                 return '👉 Mengalihkan ke halaman login...';
             }
             
+            return null;
+        },
+        onQuickAction: (id, action) => {
+            if (id === 'help_password') {
+                return '🔐 <b>Tips Password Aman:</b><br>' +
+                    '• Minimal 8 karakter (huruf besar, kecil, angka, simbol)<br>' +
+                    '• Jangan gunakan info pribadi (nama, tgl lahir, nomor hp)<br>' +
+                    '• Gunakan frasa acak: <i>"Bintang-Jatuh-7-Malam!"</i><br>' +
+                    '• Jangan pakai password sama di situs lain<br>' +
+                    '• Simpan di password manager (Bitwarden, 1Password, dll)';
+            }
+            if (id === 'help_bantuan') {
+                return '💡 Ketik "help" untuk panduan lengkap, atau tanyakan langsung tentang pendaftaran.';
+            }
             return null;
         },
         onExecuteAction: (type, target, data) => {
@@ -264,6 +316,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     AI.init();
 });
+function navigateWithTransition(url) {
+    const overlay = document.getElementById('pageTransitionOverlay');
+    if (overlay) { overlay.classList.add('active'); setTimeout(() => { window.location.href = url; }, 350); }
+    else { window.location.href = url; }
+}
+function initPageTransition() {
+    document.body.style.opacity = '0';
+    requestAnimationFrame(() => { document.body.style.transition = 'opacity 0.4s ease'; document.body.style.opacity = '1'; });
+}
+document.addEventListener('DOMContentLoaded', initPageTransition);
 </script>
 </body>
 </html>

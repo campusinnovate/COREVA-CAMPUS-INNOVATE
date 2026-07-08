@@ -41,6 +41,12 @@
             font-family: 'Inter', sans-serif; 
         }
         
+        /* === PAGE TRANSITION OVERLAY === */
+        .page-transition-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 9999999; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .page-transition-overlay.active { opacity: 1; visibility: visible; }
+        .page-transition-overlay .spinner { width: 50px; height: 50px; border: 4px solid rgba(245, 158, 11, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
         body { 
             background: var(--bg); 
             display: flex; 
@@ -435,6 +441,8 @@
     </style>
 </head>
 <body>
+    
+    <div class="page-transition-overlay" id="pageTransitionOverlay"><div class="spinner"></div></div>
     
     <div class="mobile-header">
         <h2><img src="Logo Coreva removebg.png" alt="Coreva" style="height:28px; width:auto; object-fit:contain;"> CI Admin</h2>
@@ -950,7 +958,17 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         
         function goToUserDashboard() { if (currentWorkspaceId) window.open(`user.html?workspace=${currentWorkspaceId}`, '_blank'); }
-        async function handleLogout() { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; }
+        async function handleLogout() { await supabaseClient.auth.signOut(); navigateWithTransition('index.html'); }
+        function navigateWithTransition(url) {
+            const overlay = document.getElementById('pageTransitionOverlay');
+            if (overlay) { overlay.classList.add('active'); setTimeout(() => { window.location.href = url; }, 350); }
+            else { window.location.href = url; }
+        }
+        function initPageTransition() {
+            document.body.style.opacity = '0';
+            requestAnimationFrame(() => { document.body.style.transition = 'opacity 0.4s ease'; document.body.style.opacity = '1'; });
+        }
+        document.addEventListener('DOMContentLoaded', initPageTransition);
 
         function showInviteCode() {
             if(currentWorkspaceId) {
@@ -1907,15 +1925,15 @@ document.addEventListener('DOMContentLoaded', () => {
         onOpenModal: (modalId) => { if (typeof openModal === 'function') openModal(modalId); },
         onSubmitForm: () => '✅ Silakan klik tombol Simpan di form.',
         onRefresh: () => { if (typeof refreshCurrentView === 'function') refreshCurrentView(document.querySelector('.btn-action')); return '🔄 Data diperbarui.'; },
+        supabase: supabaseClient,
         onGetQuickActions: () => [
-            { label: 'Dashboard', icon: 'gauge-high', type: 'navigate', target: 'dashboard' },
-            { label: 'KPI', icon: 'bullseye', type: 'navigate', target: 'kpi' },
-            { label: 'RAB', icon: 'wallet', type: 'navigate', target: 'rab' },
-            { label: 'Program', icon: 'calendar', type: 'navigate', target: 'program' },
-            { label: 'Surat', icon: 'file-lines', type: 'navigate', target: 'surat' },
-            { label: 'Absensi', icon: 'clipboard-user', type: 'navigate', target: 'absensi' },
-            { label: 'Anggota', icon: 'users', type: 'navigate', target: 'anggota' },
-            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+            { id: 'nav_dashboard', label: 'Dashboard', icon: 'fa-solid fa-gauge-high' },
+            { id: 'nav_kpi', label: 'KPI', icon: 'fa-solid fa-bullseye' },
+            { id: 'nav_rab', label: 'RAB', icon: 'fa-solid fa-wallet' },
+            { id: 'nav_program', label: 'Program', icon: 'fa-solid fa-calendar' },
+            { id: 'nav_surat', label: 'Surat', icon: 'fa-solid fa-file-lines' },
+            { id: 'nav_absensi', label: 'Absensi', icon: 'fa-solid fa-clipboard-user' },
+            { id: 'nav_anggota', label: 'Anggota', icon: 'fa-solid fa-users' },
         ],
         // Enhanced smart logic for admin page
         handleIntent: (intent, entities) => {

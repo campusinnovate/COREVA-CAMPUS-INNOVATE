@@ -1680,11 +1680,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
             return false;
         },
+        supabase: supabaseClient,
         onGetQuickActions: () => [
-            { label: 'Chat', icon: 'comments', type: 'navigate', target: 'chat' },
-            { label: 'Agenda', icon: 'calendar-plus', type: 'navigate', target: 'agenda' },
-            { label: 'Workspace', icon: 'layer-group', type: 'navigate', target: 'workspace' },
-            { label: 'Bantuan', icon: 'circle-question', type: 'help' },
+            { id: 'nav_chat', label: 'Chat', icon: 'fa-solid fa-comments' },
+            { id: 'nav_agenda', label: 'Agenda', icon: 'fa-solid fa-calendar-plus' },
+            { id: 'nav_workspace', label: 'Workspace', icon: 'fa-solid fa-layer-group' },
         ],
         // Enhanced smart logic for chat page
         handleIntent: (intent, entities) => {
