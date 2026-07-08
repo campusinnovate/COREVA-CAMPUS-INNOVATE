@@ -519,20 +519,27 @@
 document.addEventListener('DOMContentLoaded', () => {
     window.AI = AIAssistantCreate({
         pageName: 'user-hub',
+        pageDescription: 'Halaman utama anggota untuk melihat dan bergabung dengan organisasi (workspace). Kelola workspace, cari organisasi, dan akses fitur.',
         storageKey: 'ai_user_hub',
         pageUser: window.userEmail || 'user',
-        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Cari workspace</b> — "cari organisasi", "temukan UKM"<br>• <b>Gabung</b> — cara join workspace<br>• <b>Navigasi</b> — "buka workspace saya", "ke profil"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
-        onDetectContext: () => {
-            const active = document.querySelector('.nav-link.active, .menu-item.active');
-            return active ? active.textContent.trim() : 'Lobby';
-        },
-        onGetContextLabel: (ctx) => ctx || 'Lobby Anggota',
+        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Gabung organisasi</b> — masukkan kode undangan<br>• <b>Lihat workspace</b> — buka organisasi Anda<br>• <b>Cari organisasi</b> — temukan UKM atau organisasi<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        onDetectContext: () => 'Lobby Anggota',
+        onGetContextLabel: (ctx) => 'Lobby Anggota',
         onNavigate: (target) => {
-            const navMap = { 'lobby':'tab-lobby','workspace':'tab-my-workspace','workspace saya':'tab-my-workspace','join':'tab-join','cari':'tab-explore','explore':'tab-explore','profile':'tab-profile','profil':'tab-profile' };
-            const tabId = navMap[target.toLowerCase().trim()];
-            if (tabId && typeof switchTab === 'function') {
-                switchTab(tabId);
-                return '✅ Membuka <b>' + target + '</b>.';
+            const t = target.toLowerCase().trim();
+            if (t.includes('gabung') || t.includes('join') || t.includes('undangan') || t.includes('kode')) {
+                const inp = document.getElementById('inviteCode');
+                if (inp) inp.focus();
+                return '👉 Masukkan kode undangan di kolom <b>Gabung Organisasi</b> lalu klik tombol Gabung.';
+            }
+            if (t.includes('workspace') || t.includes('organisasi') || t.includes('ruang kerja') || t.includes('my workspace')) {
+                return '📋 Daftar organisasi Anda ada di bawah. Klik kartu organisasi untuk membuka workspace.';
+            }
+            if (t.includes('profil') || t.includes('profile') || t.includes('akun')) {
+                return 'Informasi akun Anda: ' + (window.userEmail || 'tersimpan di sistem');
+            }
+            if (t.includes('cari') || t.includes('temukan') || t.includes('explore')) {
+                return '🔍 Gunakan kolom <b>Gabung Organisasi</b> dengan memasukkan kode undangan dari Admin organisasi.';
             }
             return null;
         },
@@ -541,37 +548,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) { el.value = value; el.dispatchEvent(new Event('input')); return true; }
             return false;
         },
-        onOpenModal: (modalId) => {
-            const modal = document.getElementById(modalId);
-            if (modal) modal.classList.add('active');
-        },
         supabase: supabaseClient,
         onGetQuickActions: () => [
-            { id: 'nav_lobby', label: 'Lobby', icon: 'fa-solid fa-house' },
-            { id: 'nav_workspace', label: 'Workspace Saya', icon: 'fa-solid fa-layer-group' },
-            { id: 'nav_cari', label: 'Cari', icon: 'fa-solid fa-magnifying-glass' },
-            { id: 'nav_profile', label: 'Profile', icon: 'fa-solid fa-user' },
+            { id: 'nav_gabung', label: 'Gabung', icon: 'fa-solid fa-link' },
+            { id: 'nav_workspace', label: 'Workspace', icon: 'fa-solid fa-layer-group' },
         ],
-        // Enhanced smart logic
         handleIntent: (intent, entities) => {
             const text = (entities.target || '').toLowerCase();
-            if (intent === 'CREATE' && (text.includes('workspace') || text.includes('organisasi'))) {
-                if (typeof switchTab === 'function') switchTab('tab-explore');
-                return '👉 Buka tab <b>Cari Workspace</b> untuk menemukan organisasi.';
+            if (intent === 'CREATE' && (text.includes('workspace') || text.includes('organisasi') || text.includes('gabung'))) {
+                const inp = document.getElementById('inviteCode');
+                if (inp) inp.focus();
+                return '👉 Masukkan kode undangan di kolom <b>Gabung Organisasi</b> lalu klik Gabung.';
             }
-            if (intent === 'NAVIGATE' && (text.includes('profil') || text.includes('profile'))) {
-                if (typeof switchTab === 'function') switchTab('tab-profile');
-                return '✅ Membuka <b>Profil</b>.';
+            if (intent === 'SEARCH' || intent === 'CARI') {
+                return '🔍 Untuk mencari organisasi, masukkan kode undangan yang diberikan Admin di kolom Gabung Organisasi.';
             }
             return null;
         },
         onExecuteAction: (type, target, data) => {
             if (type === 'navigate') {
-                const navMap = { 'lobby':'tab-lobby','workspace':'tab-my-workspace','join':'tab-join','cari':'tab-explore','profile':'tab-profile' };
-                const tabId = navMap[target];
-                if (tabId && typeof switchTab === 'function) {
-                    switchTab(tabId);
-                    return '✅ Membuka <b>' + target + '</b>.';
+                const t = (target || '').toLowerCase();
+                if (t.includes('gabung') || t === 'join') {
+                    const inp = document.getElementById('inviteCode');
+                    if (inp) inp.focus();
+                    return 'Masukkan kode undangan.';
                 }
             }
             return null;

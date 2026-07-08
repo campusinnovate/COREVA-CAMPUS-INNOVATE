@@ -7,7 +7,7 @@ function AIAssistantCreate(pageConfig) {
     pageName: 'default',
     storageKey: 'ai_chat_default',
     welcomeMessage: 'Halo! Saya AI Assistant Coreva. Ada yang bisa dibantu?',
-    pageUser: null, pageRole: null, workspaceId: null,
+    pageUser: null, pageRole: null, pageDescription: null, workspaceId: null,
     supabase: null,
     onNavigate: null, onFillField: null, onSubmitForm: null,
     onRefresh: null, onDetectContext: null, onGetContextLabel: null,
@@ -121,11 +121,47 @@ function AIAssistantCreate(pageConfig) {
     HELP: { s:['help','bantuan','panduan','cara','tutorial','petunjuk','gimana cara','bagaimana cara'], a:['help','bantuan','panduan'] },
     WHOAMI: { s:['siapa','siapa saya','nama saya','saya siapa'], a:[] },
     WHEREAMI: { s:['dimana','posisi','halaman','di mana','di halaman apa'], a:[] },
+    INFO: { s:['apa itu','jelaskan','info','penjelasan','fitur','keterangan','deskripsi','definisi','pengertian','fungsi','peran','tugas','tentang','apa sih','maksudnya','maksud'], a:['info','jelaskan','deskripsi'] },
     REFRESH: { s:['refresh','reload','perbarui','segar','muat ulang'], a:['refresh','reload'] },
     RESET: { s:['reset','ulang','mulai ulang','fresh','kembali ke awal','clear'], a:['reset','ulang','clear'] },
     SUBMIT: { s:['submit','simpan','kirim','proses','publikasi','terbitkan','publish'], a:['submit','simpan','kirim','publish'] },
     CONFIRM: { s:['konfirmasi','pastikan','yakin','confirm','iya yakin','pasti'], a:['konfirmasi','confirm','yakin'] },
     HELP: { s:['help','bantuan','panduan','cara','tutorial','petunjuk','gimana cara','bagaimana cara','tips'], a:['help','bantuan','panduan'] },
+  };
+
+  // ── FEATURE KNOWLEDGE BASE ──
+  const FEATURE_KNOWLEDGE = {
+    'rab': { title: 'RAB (Rencana Anggaran Biaya)', desc: 'Fitur untuk mengelola anggaran kegiatan organisasi. Anda bisa input item pengeluaran, melihat realisasi, dan memantau sisa anggaran secara real-time.' },
+    'anggaran': { title: 'RAB (Rencana Anggaran Biaya)', desc: 'Fitur untuk mengelola anggaran kegiatan organisasi. Anda bisa input item pengeluaran, melihat realisasi, dan memantau sisa anggaran secara real-time.' },
+    'kpi': { title: 'KPI (Key Performance Indicators)', desc: 'Fitur untuk menetapkan dan memantau Indikator Kinerja Utama organisasi. Lacak target vs capaian di setiap bidang kerja.' },
+    'indikator': { title: 'KPI (Key Performance Indicators)', desc: 'Fitur untuk menetapkan dan memantau Indikator Kinerja Utama organisasi. Lacak target vs capaian di setiap bidang kerja.' },
+    'program': { title: 'Program & Event', desc: 'Fitur untuk merencanakan dan menjadwalkan program kerja, kegiatan, dan event organisasi. Dilengkapi timeline, status progres, dan monitoring.' },
+    'proker': { title: 'Program & Event', desc: 'Fitur untuk merencanakan dan menjadwalkan program kerja, kegiatan, dan event organisasi. Dilengkapi timeline, status progres, dan monitoring.' },
+    'surat': { title: 'Digital Office (Surat)', desc: 'Fitur pengelolaan surat menyurat digital. Ajukan surat, review, tanda tangan elektronik, dan tracking status approval dalam satu alur kerja.' },
+    'digital office': { title: 'Digital Office (Surat)', desc: 'Fitur pengelolaan surat menyurat digital. Ajukan surat, review, tanda tangan elektronik, dan tracking status approval dalam satu alur kerja.' },
+    'absensi': { title: 'Absensi / Presensi', desc: 'Fitur kehadiran anggota dengan scan QR code. Lihat rekap kehadiran, statistik, dan histori presensi setiap anggota.' },
+    'presensi': { title: 'Absensi / Presensi', desc: 'Fitur kehadiran anggota dengan scan QR code. Lihat rekap kehadiran, statistik, dan histori presensi setiap anggota.' },
+    'struktur': { title: 'Struktur Organisasi', desc: 'Fitur untuk mengatur dan menampilkan struktur organisasi dalam bentuk bagan. Kelola divisi, departemen, dan jabatan pengurus.' },
+    'divisi': { title: 'Struktur Organisasi / Divisi', desc: 'Fitur untuk mengelola divisi dan departemen dalam organisasi. Atur anggota, kepala divisi, dan hierarki organisasi.' },
+    'notulensi': { title: 'Notulensi Rapat', desc: 'Fitur untuk mencatat hasil rapat dan pertemuan. Simpan notulen, bagikan ke anggota, dan arsipkan untuk referensi.' },
+    'notulen': { title: 'Notulensi Rapat', desc: 'Fitur untuk mencatat hasil rapat dan pertemuan. Simpan notulen, bagikan ke anggota, dan arsipkan untuk referensi.' },
+    'keuangan': { title: 'Keuangan', desc: 'Fitur pelacakan keuangan organisasi. Pantau pemasukan, pengeluaran, saldo, dan buat laporan keuangan periodik.' },
+    'jadwal': { title: 'Kalender & Agenda', desc: 'Fitur kalender terintegrasi untuk menjadwalkan kegiatan, rapat, dan deadline. Tampilan bulanan, mingguan, dengan pengingat otomatis.' },
+    'kalender': { title: 'Kalender & Agenda', desc: 'Fitur kalender terintegrasi untuk menjadwalkan kegiatan, rapat, dan deadline. Tampilan bulanan, mingguan, dengan pengingat otomatis.' },
+    'agenda': { title: 'Kalender & Agenda', desc: 'Fitur kalender terintegrasi untuk menjadwalkan kegiatan, rapat, dan deadline. Tampilan bulanan, mingguan, dengan pengingat otomatis.' },
+    'chat': { title: 'Workspace Chat', desc: 'Fitur chat realtime antar anggota organisasi. Kirim pesan, mention dokumen, share file, dan buat grup diskusi divisi.' },
+    'workspace': { title: 'Workspace / Organisasi', desc: 'Ruang kerja bersama untuk setiap organisasi. Kelola anggota, atur role, dan akses semua fitur manajemen organisasi.' },
+    'dashboard': { title: 'Dashboard Utama', desc: 'Tampilan ringkasan seluruh aktivitas organisasi. Lihat KPI, RAB, status program, absensi, dan notifikasi dalam satu layar.' },
+    'dokumentasi': { title: 'Dokumentasi', desc: 'Fitur untuk mengelola foto dan dokumentasi kegiatan. Upload, kategorikan, dan tampilkan di galeri publik.' },
+    'sponsor': { title: 'Sponsor & Mitra', desc: 'Fitur untuk mengelola data sponsor dan mitra organisasi. Catat donasi, kontribusi, dan kerja sama.' },
+    'pendaftaran': { title: 'Pendaftaran', desc: 'Fitur pendaftaran anggota baru. Kelola data pendaftar, verifikasi, dan approval keanggotaan.' },
+    'web builder': { title: 'Web Builder Studio', desc: 'Fitur drag & drop untuk membuat website organisasi tanpa coding. Pilih blok, edit properti, dan publikasikan langsung.' },
+    'pengguna': { title: 'Manajemen Pengguna', desc: 'Fitur untuk mengelola data pengguna, role, dan hak akses dalam organisasi.' },
+    'transparansi': { title: 'Transparansi & KPI', desc: 'Fitur untuk menampilkan data transparansi organisasi seperti keuangan, KPI, dan capaian program kepada publik atau anggota.' },
+  };
+  self.getFeatureKnowledge = function(keyword) {
+    const kw = keyword.toLowerCase().trim();
+    return FEATURE_KNOWLEDGE[kw] || FEATURE_KNOWLEDGE[kw.replace(/^fitur\s+/, '')] || null;
   };
 
   // ── UTILITY ──
@@ -493,6 +529,12 @@ function AIAssistantCreate(pageConfig) {
       .ai-input-btn.send { background: linear-gradient(135deg, var(--ai-primary), #1e40af); color: white; }
       .ai-input-btn.send:hover { box-shadow: 0 4px 12px rgba(10,48,85,0.3); }
       .ai-context-badge { display: none; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 500; }
+      .ai-actions-toggle { font-size: 0.75rem; }
+      .ai-actions-toggle.collapsed i { transform: rotate(180deg); }
+      .ai-quick-actions-wrapper { overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); max-height: 300px; }
+      .ai-quick-actions-wrapper.collapsed { max-height: 0; padding: 0; }
+      .ai-quick-actions { transition: opacity 0.25s; }
+      .ai-quick-actions-wrapper.collapsed .ai-quick-actions { opacity: 0; pointer-events: none; }
       @media (max-width: 480px) {
         .ai-widget { width: calc(100vw - 20px); height: 70vh; max-height: 70vh; border-radius: 16px 16px 0 0; left: 10px; }
         .ai-widget-header { padding: 12px 16px; border-radius: 16px 16px 0 0; }
@@ -511,6 +553,7 @@ function AIAssistantCreate(pageConfig) {
         <div class="ai-widget-title"><i class="fa-solid fa-robot"></i><span>AI Assistant Coreva</span><span class="ai-context-badge" id="aiContextBadge"></span></div>
         <div class="ai-widget-actions">
           <button class="ai-widget-btn voice-btn" id="aiVoiceBtn" onclick="AI.toggleVoice()" title="Voice"><i class="fa-solid fa-microphone"></i></button>
+          <button class="ai-widget-btn ai-actions-toggle" id="aiActionsToggleBtn" onclick="AI.toggleActions()" title="Sembunyikan tombol"><i class="fa-solid fa-chevron-down"></i></button>
           <button class="ai-widget-btn" onclick="AI.minimize()" title="Minimize"><i class="fa-solid fa-window-minimize"></i></button>
           <button class="ai-widget-btn" onclick="AI.toggleFab()" title="Toggle FAB"><i class="fa-solid fa-eye-slash"></i></button>
           <button class="ai-widget-btn" onclick="AI.resetAll()" title="Reset" style="color:#ff6b6b;"><i class="fa-solid fa-trash-can"></i></button>
@@ -519,7 +562,9 @@ function AIAssistantCreate(pageConfig) {
       </div>
       <div class="ai-widget-body">
         <div class="ai-chat-messages" id="aiChatMessages"></div>
-        <div class="ai-quick-actions" id="aiQuickActions"></div>
+        <div class="ai-quick-actions-wrapper" id="aiActionsWrapper">
+          <div class="ai-quick-actions" id="aiQuickActions"></div>
+        </div>
       </div>
       <div class="ai-widget-footer">
         <div class="ai-input-wrapper">
@@ -556,6 +601,7 @@ function AIAssistantCreate(pageConfig) {
     self.storageKey = cfg.storageKey + '_' + (cfg.workspaceId || '0') + '_' + (cfg.pageUser || '0');
     self.loadHistory();
     self.showQuickActions();
+    self.restoreActionsState();
     if (cfg.onDetectContext) self.detectContext();
     self.loadPosition();
     const key = 'ai_fab_hidden_' + (cfg.workspaceId || '0');
@@ -708,7 +754,22 @@ function AIAssistantCreate(pageConfig) {
       }
       case 'HELP': return self.getHelpText();
       case 'WHOAMI': return cfg.pageUser ? 'Anda <b>' + cfg.pageUser + '</b>' + (cfg.pageRole ? ' (' + cfg.pageRole + ')' : '') + '.' : 'Belum ada data pengguna.';
-      case 'WHEREAMI': return 'Anda di halaman <b>' + (cfg.onGetContextLabel ? cfg.onGetContextLabel(self.currentContext) : cfg.pageName) + '</b>.';
+      case 'WHEREAMI': {
+        const pageLabel = cfg.onGetContextLabel ? cfg.onGetContextLabel(self.currentContext) : cfg.pageName;
+        const desc = cfg.pageDescription ? '<br><br>' + cfg.pageDescription : '';
+        return 'Anda di halaman <b>' + pageLabel + '</b>.' + desc;
+      }
+      case 'INFO': {
+        const searchTerm = entities.subject || entities.searchTerm || text.replace(/apa itu|jelaskan|info|fitur|penjelasan|tentang|deskripsi/gi, '').trim();
+        if (searchTerm) {
+          const knowledge = self.getFeatureKnowledge(searchTerm);
+          if (knowledge) return '<b>' + knowledge.title + '</b><br><br>' + knowledge.desc + '<br><br>' + self.getSuggestionsFor(knowledge.title);
+          const pageKnowledge = self.getFeatureKnowledge(cfg.pageName + ' ' + searchTerm) || self.getFeatureKnowledge(cfg.pageName);
+          if (pageKnowledge) return '<b>' + pageKnowledge.title + '</b><br><br>' + pageKnowledge.desc;
+          return 'Fitur <b>' + escapeHtml(searchTerm) + '</b> tidak ditemukan di basis pengetahuan. Coba tanya: "apa itu KPI", "jelaskan fitur RAB", "info Program Kerja", dll.';
+        }
+        return 'Tentang fitur apa yang ingin Anda ketahui? Contoh: "apa itu KPI", "jelaskan RAB", "info program kerja".';
+      }
       
       case 'NAVIGATE': {
         const navTarget = entities.subject || entities.searchTerm;
@@ -1015,6 +1076,28 @@ function AIAssistantCreate(pageConfig) {
       try { localStorage.setItem('ai_fab_hidden_' + (cfg.workspaceId || '0'), 'true'); } catch(e) {}
     }
   };
+  self.toggleActions = function() {
+    const wrapper = document.getElementById('aiActionsWrapper');
+    const btn = document.getElementById('aiActionsToggleBtn');
+    if (!wrapper) return;
+    const isCollapsed = wrapper.classList.toggle('collapsed');
+    if (btn) btn.classList.toggle('collapsed');
+    if (btn) btn.title = isCollapsed ? 'Tampilkan tombol' : 'Sembunyikan tombol';
+    try { localStorage.setItem('ai_actions_collapsed_' + (cfg.pageName || 'default'), isCollapsed ? 'true' : ''); } catch(e) {}
+  };
+  self.restoreActionsState = function() {
+    const wrapper = document.getElementById('aiActionsWrapper');
+    const btn = document.getElementById('aiActionsToggleBtn');
+    if (!wrapper) return;
+    try {
+      const val = localStorage.getItem('ai_actions_collapsed_' + (cfg.pageName || 'default'));
+      if (val === 'true') {
+        wrapper.classList.add('collapsed');
+        if (btn) { btn.classList.add('collapsed'); btn.title = 'Tampilkan tombol'; }
+      }
+    } catch(e) {}
+  };
+
   self.restoreFab = function() {
     const fab = document.getElementById('aiFab'), restore = document.getElementById('aiFabRestore');
     const btn = document.getElementById('aiFabToggleBtn'), footerBtn = document.getElementById('aiFooterFabToggleBtn');
@@ -1038,6 +1121,20 @@ function AIAssistantCreate(pageConfig) {
       '- <i>"bantuan"</i> — panduan ini<br><br>' +
       '<b>Voice:</b> Klik ikon mikrofon<br>' +
       '<b>Tempel Excel:</b> Salin data, klik Tempel';
+  };
+
+  self.getSuggestionsFor = function(featureName) {
+    const suggestions = {
+      'RAB (Rencana Anggaran Biaya)': 'Coba: "buat item RAB baru", "lihat realisasi anggaran", "total pengeluaran"',
+      'KPI (Key Performance Indicators)': 'Coba: "buat KPI baru", "lihat capaian KPI", "hitung persentase"',
+      'Program & Event': 'Coba: "buat program baru", "jadwalkan event", "lihat status proker"',
+      'Digital Office (Surat)': 'Coba: "ajukan surat baru", "lihat daftar surat", "setujui surat"',
+      'Absensi / Presensi': 'Coba: "scan absen", "lihat rekap kehadiran", "statistik presensi"',
+      'Struktur Organisasi / Divisi': 'Coba: "tambah divisi baru", "lihat struktur organisasi"',
+      'Notulensi Rapat': 'Coba: "buat notulensi baru", "lihat catatan rapat"',
+      'Workspace Chat': 'Coba: "kirim pesan", "buka chat grup"',
+    };
+    return suggestions[featureName] || 'Ketik "bantuan" untuk panduan lengkap.';
   };
 
   // ── SET PENDING ACTION ──

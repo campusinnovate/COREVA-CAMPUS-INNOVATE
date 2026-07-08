@@ -958,11 +958,23 @@
 document.addEventListener('DOMContentLoaded', () => {
     window.AI = AIAssistantCreate({
         pageName: 'public',
+        pageDescription: 'Halaman portal publik organisasi. Menampilkan informasi profil, kegiatan, galeri, dan kontak untuk pengunjung.',
         storageKey: 'ai_public',
-        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Info organisasi</b> — tanya tentang visi, misi, kegiatan<br>• <b>Navigasi halaman</b> — "buka tentang kami", "ke kontak"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Info organisasi</b> — tanya tentang visi, misi, kegiatan<br>• <b>Navigasi halaman</b> — "buka tentang kami", "ke kontak"<br>• <b>Login / Daftar</b> — "login", "daftar akun"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
         onNavigate: (target) => {
+            const t = target.toLowerCase().trim();
+            // Cross-page navigation
+            if (t === 'login' || t === 'masuk' || t === 'sign in') {
+                navigateWithTransition('index.html');
+                return '✅ Mengalihkan ke halaman login...';
+            }
+            if (t === 'register' || t === 'daftar' || t === 'sign up' || t === 'buat akun') {
+                navigateWithTransition('buatakun.html');
+                return '✅ Mengalihkan ke halaman pendaftaran...';
+            }
+            // In-page navigation (scroll to section)
             const navMap = { 'tentang':'about-section','visi misi':'about-section','beranda':'hero-section','home':'hero-section','kontak':'contact-section','hubungi':'contact-section','kegiatan':'activities-section','program':'activities-section','galeri':'gallery-section','dokumentasi':'gallery-section' };
-            const sel = navMap[target.toLowerCase().trim()];
+            const sel = navMap[t];
             if (sel) {
                 const el = document.getElementById(sel);
                 if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Scroll ke <b>' + target + '</b>.'; }
@@ -977,24 +989,23 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'nav_kegiatan', label: 'Kegiatan', icon: 'fa-solid fa-calendar' },
             { id: 'nav_kontak', label: 'Kontak', icon: 'fa-solid fa-envelope' },
         ],
-        // Enhanced smart logic for public page
         handleIntent: (intent, entities) => {
             const text = (entities.target || '').toLowerCase();
-            
             if (intent === 'SEARCH' || intent === 'CARI') {
                 return '🔍 Gunakan scroll atau menu navigasi untuk mencari informasi. Contoh: <i>"cari kegiatan seminar"</i>.';
             }
-            
             if (intent === 'HELP' || intent === 'TOLONG') {
-                return '🌐 <b>Portal Publik Organisasi</b><br>Saya bisa bantu navigasi:<br>• <b>Beranda</b> — informasi umum<br>• <b>Tentang Kami</b> — visi, misi, struktur<br>• <b>Kegiatan</b> — program & agenda<br>• <b>Galeri</b> — foto & dokumentasi<br>• <b>Kontak</b> — hubungi organisasi<br><br>Ketik: <i>"buka kegiatan"</i>, <i>"scroll ke kontak"</i>, dll.';
+                return '🌐 <b>Portal Publik Organisasi</b><br>Saya bisa bantu navigasi:<br>• <b>Beranda</b> — informasi umum<br>• <b>Tentang Kami</b> — visi, misi, struktur<br>• <b>Kegiatan</b> — program & agenda<br>• <b>Galeri</b> — foto & dokumentasi<br>• <b>Kontak</b> — hubungi organisasi<br>• <b>Login</b> — masuk ke sistem<br>• <b>Daftar</b> — buat akun baru<br><br>Ketik: <i>"buka kegiatan"</i>, <i>"login"</i>, <i>"scroll ke kontak"</i>, dll.';
             }
-            
             return null;
         },
         onExecuteAction: (type, target, data) => {
             if (type === 'navigate') {
+                const t = (target || '').toLowerCase();
+                if (t === 'login') { navigateWithTransition('index.html'); return '✅ Ke halaman login.'; }
+                if (t === 'daftar' || t === 'register') { navigateWithTransition('buatakun.html'); return '✅ Ke halaman pendaftaran.'; }
                 const navMap = { 'beranda':'hero-section', 'tentang':'about-section', 'kegiatan':'activities-section', 'kontak':'contact-section', 'galeri':'gallery-section' };
-                const sel = navMap[target];
+                const sel = navMap[t];
                 if (sel) {
                     const el = document.getElementById(sel);
                     if (el) { el.scrollIntoView({ behavior: 'smooth' }); return '✅ Scroll ke <b>' + target + '</b>.'; }

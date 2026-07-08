@@ -595,6 +595,7 @@
         @media (max-width: 1024px) {
             .builder-layout { grid-template-columns: 180px 1fr; max-width: 100%; overflow: hidden; }
             .builder-props-col { display: none; }
+            .builder-tool-item { white-space: normal; word-break: break-word; }
             .do-layout { grid-template-columns: 1fr; }
             .do-right-col { border-top: 1px solid var(--border); }
             .cal-showcase-layout { grid-template-columns: 1fr; }
@@ -633,8 +634,11 @@
             .builder-canvas-viewport { padding: 8px; }
             .do-left-col, .do-right-col { padding: 16px; }
             .do-page-inner { padding: 16px; font-size: 12px; }
-            .cal-widget { margin: 0 -4px; }
+            .cal-widget { margin: 0; }
             .cal-add-form { padding: 12px; }
+            #feature-cards { grid-template-columns: 1fr !important; gap: 16px; }
+            #feature-cards > div { padding: 20px !important; }
+            .block-news-grid { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 480px) {
             .msg-row { max-width: 92%; }
@@ -1342,7 +1346,7 @@
         </div><!-- end showcase-container -->
     </div><!-- end feature-tabs-wrapper -->
 
-    <div style="max-width:1100px;margin:64px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;" class="reveal">
+    <div id="feature-cards" style="max-width:1100px;margin:64px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;" class="reveal">
         <div style="padding:28px;border:1px solid var(--border);border-radius:16px;transition:.3s;" onmouseenter="this.style.borderColor='var(--accent)';this.style.boxShadow='0 12px 30px rgba(246,178,59,.1)'" onmouseleave="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
             <div style="width:48px;height:48px;background:rgba(10,48,85,.08);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><i class="fa-solid fa-chart-pie" style="color:var(--primary);font-size:20px;"></i></div>
             <h3 style="font-size:16px;font-weight:700;color:var(--primary);margin-bottom:8px;">Dashboard Cerdas</h3>
@@ -2403,6 +2407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 document.addEventListener('DOMContentLoaded', () => {
     window.AI = AIAssistantCreate({
         pageName: 'index',
+        pageDescription: 'Halaman utama/landing page Campus Innovate. Menampilkan fitur-fitur unggulan: dashboard, chat, web builder, digital office, dan kalender.',
         storageKey: 'ai_index',
         welcomeMessage: '👋 Halo! Saya AI Assistant Coreva. Saya bisa bantu kamu:<br><br>• <b>Informasi fitur</b> — tanya tentang fitur Campus Innovate<br>• <b>Login / Daftar</b> — panduan masuk atau buat akun<br>• <b>Navigasi</b> — bantu pindah ke bagian tertentu<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
         onNavigate: (target) => {

@@ -1901,113 +1901,87 @@
 document.addEventListener('DOMContentLoaded', () => {
     window.AI = AIAssistantCreate({
         pageName: 'admin',
+        pageDescription: 'Halaman Admin untuk mengelola organisasi: konfigurasi, struktur organisasi, berita, pengurus, transparansi KPI, dan web builder.',
         storageKey: 'ai_admin',
         workspaceId: window.workspaceId || '0',
         pageUser: window.userEmail || 'admin',
-        welcomeMessage: '👋 Halo Admin! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Navigasi menu</b> — "buka KPI", "ke RAB", dll<br>• <b>Buat / Isi data</b> — "buat program kerja baru"<br>• <b>Cari data</b> — "cari anggota", "cari folder"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
+        welcomeMessage: '👋 Halo Admin! Saya AI Assistant Coreva. Saya bisa bantu:<br><br>• <b>Navigasi menu</b> — "buka struktur", "ke transparansi", dll<br>• <b>Info fitur</b> — "apa itu KPI", "jelaskan RAB"<br>• <b>Cari data</b> — "cari pengurus", "cari folder"<br>• <b>Bantuan</b> — ketik "help" untuk panduan lengkap',
         onDetectContext: () => {
             const active = document.querySelector('.nav-item.active');
-            return active ? (active.dataset.view || active.textContent.trim()) : 'dashboard';
+            const menus = { 'setup':'Konfigurasi','builder':'Web Builder','struktur':'Struktur','berita':'Berita','users':'Pengurus','transparansi':'Transparansi','analytics':'Analitik','premium':'Premium' };
+            if (active) {
+                for (const [k,v] of Object.entries(menus)) {
+                    if (active.textContent.includes(v) || active.getAttribute('onclick')?.includes(k)) return k;
+                }
+            }
+            return 'setup';
         },
         onGetContextLabel: (ctx) => {
-            const labels = { 'view-kpi':'KPI', 'view-rab':'RAB', 'view-absen':'Absensi', 'view-prog':'Program', 'view-surat':'Surat', 'view-orgchart':'Struktur', 'view-notulen':'Notulensi', 'view-keuangan':'Keuangan', 'view-dokumentasi':'Dokumentasi', 'view-sponsor':'Sponsor', 'view-pendaftaran':'Pendaftaran', 'view-data-pengguna':'Pengguna' };
+            const labels = { 'setup':'Konfigurasi Utama','builder':'Web Builder Studio','struktur':'Struktur Organisasi','berita':'Berita & Pengumuman','users':'Manajemen Pengurus','transparansi':'Transparansi & KPI','analytics':'Analitik Interaksi','premium':'Premium' };
             return labels[ctx] || ctx || 'Dashboard';
         },
         onNavigate: (target) => {
-            const navMap = { 'dashboard':'view-dashboard','kpi':'view-kpi','rab':'view-rab','anggaran':'view-rab','absensi':'view-absen','absen':'view-absen','program':'view-prog','proker':'view-prog','event':'view-prog','surat':'view-surat','digital office':'view-surat','struktur':'view-orgchart','organigram':'view-orgchart','notulensi':'view-notulen','notulen':'view-notulen','keuangan':'view-keuangan','dokumentasi':'view-dokumentasi','sponsor':'view-sponsor','pendaftaran':'view-pendaftaran','pengguna':'view-data-pengguna','anggota':'view-data-pengguna','member':'view-data-pengguna' };
-            const viewId = navMap[target.toLowerCase().trim()];
-            if (viewId && typeof switchTab === 'function') {
-                switchTab(viewId);
+            const navMap = {
+                'dashboard':'setup','konfigurasi':'setup','pengaturan':'setup',
+                'builder':'builder','web builder':'builder','web':'builder','studio':'builder',
+                'struktur':'struktur','organisasi':'struktur','organigram':'struktur','bagan':'struktur',
+                'berita':'berita','pengumuman':'berita','news':'berita',
+                'pengurus':'users','users':'users','anggota':'users','user':'users','manajemen':'users',
+                'transparansi':'transparansi','kpi':'transparansi','indikator':'transparansi',
+                'analitik':'analytics','analytics':'analytics','statistik':'analytics','laporan':'analytics',
+                'premium':'premium','upgrade':'premium'
+            };
+            const menu = navMap[target.toLowerCase().trim()];
+            if (menu && typeof switchMenu === 'function') {
+                const navItems = document.querySelectorAll('.nav-item');
+                for (const item of navItems) {
+                    if (item.getAttribute('onclick')?.includes("switchMenu('"+menu+"')")) { item.click(); break; }
+                }
                 return '✅ Membuka <b>' + target + '</b>.';
             }
             return null;
         },
         onOpenModal: (modalId) => { if (typeof openModal === 'function') openModal(modalId); },
         onSubmitForm: () => '✅ Silakan klik tombol Simpan di form.',
-        onRefresh: () => { if (typeof refreshCurrentView === 'function') refreshCurrentView(document.querySelector('.btn-action')); return '🔄 Data diperbarui.'; },
+        onRefresh: () => '🔄 Muat ulang halaman (F5) untuk data terbaru.',
         supabase: supabaseClient,
         onGetQuickActions: () => [
-            { id: 'nav_dashboard', label: 'Dashboard', icon: 'fa-solid fa-gauge-high' },
-            { id: 'nav_kpi', label: 'KPI', icon: 'fa-solid fa-bullseye' },
-            { id: 'nav_rab', label: 'RAB', icon: 'fa-solid fa-wallet' },
-            { id: 'nav_program', label: 'Program', icon: 'fa-solid fa-calendar' },
-            { id: 'nav_surat', label: 'Surat', icon: 'fa-solid fa-file-lines' },
-            { id: 'nav_absensi', label: 'Absensi', icon: 'fa-solid fa-clipboard-user' },
-            { id: 'nav_anggota', label: 'Anggota', icon: 'fa-solid fa-users' },
+            { id: 'nav_setup', label: 'Konfigurasi', icon: 'fa-solid fa-sliders' },
+            { id: 'nav_struktur', label: 'Struktur', icon: 'fa-solid fa-sitemap' },
+            { id: 'nav_berita', label: 'Berita', icon: 'fa-solid fa-newspaper' },
+            { id: 'nav_users', label: 'Pengurus', icon: 'fa-solid fa-users' },
+            { id: 'nav_transparansi', label: 'Transparansi', icon: 'fa-solid fa-scale-balanced' },
+            { id: 'nav_analytics', label: 'Analitik', icon: 'fa-solid fa-chart-line' },
         ],
-        // Enhanced smart logic for admin page
         handleIntent: (intent, entities) => {
             const ctx = AI.currentContext || '';
             const text = (entities.target || '').toLowerCase();
-            
-            // Context-aware CREATE actions
             if (intent === 'CREATE' || intent === 'BUAT' || intent === 'TAMBAH') {
-                if (ctx.includes('kpi')) {
-                    if (typeof openModal === 'function') openModal('kpiModal');
-                    return '✅ Membuka modal buat KPI baru.';
-                }
-                if (ctx.includes('rab') || ctx.includes('anggaran')) {
-                    if (typeof openModal === 'function') openModal('rabModal');
-                    return '✅ Membuka modal buat item RAB baru.';
-                }
-                if (ctx.includes('program') || ctx.includes('proker')) {
-                    if (typeof openModal === 'function') openModal('programModal');
-                    return '✅ Membuka modal buat program kerja baru.';
-                }
-                if (ctx.includes('surat') || ctx.includes('digital')) {
-                    if (typeof openModal === 'function') openModal('modalAjukanSurat');
-                    return '✅ Membuka modal ajukan surat baru.';
-                }
-                if (ctx.includes('absensi') || ctx.includes('presensi')) {
-                    return '📱 Gunakan fitur scan QR code di halaman Presensi untuk absen.';
-                }
-                if (ctx.includes('divisi') || ctx.includes('departemen') || ctx.includes('struktur')) {
-                    if (typeof openModal === 'function') openModal('deptModal');
-                    return '✅ Membuka modal tambah divisi baru.';
-                }
-                if (ctx.includes('notulensi') || ctx.includes('notulen')) {
-                    if (typeof openModal === 'function') openModal('notulenModal');
-                    return '✅ Membuka modal buat notulensi baru.';
-                }
+                if (ctx.includes('berita')) return 'Buka menu Berita & Pengumuman, lalu klik Tambah Berita.';
+                if (ctx.includes('struktur')) return 'Untuk menambah divisi, klik tombol Tambah Divisi di bagian Struktur Organisasi.';
+                if (ctx.includes('users')) return 'Untuk menambah pengurus, klik tombol Tambah di Manajemen Pengurus.';
+                return 'Untuk membuat data baru, buka menu terkait lalu klik tombol Tambah/Input.';
             }
-            
-            // Context-aware APPROVE/REJECT for digital office
-            if ((intent === 'APPROVE' || intent === 'SETUJUI' || intent === 'ACC') && ctx.includes('surat')) {
-                if (typeof openModal === 'function') openModal('modalAksiSurat');
-                return '✅ Buka dokumen di Digital Office untuk review & TTD.';
-            }
-            
-            // CALCULATE intent for RAB/KPI
-            if ((intent === 'CALCULATE' || intent === 'HITUNG' || intent === 'ITUNG') && (ctx.includes('rab') || ctx.includes('kpi'))) {
-                return '🧮 Total & persentase dihitung otomatis di tabel. Klik refresh untuk update.';
-            }
-            
-            return null; // Use default handler
-        },
-        onExecuteAction: (type, target, data) => {
-            if (type === 'navigate') {
-                const navMap = { 'kpi':'view-kpi','rab':'view-rab','program':'view-prog','surat':'view-surat','absensi':'view-absen','anggota':'view-data-pengguna' };
-                const viewId = navMap[target];
-                if (viewId && typeof switchTab === 'function') {
-                    switchTab(viewId);
-                    return '✅ Membuka <b>' + target + '</b>.';
-                }
-            }
-            if (type === 'openModal' && typeof openModal === 'function') {
-                openModal(target);
-                return '✅ Membuka modal <b>' + target + '</b>.';
+            if (intent === 'NAVIGATE') {
+                if (ctx.includes('builder')) return 'Gunakan Web Builder Studio untuk mendesain website organisasi dengan drag & drop.';
+                if (ctx.includes('transparansi')) return 'Fitur Transparansi menampilkan data KPI & capaian organisasi ke publik.';
+                return null;
             }
             return null;
         },
-        // Register custom intents for admin
-        intents: {
-            BUAT_KPI: { s:['kpi'], a:['buat','tambah','bikin','input'] },
-            BUAT_RAB: { s:['rab','anggaran','biaya'], a:['buat','tambah','input','isi'] },
-            BUAT_PROGRAM: { s:['program','proker','kegiatan','event'], a:['buat','tambah','bikin','jadwalkan'] },
-            AJUKAN_SURAT: { s:['surat','pengajuan','dokumen'], a:['ajukan','buat','kirim','submit'] },
-            SCAN_ABSEN: { s:['absen','presensi','kehadiran','scan'], a:['absen','scan','hadir','checkin'] },
-            SETUJUI_SURAT: { s:['surat','digital office','ttd','tanda tangan'], a:['setujui','acc','approve','konfirmasi'] },
-            TOLAK_SURAT: { s:['surat','digital office','ttd'], a:['tolak','reject','batal'] },
+        onExecuteAction: (type, target, data) => {
+            if (type === 'navigate') {
+                const navMap = { 'setup':'setup','struktur':'struktur','berita':'berita','users':'users','transparansi':'transparansi','analytics':'analytics','premium':'premium' };
+                const menu = navMap[target];
+                if (menu && typeof switchMenu === 'function') {
+                    const navItems = document.querySelectorAll('.nav-item');
+                    for (const item of navItems) {
+                        if (item.getAttribute('onclick')?.includes("switchMenu('"+menu+"')")) { item.click(); break; }
+                    }
+                    return '✅ Membuka <b>' + target + '</b>.';
+                }
+            }
+            return null;
         },
     });
     AI.init();
