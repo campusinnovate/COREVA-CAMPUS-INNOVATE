@@ -1299,11 +1299,25 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...'; btn.disabled = true;
             try {
                 if (!req.password) throw new Error("Password tidak tercatat.");
+                let userId;
                 const { data: nu, error: ae } = await supabaseSecondary.auth.signUp({ email: req.email, password: req.password, options: { data: { full_name: req.nama } } });
-                if (ae) throw ae;
-                if (!nu||!nu.user) throw new Error("Gagal mendapat ID user.");
-                await supabaseClient.from('user_roles').insert([{ user_id: nu.user.id, role: role }]);
-                await supabaseClient.from('registration_requests').update({ status: 'approved', updated_at: new Date().toISOString() }).eq('id', activeRequestId);
+                if (ae) {
+                    if (ae.message?.includes('already registered') || ae.code === 'user_already_exists') {
+                        const { data: authUsers } = await supabaseClient.rpc('get_all_auth_users');
+                        const existing = authUsers?.find(u => u.email?.toLowerCase() === req.email.toLowerCase());
+                        if (!existing) throw new Error("User sudah terdaftar di Auth tapi tidak ditemukan di data pengguna.");
+                        userId = existing.user_id;
+                    } else {
+                        throw ae;
+                    }
+                } else {
+                    if (!nu || !nu.user) throw new Error("Gagal mendapat ID user.");
+                    userId = nu.user.id;
+                }
+                const { error: ri } = await supabaseClient.from('user_roles').insert([{ user_id: userId, role: role }]);
+                if (ri) throw ri;
+                const { error: ru } = await supabaseClient.from('registration_requests').update({ status: 'approved', updated_at: new Date().toISOString() }).eq('id', activeRequestId);
+                if (ru) throw ru;
                 showToast("Berhasil!", `Akun ${req.email} telah diaktifkan.`, "success");
                 closeModal('modalApproveRequest');
                 loadRegistrationRequests();
