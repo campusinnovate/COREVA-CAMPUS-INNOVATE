@@ -960,7 +960,7 @@
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         
         function goToUserDashboard() { if (currentWorkspaceId) window.open(`user.html?workspace=${currentWorkspaceId}`, '_blank'); }
-        async function handleLogout() { await supabaseClient.auth.signOut(); navigateWithTransition('index.html'); }
+        async function handleLogout() { await supabaseClient.auth.signOut(); sessionStorage.removeItem('cached_user_role'); sessionStorage.removeItem('cached_user_role_time'); navigateWithTransition('index.html'); }
         function navigateWithTransition(url) {
             const overlay = document.getElementById('pageTransitionOverlay');
             if (overlay) { overlay.classList.add('active'); setTimeout(() => { window.location.href = url; }, 350); }

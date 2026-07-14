@@ -504,6 +504,8 @@
 
         async function handleLogout() {
             await supabaseClient.auth.signOut();
+            sessionStorage.removeItem('cached_user_role');
+            sessionStorage.removeItem('cached_user_role_time');
             navigateWithTransition('index.html');
         }
 

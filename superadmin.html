@@ -1899,7 +1899,7 @@
         // ============================================================
         async function handleLogout() {
             showToast("Logout","Memutus sesi...","info");
-            setTimeout(async () => { await supabaseClient.auth.signOut(); navigateWithTransition('index.html'); }, 1000);
+            setTimeout(async () => { await supabaseClient.auth.signOut(); sessionStorage.removeItem('cached_user_role'); sessionStorage.removeItem('cached_user_role_time'); navigateWithTransition('index.html'); }, 1000);
         }
         
         function navigateWithTransition(url) {

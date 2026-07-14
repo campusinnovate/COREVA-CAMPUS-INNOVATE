@@ -4425,7 +4425,7 @@
                 }
             }
         }
-        async function handleLogout() { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; }
+        async function handleLogout() { await supabaseClient.auth.signOut(); sessionStorage.removeItem('cached_user_role'); sessionStorage.removeItem('cached_user_role_time'); window.location.href = 'index.html'; }
 
         // ===== FUNGSI REFRESH PINTAR =====
         async function refreshCurrentView(btnElement) {
