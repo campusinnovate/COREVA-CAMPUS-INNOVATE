@@ -1448,13 +1448,13 @@
         </div>
     </div>
 
-    <div class="modal-overlay glassy-overlay" id="eventDetailModal">
-        <div class="modal-content glassy-modal" style="max-width: 420px; position: relative;">
+    <div class="modal-overlay" id="eventDetailModal">
+        <div class="modal-content" style="max-width: 420px; position: relative;">
             <div class="modal-header"><h2 id="event-detail-title">Detail Jadwal</h2><button class="close-btn" onclick="closeModal('eventDetailModal')"><i class="fa-solid fa-xmark"></i></button></div>
             <div id="event-detail-body">
                 <div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;">
+            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
                 <button class="btn-action-sm" id="event-detail-edit-btn" style="flex:1; justify-content:center; background:var(--info); color:white;" onclick="editEventFromDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button class="btn-danger-sm" id="event-detail-delete-btn" style="flex:1; justify-content:center;" onclick="deleteEventFromDetail()"><i class="fa-solid fa-trash"></i> Hapus</button>
                 <button class="btn-ghost" onclick="closeModal('eventDetailModal')" style="flex:1; justify-content:center;">Tutup</button>
@@ -2943,7 +2943,7 @@
             document.getElementById('event-detail-delete-btn').style.display = isSchedule ? 'block' : 'none';
 
             body.innerHTML = `
-                <div class="glassy-info-box">
+                <div style="background:var(--primary-soft);padding:16px;border-radius:12px;margin-bottom:12px;">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem;">
                         <div><span style="color:var(--text-muted);font-size:0.8rem;">Tipe</span><br><strong>${tipe}</strong></div>
                         <div><span style="color:var(--text-muted);font-size:0.8rem;">Tanggal</span><br><strong>${tgl}</strong></div>
@@ -4202,7 +4202,15 @@
         }
 
         function openModal(modalId) { document.getElementById(modalId).classList.add('active'); }
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+        function closeModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (el) {
+                el.classList.remove('active');
+                if (modalId === 'mw-template-modal') {
+                    setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
+                }
+            }
+        }
         async function handleLogout() { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; }
 
         // ===== FUNGSI REFRESH PINTAR =====
@@ -4530,11 +4538,13 @@
         }
 
         async function openTemplateModal() {
+            const existing = document.getElementById('mw-template-modal');
+            if (existing) existing.remove();
             const ctxs = await loadKonteksOptions();
             const html = `
                 <div class="modal-overlay active" id="mw-template-modal">
                     <div class="modal-content" style="max-width:600px;">
-                        <div class="modal-header"><h2>Buat Template Surat</h2><button class="close-btn" onclick="closeModal('mw-template-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+                        <div class="modal-header"><h2>Buat Template Surat</h2><button class="close-btn" id="mw-tpl-close-btn"><i class="fa-solid fa-xmark"></i></button></div>
                         <div class="input-group"><label>Nama Template</label><input type="text" id="mw-tpl-name" placeholder="Contoh: SK Pengurus"></div>
                         <div class="input-group"><label>Konteks Surat</label><select id="mw-tpl-konteks">${ctxs}</select></div>
                         <div class="input-group"><label>URL Letterhead (opsional)</label><input type="url" id="mw-tpl-letterhead" placeholder="https://example.com/letterhead.png"></div>
@@ -4549,12 +4559,12 @@
                             <div class="input-group"><label>Tanda Tangan Kanan - Nama</label><input type="text" id="mw-tpl-sig-right-name"></div>
                             <div class="input-group"><label>Tanda Tangan Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-right-title"></div>
                         </div>
-                        <button class="btn-action" style="width:100%;" onclick="saveTemplate()"><i class="fa-solid fa-floppy-disk"></i> Simpan Template</button>
+                        <button class="btn-action" style="width:100%;" id="mw-tpl-save-btn"><i class="fa-solid fa-floppy-disk"></i> Simpan Template</button>
                     </div>
                 </div>`;
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            document.body.appendChild(div.firstElementChild);
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.getElementById('mw-tpl-close-btn').onclick = function() { closeModal('mw-template-modal'); };
+            document.getElementById('mw-tpl-save-btn').onclick = saveTemplate;
         }
 
         async function loadKonteksOptions() {
@@ -4594,13 +4604,15 @@
         }
 
         async function editTemplate(id) {
+            const existing = document.getElementById('mw-template-modal');
+            if (existing) existing.remove();
             const tpl = mwTemplates.find(t => t.id === id);
             if (!tpl) return;
             const ctxs = await loadKonteksOptions();
             const html = `
                 <div class="modal-overlay active" id="mw-template-modal">
                     <div class="modal-content" style="max-width:600px;">
-                        <div class="modal-header"><h2>Edit Template</h2><button class="close-btn" onclick="closeModal('mw-template-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+                        <div class="modal-header"><h2>Edit Template</h2><button class="close-btn" id="mw-tpl-close-btn"><i class="fa-solid fa-xmark"></i></button></div>
                         <div class="input-group"><label>Nama Template</label><input type="text" id="mw-tpl-name" value="${escapeHtml(tpl.name)}"></div>
                         <div class="input-group"><label>Konteks Surat</label><select id="mw-tpl-konteks">${ctxs.replace('value="' + (tpl.konteks_id || '') + '"', 'value="' + (tpl.konteks_id || '') + '" selected')}</select></div>
                         <div class="input-group"><label>URL Letterhead</label><input type="url" id="mw-tpl-letterhead" value="${escapeHtml(tpl.letterhead_url || '')}"></div>
@@ -4615,12 +4627,12 @@
                             <div class="input-group"><label>TTD Kanan - Nama</label><input type="text" id="mw-tpl-sig-right-name" value="${escapeHtml(tpl.signature_right_name || '')}"></div>
                             <div class="input-group"><label>TTD Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-right-title" value="${escapeHtml(tpl.signature_right_title || '')}"></div>
                         </div>
-                        <button class="btn-action" style="width:100%;" onclick="updateTemplate('${id}')"><i class="fa-solid fa-floppy-disk"></i> Update Template</button>
+                        <button class="btn-action" style="width:100%;" id="mw-tpl-update-btn"><i class="fa-solid fa-floppy-disk"></i> Update Template</button>
                     </div>
                 </div>`;
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            document.body.appendChild(div.firstElementChild);
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.getElementById('mw-tpl-close-btn').onclick = function() { closeModal('mw-template-modal'); };
+            document.getElementById('mw-tpl-update-btn').onclick = function() { updateTemplate(id); };
         }
 
         async function updateTemplate(id) {
