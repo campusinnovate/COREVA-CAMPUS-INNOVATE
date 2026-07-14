@@ -4200,29 +4200,7 @@
                 if (htmlContainer) {
                     htmlContainer.style.display = 'block';
                     htmlContainer.style.height = '500px';
-
-                    let headerUrl = '';
-                    let footerUrl = '';
-                    if (surat.template_id) {
-                        const { data: tpl } = await supabaseClient.from('letter_templates')
-                            .select('header_url, footer_url')
-                            .eq('id', surat.template_id)
-                            .single();
-                        if (tpl) {
-                            headerUrl = tpl.header_url || '';
-                            footerUrl = tpl.footer_url || '';
-                        }
-                    }
-
-                    htmlContainer.innerHTML = buildCompleteLetterHtml({
-                        headerUrl, footerUrl,
-                        headerWidth: 80, footerWidth: 80,
-                        nomorSurat: surat.nomor_surat || '',
-                        judul: surat.judul_surat || '',
-                        tujuan: surat.tujuan_surat || '',
-                        bodyHtml: surat.body_html,
-                        signatories: surat.signatories || []
-                    });
+                    htmlContainer.innerHTML = surat.body_html;
                 }
                 document.getElementById('pdf-controls-bar').style.display = 'flex';
                 const controlsBar = document.getElementById('pdf-controls-bar');
@@ -4310,6 +4288,13 @@
 
         function terapkanSignature() {
             if (!userSignatureBase64) { showNotification("Anda belum membuat tanda tangan! Silakan klik 'Buat TTD' terlebih dahulu.", "error"); return; }
+            const htmlContainer = document.getElementById('do-html-review-container');
+            if (htmlContainer && htmlContainer.style.display !== 'none') {
+                injectSignatureToHtmlContainer(htmlContainer);
+                signatureIsApplied = true;
+                showNotification("TTD berhasil ditempatkan di posisi tanda tangan Anda.", "info");
+                return;
+            }
             const overlay = document.getElementById('sig-draggable-overlay');
             const img = document.getElementById('sig-img-element');
             img.src = userSignatureBase64;
@@ -4320,6 +4305,51 @@
             
             signatureIsApplied = true;
             showNotification("TTD berhasil dimunculkan. Geser kotak & atur ukurannya di sudut kanan bawah!", "info");
+        }
+
+        function injectSignatureToHtmlContainer(container) {
+            const userId = currentUserId || '';
+            let signatoryBlock = null;
+            if (userId) {
+                signatoryBlock = container.querySelector(`div[data-user-id="${userId}"]`);
+            }
+            if (!signatoryBlock) {
+                const userName = currentUserName || '';
+                if (!userName) { showNotification("Tidak dapat menemukan posisi tanda tangan Anda.", "error"); return; }
+                const allDivs = container.querySelectorAll('div');
+                for (const d of allDivs) {
+                    if (d.textContent.trim() === userName && d.style.fontWeight === 'bold') {
+                        signatoryBlock = d.parentNode;
+                        break;
+                    }
+                }
+                if (!signatoryBlock) {
+                    try {
+                        const xpath = `//div[text()='${userName}']`;
+                        const nameDiv = document.evaluate(xpath, container, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        if (nameDiv && nameDiv.style.fontWeight === 'bold') signatoryBlock = nameDiv.parentNode;
+                    } catch(e) {}
+                }
+            }
+            if (!signatoryBlock) {
+                showNotification("Tidak dapat menemukan posisi tanda tangan Anda. Silakan hubungi admin.", "error");
+                return;
+            }
+            const existingBlank = signatoryBlock.querySelector('div[style*="margin-bottom:40px"]');
+            if (existingBlank) {
+                const img = document.createElement('img');
+                img.src = userSignatureBase64;
+                img.style.maxHeight = '35px';
+                img.style.display = 'block';
+                img.style.margin = '0 auto 5px auto';
+                img.alt = 'TTD';
+                existingBlank.parentNode.replaceChild(img, existingBlank);
+            } else {
+                const existingSigned = signatoryBlock.querySelector('div[style*="margin-bottom:5px"]');
+                if (existingSigned) {
+                    showNotification("Anda sudah menandatangani surat ini.", "info");
+                }
+            }
         }
 
         async function prosesAksiSurat(statusPilihan) {
@@ -4401,7 +4431,7 @@
                         finalUrl = publicUrlData.publicUrl;
                         updatePayload.file_url = finalUrl;
                     } else if (activeSuratData && activeSuratData.body_html && !activeSuratData.file_url) {
-                        // HTML letter: generate PDF from HTML, then embed signature
+                        // HTML letter: generate PDF from HTML (signature already embedded in DOM)
                         if (!signatureIsApplied && !userSignatureBase64) {
                             showNotification("Anda harus membuat dan menerapkan Tanda Tangan terlebih dahulu!", "error");
                             document.getElementById('btn-approve-pdf').disabled = false;
@@ -4420,26 +4450,7 @@
                             jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
                         };
                         const pdfBlob = await html2pdf().set(opt).from(htmlElement).outputPdf('blob');
-                        const genPdfBytes = await pdfBlob.arrayBuffer();
-                        const pdfDoc = await PDFLib.PDFDocument.load(genPdfBytes);
-                        const pages = pdfDoc.getPages();
-                        const lastPage = pages[pages.length - 1];
-                        const pdfW = lastPage.getWidth();
-                        const pdfH = lastPage.getHeight();
-
-                        const sigImgBytes = await fetch(userSignatureBase64).then(res => res.arrayBuffer());
-                        const pngImage = await pdfDoc.embedPng(sigImgBytes);
-                        const sigWidth = 150;
-                        const sigHeight = (sigWidth * pngImage.height) / pngImage.width;
-                        lastPage.drawImage(pngImage, {
-                            x: pdfW - sigWidth - 40,
-                            y: 40,
-                            width: sigWidth,
-                            height: sigHeight
-                        });
-
-                        const modifiedPdfBytes = await pdfDoc.save();
-                        const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+                        const blob = new Blob([pdfBlob], { type: 'application/pdf' });
                         const file = new File([blob], `Signed_${Date.now()}.pdf`, { type: 'application/pdf' });
 
                         const filePath = `dokumen_surat/${globalWorkspaceId}/${file.name}`;
@@ -5250,7 +5261,7 @@
                     sigSection += `<div style="display:flex;justify-content:space-between;margin-top:30px;gap:40px;">`;
                     if (left) {
                         const nama = globalWorkspaceUsers.find(u => u.id === left.user_id)?.name || left.custom_title || 'User';
-                        sigSection += `<div style="flex:1;text-align:center;min-width:200px;">`;
+                        sigSection += `<div data-user-id="${escapeHtml(left.user_id)}" style="flex:1;text-align:center;min-width:200px;">`;
                         if (left.signed) {
                             sigSection += `<div style="margin-bottom:5px;font-style:italic;color:var(--success);font-size:10pt;">✅ Ditandatangani</div>`;
                         } else {
@@ -5263,7 +5274,7 @@
                     }
                     if (right) {
                         const nama = globalWorkspaceUsers.find(u => u.id === right.user_id)?.name || right.custom_title || 'User';
-                        sigSection += `<div style="flex:1;text-align:center;min-width:200px;">`;
+                        sigSection += `<div data-user-id="${escapeHtml(right.user_id)}" style="flex:1;text-align:center;min-width:200px;">`;
                         if (right.signed) {
                             sigSection += `<div style="margin-bottom:5px;font-style:italic;color:var(--success);font-size:10pt;">✅ Ditandatangani</div>`;
                         } else {
