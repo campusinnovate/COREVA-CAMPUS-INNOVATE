@@ -48,3 +48,8 @@ ALTER TABLE digital_office
 -- 3. ADD body_html column to digital_office (for rich content)
 ALTER TABLE digital_office
   ADD COLUMN IF NOT EXISTS body_html TEXT DEFAULT '';
+
+-- 4. ADD header_url and footer_url to letter_templates
+ALTER TABLE letter_templates
+  ADD COLUMN IF NOT EXISTS header_url TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS footer_url TEXT DEFAULT '';
