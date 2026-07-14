@@ -12,11 +12,12 @@ DROP FUNCTION IF EXISTS public.insert_digital_office_letter(
     p_konteks_id UUID,
     p_nomor_surat TEXT,
     p_judul_surat TEXT,
-    p_tujuan_surat TEXT,
-    p_body_html TEXT,
     p_pengirim_id UUID,
     p_pengaju_id UUID,
     p_template_id UUID,
+    p_file_url TEXT,
+    p_tujuan_surat TEXT,
+    p_body_html TEXT,
     p_signatories JSONB
 );
 
@@ -25,11 +26,12 @@ CREATE OR REPLACE FUNCTION public.insert_digital_office_letter(
     p_konteks_id UUID,
     p_nomor_surat TEXT,
     p_judul_surat TEXT,
-    p_tujuan_surat TEXT DEFAULT '',
-    p_body_html TEXT DEFAULT '',
     p_pengirim_id UUID,
     p_pengaju_id UUID,
     p_template_id UUID,
+    p_file_url TEXT DEFAULT '',
+    p_tujuan_surat TEXT DEFAULT '',
+    p_body_html TEXT DEFAULT '',
     p_signatories JSONB DEFAULT '[]'::jsonb
 )
 RETURNS JSONB
@@ -78,6 +80,7 @@ BEGIN
         judul_surat,
         tujuan_surat,
         body_html,
+        file_url,
         pengirim_id,
         pengaju_id,
         penerima_id,
@@ -92,6 +95,7 @@ BEGIN
         p_judul_surat,
         p_tujuan_surat,
         p_body_html,
+        p_file_url,
         p_pengirim_id,
         p_pengaju_id,
         v_penerima_id,
@@ -115,12 +119,14 @@ $$;
 
 -- Revoke execute from anon/public for security
 REVOKE EXECUTE ON FUNCTION public.insert_digital_office_letter(
-    UUID, UUID, TEXT, TEXT, TEXT, TEXT, UUID, UUID, UUID, JSONB
+    UUID, UUID, TEXT, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, JSONB
 ) FROM anon, public;
 
 -- Grant execute to authenticated users
 GRANT EXECUTE ON FUNCTION public.insert_digital_office_letter(
-    UUID, UUID, TEXT, TEXT, TEXT, TEXT, UUID, UUID, UUID, JSONB
+    UUID, UUID, TEXT, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, JSONB
 ) TO authenticated;
 
-COMMENT ON FUNCTION public.insert_digital_office_letter IS 'Menyimpan surat baru ke digital_office dengan status Menunggu, auto-set penerima_id dari signatory pertama';
+COMMENT ON FUNCTION public.insert_digital_office_letter(
+    UUID, UUID, TEXT, TEXT, UUID, UUID, UUID, TEXT, TEXT, TEXT, JSONB
+) IS 'Menyimpan surat baru ke digital_office dengan status Menunggu, auto-set penerima_id dari signatory pertama';
