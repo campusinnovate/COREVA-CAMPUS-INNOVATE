@@ -1661,6 +1661,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
                 <button type="button" class="btn-action" style="flex: 1; background: var(--success); color: white;" id="btn-approve-pdf" onclick="prosesAksiSurat('Disetujui')"><i class="fa-solid fa-signature"></i> Tanda Tangani (Approve)</button>
+                <button type="button" class="btn-action" style="flex: 1; background: var(--accent); color: white; display:none;" id="btn-download-pdf" onclick="downloadApprovedPdf()"><i class="fa-solid fa-download"></i> Download PDF</button>
                 <button type="button" class="btn-action" style="flex: 1; background: var(--error); color: white;" onclick="prosesAksiSurat('Ditolak')"><i class="fa-solid fa-xmark"></i> Tolak Dokumen (Revisi)</button>
             </div>
         </div>
@@ -3906,6 +3907,9 @@
                     let docLink = '';
                     if (item.file_url) {
                         docLink = `<a href="${item.file_url}" target="_blank" style="font-size:0.75rem; color:var(--info);"><i class="fa-solid fa-file-pdf"></i> Buka Dokumen</a>`;
+                        if (item.status === 'Disetujui') {
+                            docLink += ` <a href="${item.file_url}" download="${item.judul_surat || 'surat'}.pdf" style="font-size:0.75rem; color:var(--success); margin-left:4px;"><i class="fa-solid fa-download"></i> Download</a>`;
+                        }
                     } else if (item.body_html) {
                         docLink = `<span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-file-lines"></i> Draft</span>`;
                     }
@@ -3937,6 +3941,9 @@
                     let actionHtmlH = '';
                     if (item.file_url) {
                         actionHtmlH = `<a href="${item.file_url}" target="_blank" style="background: var(--info); color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8rem;"><i class="fa-solid fa-file-pdf"></i> Buka</a>`;
+                        if (item.status === 'Disetujui') {
+                            actionHtmlH += ` <a href="${item.file_url}" download="${item.judul_surat || 'surat'}.pdf" style="background: var(--success); color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8rem;"><i class="fa-solid fa-download"></i> Download</a>`;
+                        }
                     } else {
                         actionHtmlH = `<span style="font-size:0.75rem;color:var(--text-muted);padding:5px 10px;"><i class="fa-solid fa-file-lines"></i> Draft</span>`;
                     }
@@ -4165,6 +4172,23 @@
                 sigInfoEl.style.display = 'none';
             }
 
+            const downloadBtn = document.getElementById('btn-download-pdf');
+            if (downloadBtn) {
+                if (surat.status === 'Disetujui' && surat.file_url) {
+                    downloadBtn.style.display = 'flex';
+                    downloadBtn.onclick = () => {
+                        const a = document.createElement('a');
+                        a.href = surat.file_url;
+                        a.download = (surat.judul_surat || 'surat') + '.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    };
+                } else {
+                    downloadBtn.style.display = 'none';
+                }
+            }
+
             openModal('modalAksiSurat');
 
             // Check if this is HTML-based (draft) or PDF
@@ -4200,7 +4224,13 @@
                         signatories: surat.signatories || []
                     });
                 }
-                document.getElementById('pdf-controls-bar').style.display = 'none';
+                document.getElementById('pdf-controls-bar').style.display = 'flex';
+                const controlsBar = document.getElementById('pdf-controls-bar');
+                controlsBar.innerHTML = `
+                    <button type="button" onclick="bukaModalSignature()"><i class="fa-solid fa-pen-nib"></i> Buat TTD</button>
+                    <div style="width:1px;height:20px;background:#ccc;margin:0 5px;"></div>
+                    <button type="button" onclick="terapkanSignature()"><i class="fa-solid fa-stamp"></i> Terapkan TTD</button>
+                `;
                 document.getElementById('sig-draggable-overlay').style.display = 'none';
                 document.getElementById('btn-approve-pdf').style.display = 'inline-flex';
                 document.getElementById('btn-approve-pdf').innerText = 'Tanda Tangani (Approve)';
@@ -4211,7 +4241,20 @@
             // PDF review
             if (pdfContainer) pdfContainer.style.display = 'block';
             if (htmlContainer) htmlContainer.style.display = 'none';
-            document.getElementById('pdf-controls-bar').style.display = 'flex';
+            const pdfControlsBar = document.getElementById('pdf-controls-bar');
+            pdfControlsBar.style.display = 'flex';
+            pdfControlsBar.innerHTML = `
+                <button type="button" onclick="onPrevPage()"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                <span>Halaman: <span id="page_num">1</span> / <span id="page_count">?</span></span>
+                <button type="button" onclick="onNextPage()">Next <i class="fa-solid fa-chevron-right"></i></button>
+                <div style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></div>
+                <button type="button" onclick="zoomOutPdf()" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                <button type="button" onclick="zoomInPdf()" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                <button type="button" onclick="fitPdfToPage()" title="Fit to Page"><i class="fa-solid fa-expand"></i></button>
+                <div style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></div>
+                <button type="button" onclick="bukaModalSignature()"><i class="fa-solid fa-pen-nib"></i> Buat TTD</button>
+                <button type="button" onclick="terapkanSignature()"><i class="fa-solid fa-stamp"></i> Terapkan TTD</button>
+            `;
             document.getElementById('btn-approve-pdf').style.display = 'inline-flex';
 
             if (!url) return;
@@ -4358,10 +4401,54 @@
                         finalUrl = publicUrlData.publicUrl;
                         updatePayload.file_url = finalUrl;
                     } else if (activeSuratData && activeSuratData.body_html && !activeSuratData.file_url) {
-                        // HTML letter: sign digitally without PDF
+                        // HTML letter: generate PDF from HTML, then embed signature
+                        if (!signatureIsApplied && !userSignatureBase64) {
+                            showNotification("Anda harus membuat dan menerapkan Tanda Tangan terlebih dahulu!", "error");
+                            document.getElementById('btn-approve-pdf').disabled = false;
+                            document.getElementById('btn-approve-pdf').innerText = "Tanda Tangani (Approve)";
+                            return;
+                        }
                         document.getElementById('btn-approve-pdf').innerText = "Memproses TTD Digital...";
                         document.getElementById('btn-approve-pdf').disabled = true;
-                        finalUrl = '';
+
+                        const htmlElement = document.getElementById('do-html-review-container');
+                        const opt = {
+                            margin: [0, 0, 0, 0],
+                            filename: `Signed_${Date.now()}.pdf`,
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2, useCORS: true },
+                            jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+                        };
+                        const pdfBlob = await html2pdf().set(opt).from(htmlElement).outputPdf('blob');
+                        const genPdfBytes = await pdfBlob.arrayBuffer();
+                        const pdfDoc = await PDFLib.PDFDocument.load(genPdfBytes);
+                        const pages = pdfDoc.getPages();
+                        const lastPage = pages[pages.length - 1];
+                        const pdfW = lastPage.getWidth();
+                        const pdfH = lastPage.getHeight();
+
+                        const sigImgBytes = await fetch(userSignatureBase64).then(res => res.arrayBuffer());
+                        const pngImage = await pdfDoc.embedPng(sigImgBytes);
+                        const sigWidth = 150;
+                        const sigHeight = (sigWidth * pngImage.height) / pngImage.width;
+                        lastPage.drawImage(pngImage, {
+                            x: pdfW - sigWidth - 40,
+                            y: 40,
+                            width: sigWidth,
+                            height: sigHeight
+                        });
+
+                        const modifiedPdfBytes = await pdfDoc.save();
+                        const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+                        const file = new File([blob], `Signed_${Date.now()}.pdf`, { type: 'application/pdf' });
+
+                        const filePath = `dokumen_surat/${globalWorkspaceId}/${file.name}`;
+                        const { error: uploadError } = await supabaseClient.storage.from('digital_office').upload(filePath, file);
+                        if (uploadError) throw uploadError;
+
+                        const { data: publicUrlData } = supabaseClient.storage.from('digital_office').getPublicUrl(filePath);
+                        finalUrl = publicUrlData.publicUrl;
+                        updatePayload.file_url = finalUrl;
                     }
                 }
 
@@ -5502,6 +5589,7 @@
         }
 
     </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="ai-assistant.js"></script>
 </body>
 </html>
