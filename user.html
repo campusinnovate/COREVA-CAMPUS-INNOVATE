@@ -4241,6 +4241,7 @@
                 pageDescription: 'Halaman dashboard anggota untuk mengelola program kerja, RAB, KPI, surat, absensi, notulensi, dan kalender organisasi.',
                 storageKey: 'ai_user',
                 workspaceId: globalWorkspaceId || '0',
+                pageUserId: currentUserId,
                 pageUser: currentUserName || 'user',
                 pageRole: currentUserRole || 'member',
                 supabase: supabaseForAI,
@@ -4414,13 +4415,28 @@
             });
             AI.init();
 
-            // ===== ONBOARDING TUTORIAL TRIGGER =====
-            setTimeout(() => {
-                const onboardingKey = 'onboarding_completed_' + currentUserId;
-                if (!localStorage.getItem(onboardingKey)) {
-                    if (window.AI && window.AI.startOnboarding) {
+            // ===== ONBOARDING TUTORIAL TRIGGER (khusus akun < 24 jam + pertama kali) =====
+            setTimeout(async () => {
+                try {
+                    const onboardingKey = 'onboarding_completed_' + currentUserId;
+                    const alreadyDone = localStorage.getItem(onboardingKey);
+                    if (alreadyDone) return;
+
+                    // Cek umur akun dari auth.users.created_at
+                    const createdAt = session?.user?.created_at;
+                    let isNewUser = false;
+                    if (createdAt) {
+                        const userDate = new Date(createdAt);
+                        const now = new Date();
+                        const hoursDiff = (now - userDate) / (1000 * 60 * 60);
+                        isNewUser = hoursDiff < 24;
+                    }
+
+                    if (isNewUser && window.AI && window.AI.startOnboarding) {
                         window.AI.startOnboarding();
                     }
+                } catch (e) {
+                    console.warn('Onboarding trigger error:', e);
                 }
             }, 2000);
         });

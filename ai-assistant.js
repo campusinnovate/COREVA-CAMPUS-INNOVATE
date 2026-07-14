@@ -473,42 +473,45 @@ function AIAssistantCreate(pageConfig) {
   ];
 
   const ONBOARDING_HTML = `
-    <style>
-      .onboarding-overlay { position: fixed; inset: 0; background: rgba(10,48,85,0.8); backdrop-filter: blur(6px); z-index: 200000; display: none; align-items: center; justify-content: center; }
-      .onboarding-overlay.active { display: flex; }
-      .onboarding-card { background: white; border-radius: 24px; padding: 36px; max-width: 520px; width: 92%; box-shadow: 0 40px 80px rgba(0,0,0,0.4); animation: onboardingIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); position: relative; text-align: center; }
-      @keyframes onboardingIn { from { opacity: 0; transform: scale(0.85) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-      .onboarding-icon-wrap { width: 80px; height: 80px; background: var(--primary-soft,#f0f4f8); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem; color: var(--primary,#0A3055); }
-      .onboarding-card h2 { font-size: 1.5rem; font-weight: 800; color: var(--primary,#0A3055); margin-bottom: 10px; }
-      .onboarding-card p { font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 20px; }
-      .onboarding-progress { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; }
-      .onboarding-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; transition: 0.3s; }
-      .onboarding-dot.active { background: var(--accent,#f59e0b); transform: scale(1.3); }
-      .onboarding-dot.done { background: var(--primary,#0A3055); }
-      .onboarding-actions { display: flex; gap: 10px; margin-top: 10px; }
-      .onboarding-btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
-      .onboarding-btn.primary { background: var(--primary,#0A3055); color: white; }
-      .onboarding-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,48,85,0.3); }
-      .onboarding-btn.secondary { background: #f1f5f9; color: #475569; }
-      .onboarding-btn.secondary:hover { background: #e2e8f0; }
-      .onboarding-btn.skip { background: transparent; color: #94a3b8; flex: 0.5; }
-      .onboarding-btn.skip:hover { color: var(--primary); }
-      .onboarding-sidebar-highlight { position: relative; z-index: 200001 !important; animation: obSidebarPulse 1.2s ease-in-out 5; }
-      @keyframes obSidebarPulse { 0%,100% { background: rgba(245,158,11,0.2); border-left-color: var(--accent); } 50% { background: rgba(245,158,11,0.4); border-left-color: #fff; } }
-      .onboarding-sidebar-highlight i { color: var(--accent) !important; }
-      .onboarding-sidebar-highlight span { color: #fff !important; }
-    </style>
     <div class="onboarding-overlay" id="onboardingOverlay">
+      <style>
+        .onboarding-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 200000; display: none; align-items: center; justify-content: center; }
+        .onboarding-overlay.active { display: flex; }
+        .onboarding-card { background: rgba(255,255,255,0.72); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.35); border-radius: 28px; padding: 40px 36px; max-width: 520px; width: 92%; box-shadow: 0 40px 80px rgba(0,0,0,0.25); position: relative; text-align: center; animation: onboardingIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+        @keyframes onboardingIn { from { opacity: 0; transform: scale(0.88) translateY(25px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .onboarding-icon-wrap { width: 88px; height: 88px; background: linear-gradient(135deg,rgba(10,48,85,0.12),rgba(245,158,11,0.15)); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 2.6rem; color: var(--primary,#0A3055); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 24px rgba(10,48,85,0.08); }
+        .onboarding-card h2 { font-size: 1.5rem; font-weight: 800; color: var(--primary,#0A3055); margin-bottom: 10px; letter-spacing: -0.3px; }
+        .onboarding-card p { font-size: 0.95rem; color: #475569; line-height: 1.7; margin-bottom: 20px; }
+        .onboarding-progress { margin-bottom: 28px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .onboarding-progress-bar-wrap { width: 100%; max-width: 320px; height: 6px; background: rgba(0,0,0,0.06); border-radius: 10px; overflow: hidden; position: relative; }
+        .onboarding-progress-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg,var(--accent,#f59e0b),#f97316); transition: width 0.5s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+        .onboarding-progress-label { font-size: 0.75rem; color: #94a3b8; font-weight: 500; letter-spacing: 0.3px; }
+        .onboarding-actions { display: flex; gap: 10px; margin-top: 6px; }
+        .onboarding-btn { flex: 1; padding: 14px 18px; border: none; border-radius: 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.25s; font-family: 'Inter',sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .onboarding-btn.primary { background: var(--primary,#0A3055); color: white; box-shadow: 0 4px 14px rgba(10,48,85,0.2); }
+        .onboarding-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(10,48,85,0.3); }
+        .onboarding-btn.secondary { background: rgba(255,255,255,0.5); color: var(--primary,#0A3055); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(8px); }
+        .onboarding-btn.secondary:hover { background: rgba(255,255,255,0.7); }
+        .onboarding-btn.skip { background: transparent; color: #94a3b8; flex: 0.4; font-size: 0.85rem; }
+        .onboarding-btn.skip:hover { color: var(--primary,#0A3055); }
+        .onboarding-sidebar-highlight { position: relative; z-index: 200001 !important; animation: obSidebarPulse 1.4s ease-in-out infinite; }
+        @keyframes obSidebarPulse { 0%,100% { background: rgba(245,158,11,0.15); border-left-color: var(--accent); } 50% { background: rgba(245,158,11,0.3); border-left-color: #fff; } }
+        .onboarding-sidebar-highlight i { color: var(--accent) !important; }
+        .onboarding-sidebar-highlight span { color: #fff !important; }
+      </style>
       <div class="onboarding-card" id="onboardingCard">
         <div class="onboarding-icon-wrap" id="onboardingIcon"><i class="fa-solid fa-compass"></i></div>
         <h2 id="onboardingTitle">Selamat Datang!</h2>
         <p id="onboardingDesc">Mari kita jelajahi fitur-fitur yang tersedia di workspace Anda.</p>
-        <div class="onboarding-progress" id="onboardingProgress"></div>
+        <div class="onboarding-progress" id="onboardingProgress">
+          <div class="onboarding-progress-bar-wrap"><div class="onboarding-progress-bar-fill" id="onboardingProgressFill" style="width:0%;"></div></div>
+          <div class="onboarding-progress-label" id="onboardingProgressLabel">0 / 0</div>
+        </div>
         <div class="onboarding-actions">
-          <button class="onboarding-btn skip" id="onboardingSkipBtn" onclick="AI.onboardingSkip()">Lewati</button>
-          <button class="onboarding-btn secondary" id="onboardingPrevBtn" onclick="AI.onboardingPrev()" style="display:none;"><i class="fa-solid fa-arrow-left"></i> Sebelumnya</button>
-          <button class="onboarding-btn primary" id="onboardingNextBtn" onclick="AI.onboardingNext()">Selanjutnya <i class="fa-solid fa-arrow-right"></i></button>
-          <button class="onboarding-btn primary" id="onboardingDoneBtn" onclick="AI.onboardingComplete()" style="display:none;"><i class="fa-solid fa-check"></i> Selesai</button>
+          <button class="onboarding-btn skip" id="onboardingSkipBtn" onclick="window.AI.onboardingSkip()">Lewati</button>
+          <button class="onboarding-btn secondary" id="onboardingPrevBtn" onclick="window.AI.onboardingPrev()" style="display:none;"><i class="fa-solid fa-arrow-left"></i> Sebelumnya</button>
+          <button class="onboarding-btn primary" id="onboardingNextBtn" onclick="window.AI.onboardingNext()">Selanjutnya <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="onboarding-btn primary" id="onboardingDoneBtn" onclick="window.AI.onboardingComplete()" style="display:none;"><i class="fa-solid fa-check"></i> Selesai</button>
         </div>
       </div>
     </div>
@@ -519,11 +522,12 @@ function AIAssistantCreate(pageConfig) {
   self.startOnboarding = function() {
     if (self.onboardingState.active) return;
     self.onboardingState = { current: 0, total: ONBOARDING_STEPS.length, active: true };
-    // Inject onboarding HTML if not present
     if (!document.getElementById('onboardingOverlay')) {
       const div = document.createElement('div');
       div.innerHTML = ONBOARDING_HTML;
-      document.body.appendChild(div.lastElementChild);
+      while (div.firstElementChild) {
+        document.body.appendChild(div.firstElementChild);
+      }
     }
     self.renderOnboardingStep();
     const overlay = document.getElementById('onboardingOverlay');
@@ -539,22 +543,18 @@ function AIAssistantCreate(pageConfig) {
     document.getElementById('onboardingTitle').textContent = step.title;
     document.getElementById('onboardingDesc').textContent = step.desc;
 
-    // Progress dots
-    const progressEl = document.getElementById('onboardingProgress');
-    progressEl.innerHTML = '';
-    for (let i = 0; i < state.total; i++) {
-      const dot = document.createElement('div');
-      dot.className = 'onboarding-dot';
-      if (i === state.current) dot.classList.add('active');
-      else if (i < state.current) dot.classList.add('done');
-      progressEl.appendChild(dot);
-    }
+    // Progress bar
+    const pct = ((state.current + 1) / state.total) * 100;
+    const fill = document.getElementById('onboardingProgressFill');
+    if (fill) fill.style.width = pct + '%';
+    const label = document.getElementById('onboardingProgressLabel');
+    if (label) label.textContent = (state.current + 1) + ' / ' + state.total;
 
     // Buttons
-    document.getElementById('onboardingPrevBtn').style.display = state.current > 0 ? 'block' : 'none';
-    document.getElementById('onboardingNextBtn').style.display = state.current < state.total - 1 ? 'block' : 'none';
-    document.getElementById('onboardingDoneBtn').style.display = state.current >= state.total - 1 ? 'block' : 'none';
-    document.getElementById('onboardingSkipBtn').style.display = 'block';
+    document.getElementById('onboardingPrevBtn').style.display = state.current > 0 ? 'flex' : 'none';
+    document.getElementById('onboardingNextBtn').style.display = state.current < state.total - 1 ? 'flex' : 'none';
+    document.getElementById('onboardingDoneBtn').style.display = state.current >= state.total - 1 ? 'flex' : 'none';
+    document.getElementById('onboardingSkipBtn').style.display = 'flex';
 
     // Auto-navigate to the tab
     self.onboardingNavigateTo(step.tab);
@@ -613,6 +613,11 @@ function AIAssistantCreate(pageConfig) {
     const overlay = document.getElementById('onboardingOverlay');
     if (overlay) overlay.classList.remove('active');
     self.onboardingState.active = false;
+    const userId = cfg.pageUserId || cfg.pageUser || 'default';
+    localStorage.setItem('onboarding_completed_' + userId, 'true');
+    if (cfg.workspaceId) {
+      localStorage.setItem('onboarding_completed_ws_' + cfg.workspaceId + '_' + userId, 'true');
+    }
   };
 
   self.onboardingComplete = function() {
@@ -620,11 +625,8 @@ function AIAssistantCreate(pageConfig) {
     const overlay = document.getElementById('onboardingOverlay');
     if (overlay) overlay.classList.remove('active');
     self.onboardingState.active = false;
-    // Store in localStorage
-    const userId = cfg.pageUser || 'default';
-    // Also store in a way that's accessible from user.html
+    const userId = cfg.pageUserId || cfg.pageUser || 'default';
     localStorage.setItem('onboarding_completed_' + userId, 'true');
-    // Also store workspace-specific
     if (cfg.workspaceId) {
       localStorage.setItem('onboarding_completed_ws_' + cfg.workspaceId + '_' + userId, 'true');
     }
