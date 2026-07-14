@@ -285,9 +285,9 @@
 
         /* PREVIEW CONTAINER */
         #mw-live-preview { overflow: hidden; }
-        #mw-live-preview .preview-header-container { overflow: hidden; text-align: center; margin-bottom: 15px; }
+        #mw-live-preview .preview-header-container { overflow: hidden; text-align: center; margin-bottom: 15px; display: none; }
         #mw-live-preview .preview-header-container img { max-width: 100%; max-height: 100px; object-fit: contain; display: block; margin: 0 auto; }
-        #mw-live-preview .preview-footer-container { overflow: hidden; text-align: center; margin-top: 15px; }
+        #mw-live-preview .preview-footer-container { overflow: hidden; text-align: center; margin-top: 15px; display: none; }
         #mw-live-preview .preview-footer-container img { max-width: 100%; max-height: 60px; object-fit: contain; display: block; margin: 0 auto; }
 
         /* SIGNATURE LAYERS IN PREVIEW */
@@ -1744,6 +1744,7 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let globalWorkspaceId = null; 
+        let globalWorkspaceName = '';
         let workspaceFeatures = { finance: true, kpi: true, do: true }; // Tambahkan ini (Default Terbuka)
         let globalPrograms = [];
         let globalSchedules = []; 
@@ -1847,9 +1848,12 @@
                 AI.detectContext();
             }
 
-            // Load My Workspace data when switching to it
+            // Load data when switching tabs
             if (tabId === 'my-workspace') {
                 setTimeout(() => { loadTemplates(); populateMWCreateForm(); }, 100);
+            }
+            if (tabId === 'surat') {
+                setTimeout(() => { loadDigitalOffice(); if(currentUserRole === 'admin') loadDatabaseSuratLog(); }, 100);
             }
         }
 
@@ -2592,6 +2596,7 @@
             // FIX: Tambahkan tarikan data 'locked_features'
             const { data: wsData } = await supabaseClient.from('workspaces').select('nama_organisasi, locked_features').eq('id', globalWorkspaceId).maybeSingle();
             if (wsData) {
+                globalWorkspaceName = wsData.nama_organisasi;
                 document.getElementById('workspace-name-display').innerText = wsData.nama_organisasi;
                 document.getElementById('sidebar-workspace-name').innerText = wsData.nama_organisasi;
                 // Simpan status kunci ke memori
@@ -5133,7 +5138,6 @@
                 mwHeaderDataUrl = e.target.result;
                 const img = document.getElementById('mw-preview-header-img');
                 img.src = mwHeaderDataUrl;
-                img.style.display = 'block';
                 updateMWLivePreview();
             };
             reader.readAsDataURL(file);
@@ -5147,7 +5151,6 @@
                 mwFooterDataUrl = e.target.result;
                 const img = document.getElementById('mw-preview-footer-img');
                 img.src = mwFooterDataUrl;
-                img.style.display = 'block';
                 updateMWLivePreview();
             };
             reader.readAsDataURL(file);
@@ -5179,7 +5182,8 @@
                 });
                 const nextNum = maxNum + 1;
                 const nextNumStr = String(nextNum).padStart(3, '0');
-                const nomorSurat = `${nextNumStr}/${kode}/[Institusi]/${currentMonthRoman}/${currentYear}`;
+                const institusi = globalWorkspaceName ? globalWorkspaceName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : 'INSTANSI';
+                const nomorSurat = `${nextNumStr}/${kode}/${institusi}/${currentMonthRoman}/${currentYear}`;
 
                 // Load signatories from template
                 const { data: sigs } = await supabaseClient.from('letter_signatories')
@@ -5209,6 +5213,8 @@
                     template_id: tplId,
                     signatories: signatoriesData
                 }]);
+                await loadDigitalOffice();
+                if(currentUserRole === 'admin') await loadDatabaseSuratLog();
                 showNotification('Surat berhasil dibuat dan dikirim ke Digital Office!', 'success');
                 document.getElementById('mw-create-judul').value = '';
                 document.getElementById('mw-create-tujuan').value = '';
