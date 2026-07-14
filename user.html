@@ -268,6 +268,35 @@
         .page-break { page-break-after: always; border: 0; border-top: 2px dashed #95a5a6; margin: 30px 0; position: relative; }
         .page-break::after { content: "Page Break"; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #e2e8f0; padding: 0 10px; font-size: 0.75rem; color: #777; font-family: 'Inter'; }
 
+        /* MW CREATE LETTER RICH EDITOR */
+        .mw-editor-workspace { background: #e2e8f0; padding: 15px; border-radius: 8px; border: 1px solid #ccc; }
+        .mw-rte-toolbar { background: #f8fafc; border: 1px solid #ccc; border-radius: 8px 8px 0 0; padding: 8px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+        .mw-rte-toolbar button { background: white; border: 1px solid #ddd; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.75rem; color: var(--primary); display: inline-flex; align-items: center; gap: 3px; transition: 0.2s; }
+        .mw-rte-toolbar button:hover { background: var(--accent); border-color: var(--accent); color: white; }
+        .mw-rte-editor { background: white; min-height: 200px; padding: 16px; border: 1px solid #ccc; border-top: none; border-radius: 0 0 8px 8px; outline: none; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.6; }
+        .mw-rte-editor:focus { border-color: var(--accent); }
+        .mw-rte-editor p { margin-bottom: 8px; }
+
+        /* PREVIEW MARGIN CONTROLS */
+        .margin-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+        .margin-controls label { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+        .margin-controls input[type="number"] { width: 50px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem; }
+        .margin-controls input[type="range"] { width: 80px; }
+
+        /* PREVIEW CONTAINER */
+        #mw-live-preview { overflow: hidden; }
+        #mw-live-preview .preview-header-container { overflow: hidden; text-align: center; margin-bottom: 15px; }
+        #mw-live-preview .preview-header-container img { max-width: 100%; max-height: 100px; object-fit: contain; display: block; margin: 0 auto; }
+        #mw-live-preview .preview-footer-container { overflow: hidden; text-align: center; margin-top: 15px; }
+        #mw-live-preview .preview-footer-container img { max-width: 100%; max-height: 60px; object-fit: contain; display: block; margin: 0 auto; }
+
+        /* SIGNATURE LAYERS IN PREVIEW */
+        .sig-layer { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 8px; }
+        .sig-block { text-align: center; width: 45%; }
+        .sig-line { margin-top: 40px; border-top: 1px solid #333; display: inline-block; padding-top: 5px; font-weight: bold; }
+        .sig-title { font-size: 9pt; color: #555; }
+        .sig-layer-divider { border: none; border-top: 1px dashed #ccc; margin: 15px 0; }
+
         .doc-list-item { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: var(--radius-sm); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;}
         .doc-list-item:hover { border-color: var(--accent); transform: translateX(5px);}
 
@@ -1309,8 +1338,38 @@
                             <input type="text" id="mw-create-tujuan" placeholder="Contoh: Kepada Yth. Rektor Universitas" oninput="updateMWLivePreview()">
                         </div>
                         <div class="input-group">
-                            <label>Isi Surat</label>
-                            <textarea id="mw-create-body" rows="8" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;" placeholder="Tulis isi surat di sini..." oninput="updateMWLivePreview()"></textarea>
+                            <label>Isi Surat <small style="color:#888;font-weight:normal;">(Rich Text Editor)</small></label>
+                            <div class="mw-editor-workspace">
+                                <div class="mw-rte-toolbar">
+                                    <button type="button" onclick="formatDocMW('bold')" title="Tebal"><i class="fa-solid fa-bold"></i></button>
+                                    <button type="button" onclick="formatDocMW('italic')" title="Miring"><i class="fa-solid fa-italic"></i></button>
+                                    <button type="button" onclick="formatDocMW('underline')" title="Garis Bawah"><i class="fa-solid fa-underline"></i></button>
+                                    <div style="width:1px;background:#ddd;height:16px;margin:0 4px;"></div>
+                                    <button type="button" onclick="formatDocMW('justifyLeft')" title="Rata Kiri"><i class="fa-solid fa-align-left"></i></button>
+                                    <button type="button" onclick="formatDocMW('justifyCenter')" title="Rata Tengah"><i class="fa-solid fa-align-center"></i></button>
+                                    <button type="button" onclick="formatDocMW('justifyRight')" title="Rata Kanan"><i class="fa-solid fa-align-right"></i></button>
+                                    <button type="button" onclick="formatDocMW('justifyFull')" title="Rata Kiri Kanan"><i class="fa-solid fa-align-justify"></i></button>
+                                    <div style="width:1px;background:#ddd;height:16px;margin:0 4px;"></div>
+                                    <button type="button" onclick="formatDocMW('insertOrderedList')" title="List Angka"><i class="fa-solid fa-list-ol"></i></button>
+                                    <button type="button" onclick="formatDocMW('insertUnorderedList')" title="List Titik"><i class="fa-solid fa-list-ul"></i></button>
+                                    <div style="width:1px;background:#ddd;height:16px;margin:0 4px;"></div>
+                                    <button type="button" onclick="formatDocMW('formatBlock', 'H1')" title="Heading 1">H1</button>
+                                    <button type="button" onclick="formatDocMW('formatBlock', 'H2')" title="Heading 2">H2</button>
+                                    <button type="button" onclick="formatDocMW('formatBlock', 'P')" title="Normal">P</button>
+                                    <div style="width:1px;background:#ddd;height:16px;margin:0 4px;"></div>
+                                    <button type="button" onclick="insertImageDocMW()" title="Sisipkan Gambar"><i class="fa-regular fa-image"></i></button>
+                                    <button type="button" onclick="insertTableDocMW()" title="Sisipkan Tabel"><i class="fa-solid fa-table"></i></button>
+                                </div>
+                                <div id="mw-create-body" contenteditable="true" class="mw-rte-editor" oninput="updateMWLivePreview()"><p>Tulis isi surat di sini...</p></div>
+                            </div>
+                        </div>
+                        <div class="margin-controls">
+                            <label><i class="fa-solid fa-arrows-up-down"></i> Margin:</label>
+                            <label>Atas <input type="number" id="mw-margin-top" value="30" min="0" max="100" onchange="updateMWLivePreview()"></label>
+                            <label>Bawah <input type="number" id="mw-margin-bottom" value="30" min="0" max="100" onchange="updateMWLivePreview()"></label>
+                            <label>Kiri <input type="number" id="mw-margin-left" value="25" min="0" max="100" onchange="updateMWLivePreview()"></label>
+                            <label>Kanan <input type="number" id="mw-margin-right" value="25" min="0" max="100" onchange="updateMWLivePreview()"></label>
+                            <label style="margin-left:auto;">Spasi Baris <input type="range" id="mw-line-spacing" min="1" max="2.5" step="0.1" value="1.6" oninput="document.getElementById('mw-spacing-val').textContent=this.value;updateMWLivePreview()"> <span id="mw-spacing-val" style="font-size:0.75rem;min-width:30px;">1.6</span></label>
                         </div>
                         <button class="btn-action" style="width:100%;" onclick="submitMWCreateLetter()"><i class="fa-solid fa-paper-plane"></i> Buat & Kirim ke Digital Office</button>
                     </div>
@@ -1557,7 +1616,9 @@
         <div class="modal-content" style="max-width: 800px; width: 95%;"> 
             <div class="modal-header"><h2 id="do-review-judul">Preview & Tanda Tangan Dokumen</h2><button class="close-btn" onclick="closeModal('modalAksiSurat')"><i class="fa-solid fa-xmark"></i></button></div>
             
-            <div class="pdf-controls">
+            <div id="do-signatory-info" style="display:none;"></div>
+
+            <div id="pdf-controls-bar" class="pdf-controls">
                 <button type="button" onclick="onPrevPage()"><i class="fa-solid fa-chevron-left"></i> Prev</button>
                 <span>Halaman: <span id="page_num">1</span> / <span id="page_count">?</span></span>
                 <button type="button" onclick="onNextPage()">Next <i class="fa-solid fa-chevron-right"></i></button>
@@ -1579,6 +1640,8 @@
                     </div>
                 </div>
             </div>
+
+            <div id="do-html-review-container" style="display:none;width:100%;height:400px;overflow:auto;border:2px solid #ccc;margin-bottom:15px;background:white;padding:30px;font-family:'Times New Roman',Times,serif;font-size:11pt;line-height:1.6;"></div>
             
             <div class="input-group">
                 <label>Catatan Revisi / Keterangan Penolakan (Wajib jika menolak)</label>
@@ -2426,7 +2489,10 @@
             });
         }
 
-        function formatDoc(cmd, value=null) { document.execCommand(cmd, false, value); document.getElementById('rte-editor').focus(); }
+        function formatDoc(cmd, value=null) { document.execCommand(cmd, false, value); const el = document.getElementById('rte-editor'); if(el) el.focus(); }
+        function formatDocMW(cmd, value=null) { document.execCommand(cmd, false, value); const el = document.getElementById('mw-create-body'); if(el) el.focus(); updateMWLivePreview(); }
+        function insertImageDocMW() { const url = prompt("Masukkan URL Gambar:"); if (url) { document.execCommand('insertImage', false, url); updateMWLivePreview(); } }
+        function insertTableDocMW() { document.execCommand('insertHTML', false, '<br><table border="1" style="width:100%;border-collapse:collapse;"><tbody><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><br>'); updateMWLivePreview(); }
 
         function zoomDoc(step) {
             docZoomLevel += step;
@@ -3804,30 +3870,72 @@
                 const penerimaData = globalWorkspaceUsers.find(u => u.id === item.penerima_id); const namaPenerima = penerimaData ? penerimaData.name : 'User Lain / Admin';
 
                 let statusBadge = '';
-                if(item.status === 'Menunggu') statusBadge = `<span class="status-badge status-menunggu"><i class="fa-solid fa-clock"></i> Menunggu TTD</span>`;
+                if(item.status === 'Draft') statusBadge = `<span class="status-badge" style="background:rgba(148,163,184,0.2);color:#64748b;"><i class="fa-solid fa-file-pen"></i> Draft</span>`;
+                else if(item.status === 'Menunggu') statusBadge = `<span class="status-badge status-menunggu"><i class="fa-solid fa-clock"></i> Menunggu TTD</span>`;
                 else if(item.status === 'Disetujui') statusBadge = `<span class="status-badge status-disetujui"><i class="fa-solid fa-check-double"></i> Disetujui</span>`;
                 else if(item.status === 'Ditolak') statusBadge = `<span class="status-badge status-ditolak"><i class="fa-solid fa-xmark"></i> Revisi/Ditolak</span>`;
 
-                if (isPenerima && item.status === 'Menunggu') {
+                // Check if current user is in signatories (for new signatory-based flow)
+                const isSignatory = item.signatories && item.signatories.some(s => s.user_id === currentUserId && !s.signed);
+                if ((isPenerima || isSignatory) && (item.status === 'Menunggu')) {
                     countMasuk++;
-                    tbodyMasuk.innerHTML += `<tr><td><strong>${item.judul_surat}</strong></td><td>${namaPengirim}</td><td><button class="btn-action" style="padding: 5px 10px; font-size: 0.8rem; background: var(--info); color: white;" onclick="openAksiSuratModal('${item.id}', '${item.judul_surat}', '${item.file_url}')"><i class="fa-solid fa-eye"></i> Review & TTD</button></td></tr>`;
+                    const fileUrl = item.file_url || '';
+                    tbodyMasuk.innerHTML += `<tr><td><strong>${item.judul_surat}</strong></td><td>${namaPengirim}</td><td><button class="btn-action" style="padding: 5px 10px; font-size: 0.8rem; background: var(--info); color: white;" onclick="openAksiSuratModal('${item.id}', '${escapeHtml(item.judul_surat)}', '${fileUrl}')"><i class="fa-solid fa-eye"></i> Review & TTD</button></td></tr>`;
                 }
 
                 if (isPengirim) {
                     countKeluar++;
                     let noteHtml = item.catatan ? `<div style="font-size:0.7rem; margin-top:5px; color:var(--error);">Catatan: ${item.catatan}</div>` : '';
-                    let deleteBtn = `<button class="btn-table-del" onclick="deletePengajuanSurat('${item.id}')" title="Hapus Pengajuan"><i class="fa-solid fa-trash"></i></button>`;
-                    tbodyKeluar.innerHTML += `<tr><td><strong>${item.judul_surat}</strong><br><a href="${item.file_url}" target="_blank" style="font-size:0.75rem; color:var(--info);"><i class="fa-solid fa-file-pdf"></i> Buka Dokumen</a></td><td>${namaPenerima}</td><td>${statusBadge} ${noteHtml}</td><td style="text-align: center;">${deleteBtn}</td></tr>`;
+                    let deleteBtn = `<button class="btn-table-del" onclick="deletePengajuanSurat('${item.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>`;
+                    let docLink = '';
+                    if (item.file_url) {
+                        docLink = `<a href="${item.file_url}" target="_blank" style="font-size:0.75rem; color:var(--info);"><i class="fa-solid fa-file-pdf"></i> Buka Dokumen</a>`;
+                    } else if (item.body_html) {
+                        docLink = `<span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-file-lines"></i> Draft</span>`;
+                    }
+                    let sigInfo = '';
+                    if (item.signatories && item.signatories.length > 0) {
+                        const total = item.signatories.length;
+                        const signed = item.signatories.filter(s => s.signed).length;
+                        sigInfo = `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;"><i class="fa-solid fa-signature"></i> TTD: ${signed}/${total}</div>`;
+                    }
+                    let actionBtns = '';
+                    if (item.status === 'Draft') {
+                        actionBtns = `<button class="btn-action-sm" style="background:var(--info);color:white;padding:4px 8px;font-size:0.75rem;" onclick="submitDraftForSignature('${item.id}')"><i class="fa-solid fa-paper-plane"></i> Ajukan</button>`;
+                    }
+                    // Show signatory names for signatory-based letters
+                    let penerimaDisplay = namaPenerima;
+                    if (!item.penerima_id && item.signatories && item.signatories.length > 0) {
+                        const names = item.signatories.map(s => {
+                            const u = globalWorkspaceUsers.find(gu => gu.id === s.user_id);
+                            return u ? u.name : 'User';
+                        });
+                        penerimaDisplay = names.join(', ');
+                    }
+                    tbodyKeluar.innerHTML += `<tr><td><strong>${item.judul_surat}</strong><br>${docLink}${sigInfo}</td><td>${penerimaDisplay || '-'}</td><td>${statusBadge} ${noteHtml}</td><td style="text-align: center;">${actionBtns} ${deleteBtn}</td></tr>`;
                 }
 
                 if (tbodyHistory) {
                     countHistory++;
                     let noteHtmlH = item.catatan ? `<div style="font-size:0.7rem; margin-top:5px; color:var(--error);">Catatan: ${item.catatan}</div>` : '';
-                    let actionHtmlH = `<a href="${item.file_url}" target="_blank" style="background: var(--info); color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8rem;"><i class="fa-solid fa-file-pdf"></i> Buka</a>`;
+                    let actionHtmlH = '';
+                    if (item.file_url) {
+                        actionHtmlH = `<a href="${item.file_url}" target="_blank" style="background: var(--info); color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 0.8rem;"><i class="fa-solid fa-file-pdf"></i> Buka</a>`;
+                    } else {
+                        actionHtmlH = `<span style="font-size:0.75rem;color:var(--text-muted);padding:5px 10px;"><i class="fa-solid fa-file-lines"></i> Draft</span>`;
+                    }
                     if (currentUserRole === 'admin') {
                         actionHtmlH += `<br><button class="btn-table-del" style="margin-top:5px; width:100%;" onclick="deletePengajuanSurat('${item.id}')" title="Hapus Permanen"><i class="fa-solid fa-trash"></i> Hapus</button>`;
                     }
-                    tbodyHistory.innerHTML += `<tr><td>${tgl}</td><td><strong>${item.judul_surat}</strong></td><td>${namaPengirim}</td><td>${namaPenerima}</td><td>${statusBadge} ${noteHtmlH}</td><td style="text-align: center;">${actionHtmlH}</td></tr>`;
+                    let penerimaDisplay = namaPenerima;
+                    if (!item.penerima_id && item.signatories && item.signatories.length > 0) {
+                        const names = item.signatories.map(s => {
+                            const u = globalWorkspaceUsers.find(gu => gu.id === s.user_id);
+                            return u ? u.name : 'User';
+                        });
+                        penerimaDisplay = names.join(', ');
+                    }
+                    tbodyHistory.innerHTML += `<tr><td>${tgl}</td><td><strong>${item.judul_surat}</strong></td><td>${namaPengirim}</td><td>${penerimaDisplay || '-'}</td><td>${statusBadge} ${noteHtmlH}</td><td style="text-align: center;">${actionHtmlH}</td></tr>`;
                 }
             });
 
@@ -3957,6 +4065,8 @@
             });
         }
 
+        let activeSuratData = null;
+
         async function openAksiSuratModal(id, judul, url) {
             activeActionSuratId = id; activeActionFileUrl = url;
             document.getElementById('do-review-judul').innerText = judul;
@@ -3965,9 +4075,64 @@
             document.getElementById('btn-approve-pdf').disabled = false;
             document.getElementById('sig-draggable-overlay').style.display = 'none';
             signatureIsApplied = false;
-            
+
+            // Load full surat data for signatory info
+            const { data: surat } = await supabaseClient.from('digital_office').select('*').eq('id', id).single();
+            activeSuratData = surat;
+
+            // Show signatory info
+            const sigInfoEl = document.getElementById('do-signatory-info');
+            if (sigInfoEl && surat && surat.signatories && surat.signatories.length > 0) {
+                let sigHtml = '<div style="background:#f8fafc;padding:12px;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);">';
+                sigHtml += '<h4 style="font-size:0.85rem;color:var(--primary);margin-bottom:8px;"><i class="fa-solid fa-signature"></i> Status Tanda Tangan</h4>';
+                const layers = {};
+                surat.signatories.forEach(s => {
+                    if (!layers[s.layer]) layers[s.layer] = [];
+                    layers[s.layer].push(s);
+                });
+                for (let layer of [1, 2]) {
+                    if (!layers[layer] || layers[layer].length === 0) continue;
+                    sigHtml += `<div style="margin-bottom:6px;"><strong style="font-size:0.75rem;color:var(--text-muted);">Layer ${layer}:</strong> `;
+                    sigHtml += layers[layer].map(s => {
+                        const nama = globalWorkspaceUsers.find(u => u.id === s.user_id)?.name || 'User';
+                        const statusIcon = s.signed ? '<i class="fa-solid fa-check-circle" style="color:var(--success);"></i>' : '<i class="fa-solid fa-clock" style="color:var(--accent);"></i>';
+                        return `<span style="font-size:0.75rem;margin-right:8px;">${statusIcon} ${escapeHtml(nama)} (${s.position})${s.signed ? ' ✅' : ' ⏳'}</span>`;
+                    }).join('');
+                    sigHtml += '</div>';
+                }
+                sigHtml += '</div>';
+                sigInfoEl.innerHTML = sigHtml;
+                sigInfoEl.style.display = 'block';
+            } else if (sigInfoEl) {
+                sigInfoEl.style.display = 'none';
+            }
+
             openModal('modalAksiSurat');
-            
+
+            // Check if this is HTML-based (draft) or PDF
+            const pdfContainer = document.getElementById('pdf-container-scroll');
+            const htmlContainer = document.getElementById('do-html-review-container');
+
+            if (!url && surat && surat.body_html) {
+                // HTML body review
+                if (pdfContainer) pdfContainer.style.display = 'none';
+                if (htmlContainer) {
+                    htmlContainer.style.display = 'block';
+                    htmlContainer.innerHTML = surat.body_html;
+                }
+                document.getElementById('pdf-controls-bar').style.display = 'none';
+                document.getElementById('btn-approve-pdf').style.display = 'none';
+                return;
+            }
+
+            // PDF review
+            if (pdfContainer) pdfContainer.style.display = 'block';
+            if (htmlContainer) htmlContainer.style.display = 'none';
+            document.getElementById('pdf-controls-bar').style.display = 'flex';
+            document.getElementById('btn-approve-pdf').style.display = 'inline-flex';
+
+            if (!url) return;
+
             try {
                 const pdfData = await fetch(url).then(res => res.arrayBuffer());
                 loadedPdfBytes = pdfData; 
@@ -4041,53 +4206,80 @@
 
             try {
                 let finalUrl = activeActionFileUrl;
+                let updatePayload = { status: statusPilihan, catatan: catatan || null };
 
                 if (statusPilihan === 'Disetujui') {
-                    if (!signatureIsApplied) { showNotification("Anda harus menerapkan Tanda Tangan untuk menyetujuinya!", "error"); return; }
-                    
-                    document.getElementById('btn-approve-pdf').innerText = "Memproses TTD...";
-                    document.getElementById('btn-approve-pdf').disabled = true;
+                    // Update signatory tracking for current user
+                    if (activeSuratData && activeSuratData.signatories && activeSuratData.signatories.length > 0) {
+                        const updatedSignatories = activeSuratData.signatories.map(s => {
+                            if (s.user_id === currentUserId && !s.signed) {
+                                return { ...s, signed: true, signed_at: new Date().toISOString() };
+                            }
+                            return s;
+                        });
+                        updatePayload.signatories = updatedSignatories;
 
-                    const pdfDoc = await PDFLib.PDFDocument.load(loadedPdfBytes);
-                    const pages = pdfDoc.getPages();
-                    const targetPage = pages[pageNum - 1];
+                        // Check if all signatories have signed
+                        const allSigned = updatedSignatories.every(s => s.signed);
+                        if (allSigned) {
+                            updatePayload.status = 'Disetujui';
+                        } else {
+                            updatePayload.status = 'Menunggu';
+                        }
+                    } else {
+                        // No signatory tracking, direct approve
+                        updatePayload.status = 'Disetujui';
+                    }
 
-                    const sigImgBytes = await fetch(userSignatureBase64).then(res => res.arrayBuffer());
-                    const pngImage = await pdfDoc.embedPng(sigImgBytes);
+                    // Handle PDF signing (if PDF exists)
+                    if (loadedPdfBytes) {
+                        if (!signatureIsApplied) { showNotification("Anda harus menerapkan Tanda Tangan untuk menyetujuinya!", "error"); return; }
+                        
+                        document.getElementById('btn-approve-pdf').innerText = "Memproses TTD...";
+                        document.getElementById('btn-approve-pdf').disabled = true;
 
-                    const canvasHtml = document.getElementById('pdf-render-canvas');
-                    const overlay = document.getElementById('sig-draggable-overlay');
-                    
-                    const htmlW = canvasHtml.width; const htmlH = canvasHtml.height;
-                    const pdfW = targetPage.getWidth(); const pdfH = targetPage.getHeight();
+                        const pdfDoc = await PDFLib.PDFDocument.load(loadedPdfBytes);
+                        const pages = pdfDoc.getPages();
+                        const targetPage = pages[pageNum - 1];
 
-                    const scaleX = pdfW / htmlW; const scaleY = pdfH / htmlH;
+                        const sigImgBytes = await fetch(userSignatureBase64).then(res => res.arrayBuffer());
+                        const pngImage = await pdfDoc.embedPng(sigImgBytes);
 
-                    const ovLeft = parseInt(overlay.style.left || 50, 10);
-                    const ovTop = parseInt(overlay.style.top || 50, 10);
-                    const ovWidth = overlay.offsetWidth;
-                    const ovHeight = overlay.offsetHeight;
+                        const canvasHtml = document.getElementById('pdf-render-canvas');
+                        const overlay = document.getElementById('sig-draggable-overlay');
+                        
+                        const htmlW = canvasHtml.width; const htmlH = canvasHtml.height;
+                        const pdfW = targetPage.getWidth(); const pdfH = targetPage.getHeight();
 
-                    const finalX = ovLeft * scaleX;
-                    const finalY = pdfH - ((ovTop + ovHeight) * scaleY);
+                        const scaleX = pdfW / htmlW; const scaleY = pdfH / htmlH;
 
-                    targetPage.drawImage(pngImage, { x: finalX, y: finalY, width: ovWidth * scaleX, height: ovHeight * scaleY });
+                        const ovLeft = parseInt(overlay.style.left || 50, 10);
+                        const ovTop = parseInt(overlay.style.top || 50, 10);
+                        const ovWidth = overlay.offsetWidth;
+                        const ovHeight = overlay.offsetHeight;
 
-                    const modifiedPdfBytes = await pdfDoc.save();
-                    const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
-                    const file = new File([blob], `Signed_${Date.now()}.pdf`, { type: 'application/pdf' });
+                        const finalX = ovLeft * scaleX;
+                        const finalY = pdfH - ((ovTop + ovHeight) * scaleY);
 
-                    const filePath = `dokumen_surat/${globalWorkspaceId}/${file.name}`;
-                    const { error: uploadError } = await supabaseClient.storage.from('digital_office').upload(filePath, file);
-                    if (uploadError) throw uploadError;
-                    
-                    const { data: publicUrlData } = supabaseClient.storage.from('digital_office').getPublicUrl(filePath);
-                    finalUrl = publicUrlData.publicUrl;
+                        targetPage.drawImage(pngImage, { x: finalX, y: finalY, width: ovWidth * scaleX, height: ovHeight * scaleY });
+
+                        const modifiedPdfBytes = await pdfDoc.save();
+                        const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+                        const file = new File([blob], `Signed_${Date.now()}.pdf`, { type: 'application/pdf' });
+
+                        const filePath = `dokumen_surat/${globalWorkspaceId}/${file.name}`;
+                        const { error: uploadError } = await supabaseClient.storage.from('digital_office').upload(filePath, file);
+                        if (uploadError) throw uploadError;
+                        
+                        const { data: publicUrlData } = supabaseClient.storage.from('digital_office').getPublicUrl(filePath);
+                        finalUrl = publicUrlData.publicUrl;
+                        updatePayload.file_url = finalUrl;
+                    }
                 }
 
-                await supabaseClient.from('digital_office').update({ status: statusPilihan, catatan: catatan || null, file_url: finalUrl }).eq('id', activeActionSuratId);
+                await supabaseClient.from('digital_office').update(updatePayload).eq('id', activeActionSuratId);
 
-                showNotification(`Dokumen berhasil ${statusPilihan}`, "success");
+                showNotification(`Dokumen berhasil ${statusPilihan === 'Disetujui' ? 'ditandatangani' : statusPilihan}`, "success");
                 
                 const canvas = document.getElementById('pdf-render-canvas');
                 if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
@@ -4100,6 +4292,22 @@
                 console.error(e); showNotification("Terjadi kesalahan proses TTD: " + e.message, "error");
                 document.getElementById('btn-approve-pdf').innerText = "Tanda Tangani (Approve)";
                 document.getElementById('btn-approve-pdf').disabled = false;
+            }
+        }
+
+        // Submit draft for signature (change status from Draft to Menunggu)
+        async function submitDraftForSignature(id) {
+            try {
+                const { data: surat } = await supabaseClient.from('digital_office').select('signatories').eq('id', id).single();
+                if (surat && surat.signatories && surat.signatories.length > 0) {
+                    await supabaseClient.from('digital_office').update({ status: 'Menunggu' }).eq('id', id);
+                    showNotification('Draft berhasil diajukan untuk tanda tangan!', 'success');
+                } else {
+                    showNotification('Tidak ada penanda tangan yang ditetapkan. Silakan edit template.', 'error');
+                }
+                await loadDigitalOffice();
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
             }
         }
 
@@ -4529,6 +4737,7 @@
                             ${t.header_url ? `<span style="font-size:0.7rem;color:var(--info);"><i class="fa-solid fa-image"></i> Header</span>` : ''}
                             ${t.footer_url ? `<span style="font-size:0.7rem;color:var(--success);"><i class="fa-solid fa-image"></i> Footer</span>` : ''}
                         </div>
+                        ${(t.signature_left_name || t.signature_right_name) ? `<div style="font-size:0.7rem;color:var(--primary);margin-top:4px;"><i class="fa-solid fa-signature"></i> TTD Layer 1</div>` : ''}
                     </div>`;
                 });
                 container.innerHTML = html;
@@ -4541,24 +4750,38 @@
             const existing = document.getElementById('mw-template-modal');
             if (existing) existing.remove();
             const ctxs = await loadKonteksOptions();
+            const userOpts = (globalWorkspaceUsers || []).map(u => `<option value="${u.id}">${escapeHtml(u.name)}${u.role ? ' ('+escapeHtml(u.role)+')' : ''}</option>`).join('');
             const html = `
                 <div class="modal-overlay active" id="mw-template-modal">
-                    <div class="modal-content" style="max-width:600px;">
+                    <div class="modal-content" style="max-width:700px;">
                         <div class="modal-header"><h2>Buat Template Surat</h2><button class="close-btn" id="mw-tpl-close-btn"><i class="fa-solid fa-xmark"></i></button></div>
                         <div class="input-group"><label>Nama Template</label><input type="text" id="mw-tpl-name" placeholder="Contoh: SK Pengurus"></div>
                         <div class="input-group"><label>Konteks Surat</label><select id="mw-tpl-konteks">${ctxs}</select></div>
                         <div class="input-group"><label>URL Letterhead (opsional)</label><input type="url" id="mw-tpl-letterhead" placeholder="https://example.com/letterhead.png"></div>
                         <div class="input-group"><label>URL Header / Kop Surat (opsional)</label><input type="url" id="mw-tpl-header-url" placeholder="https://example.com/header.png"></div>
                         <div class="input-group"><label>URL Footer / Kaki Surat (opsional)</label><input type="url" id="mw-tpl-footer-url" placeholder="https://example.com/footer.png"></div>
-                        <div class="input-group"><label>Body Template (HTML optional)</label><textarea id="mw-tpl-body" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;" placeholder="Isi template surat..."></textarea></div>
+                        <div class="input-group"><label>Body Template (HTML optional)</label><textarea id="mw-tpl-body" rows="3" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;" placeholder="Isi template surat..."></textarea></div>
+
+                        <h4 style="color:var(--primary);font-size:0.9rem;margin:15px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;"><i class="fa-solid fa-signature"></i> Layer 1 - Tanda Tangan</h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                            <div class="input-group"><label>Tanda Tangan Kiri - Nama</label><input type="text" id="mw-tpl-sig-left-name"></div>
-                            <div class="input-group"><label>Tanda Tangan Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-left-title"></div>
+                            <div class="input-group"><label>Kiri - Pilih User</label><select id="mw-tpl-sig-l1-left-user"><option value="">-- Tidak ada --</option>${userOpts}</select></div>
+                            <div class="input-group"><label>Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-l1-left-title" placeholder="Contoh: Ketua BEM"></div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                            <div class="input-group"><label>Tanda Tangan Kanan - Nama</label><input type="text" id="mw-tpl-sig-right-name"></div>
-                            <div class="input-group"><label>Tanda Tangan Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-right-title"></div>
+                            <div class="input-group"><label>Kanan - Pilih User</label><select id="mw-tpl-sig-l1-right-user"><option value="">-- Tidak ada --</option>${userOpts}</select></div>
+                            <div class="input-group"><label>Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-l1-right-title" placeholder="Contoh: Sekretaris BEM"></div>
                         </div>
+
+                        <h4 style="color:var(--primary);font-size:0.9rem;margin:15px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;"><i class="fa-solid fa-signature"></i> Layer 2 - Tanda Tangan (Opsional)</h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>Kiri - Pilih User</label><select id="mw-tpl-sig-l2-left-user"><option value="">-- Tidak ada --</option>${userOpts}</select></div>
+                            <div class="input-group"><label>Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-l2-left-title" placeholder="Contoh: Ketua DPM"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>Kanan - Pilih User</label><select id="mw-tpl-sig-l2-right-user"><option value="">-- Tidak ada --</option>${userOpts}</select></div>
+                            <div class="input-group"><label>Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-l2-right-title" placeholder="Contoh: Sekretaris DPM"></div>
+                        </div>
+
                         <button class="btn-action" style="width:100%;" id="mw-tpl-save-btn"><i class="fa-solid fa-floppy-disk"></i> Simpan Template</button>
                     </div>
                 </div>`;
@@ -4581,7 +4804,7 @@
             const name = document.getElementById('mw-tpl-name').value;
             if (!name) { showNotification('Nama template harus diisi!', 'error'); return; }
             try {
-                await supabaseClient.from('letter_templates').insert([{
+                const { data: newTpl, error: tplErr } = await supabaseClient.from('letter_templates').insert([{
                     workspace_id: globalWorkspaceId,
                     name: name,
                     konteks_id: document.getElementById('mw-tpl-konteks').value || null,
@@ -4589,12 +4812,25 @@
                     header_url: document.getElementById('mw-tpl-header-url').value || null,
                     footer_url: document.getElementById('mw-tpl-footer-url').value || null,
                     body_template: document.getElementById('mw-tpl-body').value || '',
-                    signature_left_name: document.getElementById('mw-tpl-sig-left-name').value || '',
-                    signature_left_title: document.getElementById('mw-tpl-sig-left-title').value || '',
-                    signature_right_name: document.getElementById('mw-tpl-sig-right-name').value || '',
-                    signature_right_title: document.getElementById('mw-tpl-sig-right-title').value || '',
+                    signature_left_name: document.getElementById('mw-tpl-sig-l1-left-user').value ? (globalWorkspaceUsers.find(u=>u.id===document.getElementById('mw-tpl-sig-l1-left-user').value)?.name || '') : '',
+                    signature_left_title: document.getElementById('mw-tpl-sig-l1-left-title').value || '',
+                    signature_right_name: document.getElementById('mw-tpl-sig-l1-right-user').value ? (globalWorkspaceUsers.find(u=>u.id===document.getElementById('mw-tpl-sig-l1-right-user').value)?.name || '') : '',
+                    signature_right_title: document.getElementById('mw-tpl-sig-l1-right-title').value || '',
                     created_by: currentUserId
-                }]);
+                }]).select('id').single();
+                if (tplErr) throw tplErr;
+                const tplId = newTpl.id;
+                const signatories = [
+                    { layer: 1, position: 'left', userId: document.getElementById('mw-tpl-sig-l1-left-user').value, title: document.getElementById('mw-tpl-sig-l1-left-title').value },
+                    { layer: 1, position: 'right', userId: document.getElementById('mw-tpl-sig-l1-right-user').value, title: document.getElementById('mw-tpl-sig-l1-right-title').value },
+                    { layer: 2, position: 'left', userId: document.getElementById('mw-tpl-sig-l2-left-user').value, title: document.getElementById('mw-tpl-sig-l2-left-title').value },
+                    { layer: 2, position: 'right', userId: document.getElementById('mw-tpl-sig-l2-right-user').value, title: document.getElementById('mw-tpl-sig-l2-right-title').value }
+                ].filter(s => s.userId);
+                if (signatories.length > 0) {
+                    await supabaseClient.from('letter_signatories').insert(
+                        signatories.map(s => ({ template_id: tplId, layer: s.layer, position: s.position, user_id: s.userId, custom_title: s.title }))
+                    );
+                }
                 showNotification('Template berhasil dibuat!', 'success');
                 closeModal('mw-template-modal');
                 loadTemplates();
@@ -4609,24 +4845,49 @@
             const tpl = mwTemplates.find(t => t.id === id);
             if (!tpl) return;
             const ctxs = await loadKonteksOptions();
+            const userOpts = (globalWorkspaceUsers || []).map(u => `<option value="${u.id}">${escapeHtml(u.name)}${u.role ? ' ('+escapeHtml(u.role)+')' : ''}</option>`).join('');
+            const { data: sigs } = await supabaseClient.from('letter_signatories').select('*').eq('template_id', id);
+            const sigMap = {};
+            (sigs || []).forEach(s => { sigMap[`l${s.layer}_${s.position}`] = s; });
+            function selUser(layer, pos, userId) {
+                const selected = sigMap[`l${layer}_${pos}`];
+                return selected ? selected.user_id : (userId || '');
+            }
+            function selTitle(layer, pos) {
+                const s = sigMap[`l${layer}_${pos}`];
+                return s ? s.custom_title : '';
+            }
             const html = `
                 <div class="modal-overlay active" id="mw-template-modal">
-                    <div class="modal-content" style="max-width:600px;">
+                    <div class="modal-content" style="max-width:700px;">
                         <div class="modal-header"><h2>Edit Template</h2><button class="close-btn" id="mw-tpl-close-btn"><i class="fa-solid fa-xmark"></i></button></div>
                         <div class="input-group"><label>Nama Template</label><input type="text" id="mw-tpl-name" value="${escapeHtml(tpl.name)}"></div>
                         <div class="input-group"><label>Konteks Surat</label><select id="mw-tpl-konteks">${ctxs.replace('value="' + (tpl.konteks_id || '') + '"', 'value="' + (tpl.konteks_id || '') + '" selected')}</select></div>
                         <div class="input-group"><label>URL Letterhead</label><input type="url" id="mw-tpl-letterhead" value="${escapeHtml(tpl.letterhead_url || '')}"></div>
                         <div class="input-group"><label>URL Header / Kop Surat</label><input type="url" id="mw-tpl-header-url" value="${escapeHtml(tpl.header_url || '')}"></div>
                         <div class="input-group"><label>URL Footer / Kaki Surat</label><input type="url" id="mw-tpl-footer-url" value="${escapeHtml(tpl.footer_url || '')}"></div>
-                        <div class="input-group"><label>Body Template</label><textarea id="mw-tpl-body" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;">${escapeHtml(tpl.body_template || '')}</textarea></div>
+                        <div class="input-group"><label>Body Template</label><textarea id="mw-tpl-body" rows="3" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;">${escapeHtml(tpl.body_template || '')}</textarea></div>
+
+                        <h4 style="color:var(--primary);font-size:0.9rem;margin:15px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;"><i class="fa-solid fa-signature"></i> Layer 1 - Tanda Tangan</h4>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                            <div class="input-group"><label>TTD Kiri - Nama</label><input type="text" id="mw-tpl-sig-left-name" value="${escapeHtml(tpl.signature_left_name || '')}"></div>
-                            <div class="input-group"><label>TTD Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-left-title" value="${escapeHtml(tpl.signature_left_title || '')}"></div>
+                            <div class="input-group"><label>Kiri - Pilih User</label><select id="mw-tpl-sig-l1-left-user"><option value="">-- Tidak ada --</option>${userOpts.replace('value="' + selUser(1,'left') + '"', 'value="' + selUser(1,'left') + '" selected')}</select></div>
+                            <div class="input-group"><label>Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-l1-left-title" value="${escapeHtml(selTitle(1,'left') || tpl.signature_left_title || '')}"></div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                            <div class="input-group"><label>TTD Kanan - Nama</label><input type="text" id="mw-tpl-sig-right-name" value="${escapeHtml(tpl.signature_right_name || '')}"></div>
-                            <div class="input-group"><label>TTD Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-right-title" value="${escapeHtml(tpl.signature_right_title || '')}"></div>
+                            <div class="input-group"><label>Kanan - Pilih User</label><select id="mw-tpl-sig-l1-right-user"><option value="">-- Tidak ada --</option>${userOpts.replace('value="' + selUser(1,'right') + '"', 'value="' + selUser(1,'right') + '" selected')}</select></div>
+                            <div class="input-group"><label>Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-l1-right-title" value="${escapeHtml(selTitle(1,'right') || tpl.signature_right_title || '')}"></div>
                         </div>
+
+                        <h4 style="color:var(--primary);font-size:0.9rem;margin:15px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;"><i class="fa-solid fa-signature"></i> Layer 2 - Tanda Tangan (Opsional)</h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>Kiri - Pilih User</label><select id="mw-tpl-sig-l2-left-user"><option value="">-- Tidak ada --</option>${userOpts.replace('value="' + selUser(2,'left') + '"', 'value="' + selUser(2,'left') + '" selected')}</select></div>
+                            <div class="input-group"><label>Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-l2-left-title" value="${escapeHtml(selTitle(2,'left'))}"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>Kanan - Pilih User</label><select id="mw-tpl-sig-l2-right-user"><option value="">-- Tidak ada --</option>${userOpts.replace('value="' + selUser(2,'right') + '"', 'value="' + selUser(2,'right') + '" selected')}</select></div>
+                            <div class="input-group"><label>Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-l2-right-title" value="${escapeHtml(selTitle(2,'right'))}"></div>
+                        </div>
+
                         <button class="btn-action" style="width:100%;" id="mw-tpl-update-btn"><i class="fa-solid fa-floppy-disk"></i> Update Template</button>
                     </div>
                 </div>`;
@@ -4645,11 +4906,23 @@
                     header_url: document.getElementById('mw-tpl-header-url').value || null,
                     footer_url: document.getElementById('mw-tpl-footer-url').value || null,
                     body_template: document.getElementById('mw-tpl-body').value || '',
-                    signature_left_name: document.getElementById('mw-tpl-sig-left-name').value || '',
-                    signature_left_title: document.getElementById('mw-tpl-sig-left-title').value || '',
-                    signature_right_name: document.getElementById('mw-tpl-sig-right-name').value || '',
-                    signature_right_title: document.getElementById('mw-tpl-sig-right-title').value || '',
+                    signature_left_name: document.getElementById('mw-tpl-sig-l1-left-user').value ? (globalWorkspaceUsers.find(u=>u.id===document.getElementById('mw-tpl-sig-l1-left-user').value)?.name || '') : '',
+                    signature_left_title: document.getElementById('mw-tpl-sig-l1-left-title').value || '',
+                    signature_right_name: document.getElementById('mw-tpl-sig-l1-right-user').value ? (globalWorkspaceUsers.find(u=>u.id===document.getElementById('mw-tpl-sig-l1-right-user').value)?.name || '') : '',
+                    signature_right_title: document.getElementById('mw-tpl-sig-l1-right-title').value || '',
                 }).eq('id', id);
+                await supabaseClient.from('letter_signatories').delete().eq('template_id', id);
+                const signatories = [
+                    { layer: 1, position: 'left', userId: document.getElementById('mw-tpl-sig-l1-left-user').value, title: document.getElementById('mw-tpl-sig-l1-left-title').value },
+                    { layer: 1, position: 'right', userId: document.getElementById('mw-tpl-sig-l1-right-user').value, title: document.getElementById('mw-tpl-sig-l1-right-title').value },
+                    { layer: 2, position: 'left', userId: document.getElementById('mw-tpl-sig-l2-left-user').value, title: document.getElementById('mw-tpl-sig-l2-left-title').value },
+                    { layer: 2, position: 'right', userId: document.getElementById('mw-tpl-sig-l2-right-user').value, title: document.getElementById('mw-tpl-sig-l2-right-title').value }
+                ].filter(s => s.userId);
+                if (signatories.length > 0) {
+                    await supabaseClient.from('letter_signatories').insert(
+                        signatories.map(s => ({ template_id: id, layer: s.layer, position: s.position, user_id: s.userId, custom_title: s.title }))
+                    );
+                }
                 showNotification('Template diupdate!', 'success');
                 closeModal('mw-template-modal');
                 loadTemplates();
@@ -4690,8 +4963,13 @@
                 if (tpl.konteks_id) {
                     document.getElementById('mw-create-konteks').value = tpl.konteks_id;
                 }
-                if (tpl.body_template) {
-                    document.getElementById('mw-create-body').value = tpl.body_template;
+                const bodyEl = document.getElementById('mw-create-body');
+                if (bodyEl) {
+                    if (tpl.body_template) {
+                        bodyEl.innerHTML = tpl.body_template;
+                    } else {
+                        bodyEl.innerHTML = '<p>Tulis isi surat di sini...</p>';
+                    }
                 }
                 onMWKonteksChange();
             }
@@ -4735,62 +5013,27 @@
         // Live preview and header/footer for letter creation
         let mwHeaderDataUrl = null;
         let mwFooterDataUrl = null;
+        let mwCachedSigHtml = '';
+        let mwCachedTplId = null;
 
-        function updateMWLivePreview() {
+        async function updateMWLivePreview() {
             const judul = document.getElementById('mw-create-judul').value;
             const tujuan = document.getElementById('mw-create-tujuan').value;
-            const body = document.getElementById('mw-create-body').value;
-            const ctxSelect = document.getElementById('mw-create-konteks');
+            const bodyEl = document.getElementById('mw-create-body');
+            const body = bodyEl ? bodyEl.innerHTML : '';
             const tplSelect = document.getElementById('mw-create-template');
             const preview = document.getElementById('mw-live-preview');
-            const headerImg = document.getElementById('mw-preview-header-img');
-            const footerImg = document.getElementById('mw-preview-footer-img');
+
+            const mt = parseInt(document.getElementById('mw-margin-top').value) || 30;
+            const mb = parseInt(document.getElementById('mw-margin-bottom').value) || 30;
+            const ml = parseInt(document.getElementById('mw-margin-left').value) || 25;
+            const mr = parseInt(document.getElementById('mw-margin-right').value) || 25;
+            const lineSpacing = parseFloat(document.getElementById('mw-line-spacing').value) || 1.6;
 
             const tplId = tplSelect.value;
             const tpl = mwTemplates.find(t => t.id === tplId);
 
-            let headerHtml = '';
-            if (mwHeaderDataUrl) {
-                headerHtml = `<div style="text-align:center;margin-bottom:20px;"><img src="${mwHeaderDataUrl}" style="max-width:100%;max-height:120px;object-fit:contain;"></div>`;
-            } else if (tpl && tpl.header_url) {
-                headerHtml = `<div style="text-align:center;margin-bottom:20px;"><img src="${tpl.header_url}" style="max-width:100%;max-height:120px;object-fit:contain;"></div>`;
-            }
-
-            let footerHtml = '';
-            if (mwFooterDataUrl) {
-                footerHtml = `<div style="text-align:center;margin-top:20px;"><img src="${mwFooterDataUrl}" style="max-width:100%;max-height:80px;object-fit:contain;"></div>`;
-            } else if (tpl && tpl.footer_url) {
-                footerHtml = `<div style="text-align:center;margin-top:20px;"><img src="${tpl.footer_url}" style="max-width:100%;max-height:80px;object-fit:contain;"></div>`;
-            }
-
-            const nomorDisplay = document.getElementById('mw-number-display');
-            const nomorText = nomorDisplay ? nomorDisplay.innerText.replace('Nomor Surat:', '').trim() : '';
-
-            const tujuanHtml = tujuan ? `<p style="margin-bottom:12px;font-size:11pt;">${escapeHtml(tujuan)}</p>` : '';
-            const judulHtml = judul ? `<h3 style="text-align:center;font-size:13pt;font-weight:bold;margin-bottom:15px;text-transform:uppercase;">${escapeHtml(judul)}</h3>` : '';
-            const bodyHtml = body ? `<div style="text-align:justify;margin-bottom:15px;">${body.replace(/\n/g, '<br>')}</div>` : '';
-
-            let signatureHtml = '';
-            if (tpl) {
-                const leftName = tpl.signature_left_name || '';
-                const leftTitle = tpl.signature_left_title || '';
-                const rightName = tpl.signature_right_name || '';
-                const rightTitle = tpl.signature_right_title || '';
-                if (leftName || rightName) {
-                    signatureHtml = `<div style="display:flex;justify-content:space-between;margin-top:30px;padding-top:10px;">
-                        <div style="text-align:center;width:45%;">
-                            ${leftName ? `<div style="margin-top:50px;border-top:1px solid #333;display:inline-block;padding-top:6px;font-weight:bold;">${escapeHtml(leftName)}</div><br>` : ''}
-                            ${leftTitle ? `<span style="font-size:9pt;">${escapeHtml(leftTitle)}</span>` : ''}
-                        </div>
-                        <div style="text-align:center;width:45%;">
-                            ${rightName ? `<div style="margin-top:50px;border-top:1px solid #333;display:inline-block;padding-top:6px;font-weight:bold;">${escapeHtml(rightName)}</div><br>` : ''}
-                            ${rightTitle ? `<span style="font-size:9pt;">${escapeHtml(rightTitle)}</span>` : ''}
-                        </div>
-                    </div>`;
-                }
-            }
-
-            if (!judul && !body && !tplId) {
+            if (!judul && (!body || body === '<p>Tulis isi surat di sini...</p>' || body === '<p><br></p>') && !tplId) {
                 preview.innerHTML = `<div style="text-align:center;color:#aaa;padding:60px 20px;">
                     <i class="fa-solid fa-file-pen" style="font-size:2.5rem;display:block;margin-bottom:12px;"></i>
                     <p style="font-family:'Inter',sans-serif;">Preview akan muncul setelah Anda memilih template dan mengisi data.</p>
@@ -4798,14 +5041,87 @@
                 return;
             }
 
+            let headerHtml = '';
+            if (mwHeaderDataUrl) {
+                headerHtml = `<div class="preview-header-container"><img src="${mwHeaderDataUrl}" alt="Header"></div>`;
+            } else if (tpl && tpl.header_url) {
+                headerHtml = `<div class="preview-header-container"><img src="${tpl.header_url}" alt="Header"></div>`;
+            }
+
+            let footerHtml = '';
+            if (mwFooterDataUrl) {
+                footerHtml = `<div class="preview-footer-container"><img src="${mwFooterDataUrl}" alt="Footer"></div>`;
+            } else if (tpl && tpl.footer_url) {
+                footerHtml = `<div class="preview-footer-container"><img src="${tpl.footer_url}" alt="Footer"></div>`;
+            }
+
+            const nomorDisplay = document.getElementById('mw-number-display');
+            const nomorText = nomorDisplay ? nomorDisplay.innerText.replace('Nomor Surat:', '').trim() : '';
+
+            const tujuanHtml = tujuan ? `<p style="margin-bottom:12px;font-size:11pt;">${escapeHtml(tujuan)}</p>` : '';
+            const judulHtml = judul ? `<h3 style="text-align:center;font-size:13pt;font-weight:bold;margin-bottom:15px;text-transform:uppercase;">${escapeHtml(judul)}</h3>` : '';
+            const bodyClean = body && body !== '<p>Tulis isi surat di sini...</p>' && body !== '<p><br></p>' ? body : '';
+            const bodyHtml = bodyClean ? `<div style="text-align:justify;line-height:${lineSpacing};">${bodyClean}</div>` : '';
+
+            // Use cached signature HTML if template hasn't changed, else fetch and cache
+            if (tpl) {
+                if (tplId !== mwCachedTplId) {
+                    mwCachedTplId = tplId;
+                    const { data: sigs } = await supabaseClient.from('letter_signatories')
+                        .select('*, workspace_members!inner(user_id, nama_user)')
+                        .eq('template_id', tplId);
+
+                    let sigHtml = '';
+                    if (sigs && sigs.length > 0) {
+                        const layers = {};
+                        sigs.forEach(s => {
+                            if (!layers[s.layer]) layers[s.layer] = {};
+                            layers[s.layer][s.position] = s;
+                        });
+                        const hasLayer1 = layers[1] && (layers[1].left || layers[1].right);
+                        for (let layer of [1, 2]) {
+                            const l = layers[layer];
+                            if (!l) continue;
+                            const left = l.left;
+                            const right = l.right;
+                            if (!left && !right) continue;
+                            if (layer === 2 && hasLayer1) sigHtml += `<hr class="sig-layer-divider">`;
+                            sigHtml += `<div class="sig-layer">
+                                <div class="sig-block">
+                                    ${left ? `<div class="sig-line">${escapeHtml(left.workspace_members?.nama_user || 'User')}</div><br><span class="sig-title">${escapeHtml(left.custom_title || '')}</span>` : ''}
+                                </div>
+                                <div class="sig-block">
+                                    ${right ? `<div class="sig-line">${escapeHtml(right.workspace_members?.nama_user || 'User')}</div><br><span class="sig-title">${escapeHtml(right.custom_title || '')}</span>` : ''}
+                                </div>
+                            </div>`;
+                        }
+                    } else if (tpl.signature_left_name || tpl.signature_right_name) {
+                        sigHtml = `<div class="sig-layer">
+                            <div class="sig-block">
+                                ${tpl.signature_left_name ? `<div class="sig-line">${escapeHtml(tpl.signature_left_name)}</div><br><span class="sig-title">${escapeHtml(tpl.signature_left_title || '')}</span>` : ''}
+                            </div>
+                            <div class="sig-block">
+                                ${tpl.signature_right_name ? `<div class="sig-line">${escapeHtml(tpl.signature_right_name)}</div><br><span class="sig-title">${escapeHtml(tpl.signature_right_title || '')}</span>` : ''}
+                            </div>
+                        </div>`;
+                    }
+                    mwCachedSigHtml = sigHtml;
+                }
+            } else {
+                mwCachedSigHtml = '';
+                mwCachedTplId = null;
+            }
+
             preview.innerHTML = `
-                ${headerHtml}
-                ${nomorText ? `<div style="text-align:center;margin-bottom:15px;font-size:10pt;"><strong>${escapeHtml(nomorText)}</strong></div>` : ''}
-                ${judulHtml}
-                ${tujuanHtml}
-                ${bodyHtml}
-                ${signatureHtml}
-                ${footerHtml}
+                <div style="padding:${mt}px ${mr}px ${mb}px ${ml}px;line-height:${lineSpacing};">
+                    ${headerHtml}
+                    ${nomorText ? `<div style="text-align:center;margin-bottom:15px;font-size:10pt;"><strong>${escapeHtml(nomorText)}</strong></div>` : ''}
+                    ${judulHtml}
+                    ${tujuanHtml}
+                    ${bodyHtml}
+                    ${mwCachedSigHtml}
+                    ${footerHtml}
+                </div>
             `;
         }
 
@@ -4842,7 +5158,8 @@
             const ctxId = document.getElementById('mw-create-konteks').value;
             const judul = document.getElementById('mw-create-judul').value;
             const tujuan = document.getElementById('mw-create-tujuan').value;
-            const body = document.getElementById('mw-create-body').value;
+            const bodyEl = document.getElementById('mw-create-body');
+            const body = bodyEl ? bodyEl.innerHTML : '';
             if (!tplId || !ctxId || !judul) {
                 showNotification('Template, konteks, dan judul harus diisi!', 'error');
                 return;
@@ -4864,21 +5181,38 @@
                 const nextNumStr = String(nextNum).padStart(3, '0');
                 const nomorSurat = `${nextNumStr}/${kode}/[Institusi]/${currentMonthRoman}/${currentYear}`;
 
+                // Load signatories from template
+                const { data: sigs } = await supabaseClient.from('letter_signatories')
+                    .select('user_id, layer, position, custom_title')
+                    .eq('template_id', tplId);
+                const signatoriesData = (sigs || []).map(s => ({
+                    user_id: s.user_id,
+                    layer: s.layer,
+                    position: s.position,
+                    custom_title: s.custom_title || '',
+                    signed: false,
+                    signed_at: null
+                }));
+
+                const bodyHtml = (body && body !== '<p>Tulis isi surat di sini...</p>' && body !== '<p><br></p>') ? body : '';
+
                 await supabaseClient.from('digital_office').insert([{
                     workspace_id: globalWorkspaceId,
                     konteks_id: ctxId,
                     nomor_surat: nomorSurat,
                     judul_surat: judul,
-                    tujuan_surat: tujuan || null,
-                    body_html: body || '',
+                    tujuan_surat: tujuan || '',
+                    body_html: bodyHtml,
+                    pengirim_id: currentUserId,
                     pengaju_id: currentUserId,
                     status: 'Draft',
-                    template_id: tplId
+                    template_id: tplId,
+                    signatories: signatoriesData
                 }]);
                 showNotification('Surat berhasil dibuat dan dikirim ke Digital Office!', 'success');
                 document.getElementById('mw-create-judul').value = '';
                 document.getElementById('mw-create-tujuan').value = '';
-                document.getElementById('mw-create-body').value = '';
+                if (bodyEl) bodyEl.innerHTML = '<p>Tulis isi surat di sini...</p>';
                 document.getElementById('mw-create-number-display').style.display = 'none';
                 switchTab('surat');
             } catch (e) {
