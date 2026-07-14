@@ -137,6 +137,28 @@
         .fm-dropzone i { font-size: 3rem; color: var(--text-muted); margin-bottom: 10px; display: block; }
         .fm-dropzone p { color: var(--text-secondary); font-size: 0.9rem; }
 
+        /* FILE MANAGER GLASSY + FILTER */
+        .glassy-storage-bar { background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25) !important; }
+        .glassy-breadcrumb { background: rgba(255,255,255,0.4) !important; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2) !important; }
+        .glassy-filter-bar { background: rgba(255,255,255,0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.25); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .glassy-filter-bar .fm-filter-search { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 180px; background: rgba(255,255,255,0.5); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); }
+        .glassy-filter-bar .fm-filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .fm-chip { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.2); color: var(--text-secondary); font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+        .fm-chip:hover { background: rgba(255,255,255,0.7); border-color: var(--primary); color: var(--primary); }
+        .fm-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .fm-item.glassy { background: rgba(255,255,255,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+        .fm-item.glassy:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+        .fm-item.glassy.folder { background: rgba(240,244,248,0.6); backdrop-filter: blur(12px); }
+        .fm-view-btn.active { background: var(--primary) !important; color: white !important; }
+        .fm-list { display: flex; flex-direction: column; gap: 4px; }
+
+        /* MW TABS */
+        .tab-btn { padding: 10px 20px; border: none; background: transparent; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; }
+        .tab-btn:hover { color: var(--primary); border-bottom-color: var(--primary-soft); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .mw-tab-content { display: none; animation: slideUpFade 0.35s; }
+        .mw-tab-content.active { display: block; }
+
         /* KANBAN */
         .kanban-board { display: flex; gap: 20px; align-items: flex-start; margin-top: 20px;}
         .kanban-col { flex: 1; background: var(--bg); padding: 15px; border-radius: var(--radius-sm); min-height: 200px; border: 1px solid var(--border);}
@@ -219,6 +241,18 @@
         .cal-event-badge.lainnya { border-left-color: #8e44ad; color: #8e44ad; background: rgba(142, 68, 173, 0.2); }
         .cal-cell.empty { background: #fcfcfc; cursor: default; }
         .cal-cell.today .cal-date-num { color: white; background: var(--success); width: 22px; height: 22px; text-align: center; line-height: 22px; border-radius: 50%;}
+
+        /* GLASSY EVENT DETAIL MODAL */
+        .glassy-overlay { background: rgba(0,0,0,0.4) !important; backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; }
+        .glassy-modal { background: rgba(255,255,255,0.65) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; border: 1px solid rgba(255,255,255,0.3) !important; box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important; }
+        .glassy-modal .modal-header { border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; }
+        .glassy-modal .modal-header h2 { color: var(--primary); }
+        .glassy-info-box { background: rgba(10,48,85,0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; }
+        .glassy-event-badge { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .glassy-event-badge.program { background: rgba(245, 158, 11, 0.35); border-left-color: var(--accent); }
+        .glassy-event-badge.rapat { background: rgba(59, 130, 246, 0.3); border-left-color: var(--info); }
+        .glassy-event-badge.tugas { background: rgba(16, 185, 129, 0.3); border-left-color: var(--success); }
+        .glassy-event-badge.lainnya { background: rgba(142, 68, 173, 0.25); border-left-color: #8e44ad; }
 
         /* ADVANCED RICH TEXT EDITOR STYLE */
         .editor-workspace-bg { background: #e2e8f0; padding: 30px 15px; overflow-y: auto; height: 75vh; display: flex; flex-direction: column; align-items: center; border-radius: 0 0 10px 10px; border: 1px solid #ccc; border-top: none; position: relative;}
@@ -439,6 +473,7 @@
             <div class="nav-item" id="menu-database-surat" onclick="switchTab('database-surat')"><i class="fa-solid fa-database"></i> Database Surat</div>
             
             <p style="padding: 15px 20px 5px; font-size: 0.75rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Playbook</p>
+            <div class="nav-item" onclick="switchTab('my-workspace')"><i class="fa-solid fa-briefcase"></i> My Workspace</div>
             <div class="nav-item" onclick="switchTab('workspace-files')"><i class="fa-solid fa-cloud"></i> File Manager</div>
         </div>
         <div class="nav-item" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="handleLogout()"><i class="fa-solid fa-sign-out-alt"></i> Keluar</div>
@@ -1214,42 +1249,60 @@
             </div>
         </div>
 
-        <div id="view-workspace-files" class="view-section">
+        <div id="view-my-workspace" class="view-section">
             <div class="fm-header">
                 <div>
-                    <h2>File Manager Workspace</h2>
-                    <p style="color: #666; font-size: 0.9rem;">Kelola file dan folder organisasi Anda.</p>
-                </div>
-                <div class="fm-actions">
-                    <button class="btn-action-sm" onclick="openUploadFileModal()"><i class="fa-solid fa-upload"></i> Upload File</button>
-                    <button class="btn-action-sm" onclick="openCreateFolderModal()"><i class="fa-solid fa-folder-plus"></i> Buat Folder</button>
+                    <h2>My Workspace</h2>
+                    <p style="color: #666; font-size: 0.9rem;">Kelola template surat, buat surat, dan akses Google Workspace.</p>
                 </div>
             </div>
-
-            <div class="fm-storage-bar" id="fm-storage-bar">
-                <i class="fa-solid fa-database" style="color: var(--primary);"></i>
-                <div class="bar"><div class="fill" id="fm-storage-fill" style="width: 0%;"></div></div>
-                <div class="info" id="fm-storage-info">0 MB / 50 MB</div>
-                <span class="upgrade-btn" onclick="showNotification('Hubungi Super Admin untuk upgrade paket penyimpanan.','info')">Upgrade Plan</span>
+            <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0;">
+                <button class="tab-btn active" data-mw-tab="templates" onclick="switchMWTab('templates', this)"><i class="fa-solid fa-file-lines"></i> Letter Templates</button>
+                <button class="tab-btn" data-mw-tab="create" onclick="switchMWTab('create', this)"><i class="fa-solid fa-pen-to-square"></i> Create Letter</button>
+                <button class="tab-btn" data-mw-tab="google" onclick="switchMWTab('google', this)"><i class="fa-brands fa-google"></i> Google Workspace</button>
             </div>
-
-            <div class="fm-breadcrumb" id="fm-breadcrumb">
-                <span class="active" onclick="goToFileRoot()"><i class="fa-solid fa-home"></i> Root</span>
+            <div id="mw-templates" class="mw-tab-content active">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h3 style="color:var(--primary);font-size:1.1rem;"><i class="fa-solid fa-file-lines"></i> Letter Templates</h3>
+                    <button class="btn-action-sm" onclick="openTemplateModal()"><i class="fa-solid fa-plus"></i> Buat Template</button>
+                </div>
+                <div id="mw-template-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+                    <div class="fm-empty"><i class="fa-solid fa-file-pen"></i>Belum ada template. Klik "Buat Template" untuk memulai.</div>
+                </div>
             </div>
-
-            <div class="fm-dropzone" id="fm-dropzone" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event)">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-                <p><strong>Seret & Lepas</strong> file ke sini atau klik untuk upload</p>
-                <input type="file" id="fm-drop-input" style="display:none" multiple onchange="handleFileSelect(event)">
+            <div id="mw-create" class="mw-tab-content">
+                <div class="card" style="max-width:800px;margin:0 auto;">
+                    <h3 style="color:var(--primary);margin-bottom:20px;"><i class="fa-solid fa-pen-to-square"></i> Buat Surat dari Template</h3>
+                    <div class="input-group">
+                        <label>Pilih Template Surat</label>
+                        <select id="mw-create-template" onchange="onMWTemplateChange()"><option value="">-- Pilih Template --</option></select>
+                    </div>
+                    <div class="input-group">
+                        <label>Konteks Surat</label>
+                        <select id="mw-create-konteks" onchange="onMWKonteksChange()"><option value="">-- Pilih Konteks --</option></select>
+                    </div>
+                    <div id="mw-create-number-display" class="number-checker-card" style="display:none;">
+                        <i class="fa-solid fa-hashtag" style="color:var(--info);font-size:1.2rem;"></i>
+                        <div class="number-display" id="mw-number-display">Pilih konteks untuk melihat nomor...</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Judul Surat</label>
+                        <input type="text" id="mw-create-judul" placeholder="Contoh: Surat Keputusan Pengurus Baru">
+                    </div>
+                    <div class="input-group">
+                        <label>Tujuan / Penerima</label>
+                        <input type="text" id="mw-create-tujuan" placeholder="Contoh: Kepada Yth. Rektor Universitas">
+                    </div>
+                    <div class="input-group">
+                        <label>Isi Surat</label>
+                        <textarea id="mw-create-body" rows="8" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;" placeholder="Tulis isi surat di sini..."></textarea>
+                    </div>
+                    <button class="btn-action" style="width:100%;" onclick="submitMWCreateLetter()"><i class="fa-solid fa-paper-plane"></i> Buat & Kirim ke Digital Office</button>
+                </div>
             </div>
-
-            <div id="fm-grid-container" class="fm-grid">
-                <div class="fm-empty"><i class="fa-solid fa-folder-open"></i>Memuat file...</div>
-            </div>
-
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
-                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 15px;"><i class="fa-brands fa-google"></i> Integrasi Google Workspace</h3>
-                <div class="grid-4" id="integrasi-cards">
+            <div id="mw-google" class="mw-tab-content">
+                <h3 style="color:var(--primary);margin-bottom:15px;"><i class="fa-brands fa-google"></i> Integrasi Google Workspace</h3>
+                <div class="grid-4" id="mw-google-cards">
                     <div class="card" onclick="window.open('https://docs.new', '_blank')" style="text-align: center; border-top: 4px solid #4285F4; cursor: pointer; transition: 0.3s; padding: 15px;">
                         <i class="fa-solid fa-file-word" style="font-size: 2rem; color: #4285F4; margin-bottom: 10px;"></i>
                         <h4 style="color: var(--primary); font-size: 0.9rem;">Google Docs</h4>
@@ -1270,7 +1323,58 @@
             </div>
         </div>
 
-    </div>
+        <div id="view-workspace-files" class="view-section">
+            <div class="fm-header">
+                <div>
+                    <h2>File Manager Workspace</h2>
+                    <p style="color: #666; font-size: 0.9rem;">Kelola file dan folder organisasi Anda.</p>
+                </div>
+                <div class="fm-actions">
+                    <div class="fm-view-toggle" style="display:inline-flex;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;margin-right:8px;">
+                        <button class="fm-view-btn active" data-view="grid" onclick="setFMView('grid')" style="padding:8px 12px;border:none;background:transparent;cursor:pointer;color:var(--text-secondary);font-size:0.9rem;"><i class="fa-solid fa-grip"></i></button>
+                        <button class="fm-view-btn" data-view="list" onclick="setFMView('list')" style="padding:8px 12px;border:none;background:transparent;cursor:pointer;color:var(--text-secondary);font-size:0.9rem;"><i class="fa-solid fa-list"></i></button>
+                    </div>
+                    <button class="btn-action-sm" onclick="openUploadFileModal()"><i class="fa-solid fa-upload"></i> Upload File</button>
+                    <button class="btn-action-sm" onclick="openCreateFolderModal()"><i class="fa-solid fa-folder-plus"></i> Buat Folder</button>
+                </div>
+            </div>
+
+            <div class="fm-storage-bar glassy-storage-bar" id="fm-storage-bar">
+                <i class="fa-solid fa-database" style="color: var(--primary);"></i>
+                <div class="bar"><div class="fill" id="fm-storage-fill" style="width: 0%;"></div></div>
+                <div class="info" id="fm-storage-info">0 MB / 50 MB</div>
+                <span class="upgrade-btn" onclick="showNotification('Hubungi Super Admin untuk upgrade paket penyimpanan.','info')">Upgrade Plan</span>
+            </div>
+
+            <div class="fm-filter-bar glassy-filter-bar" id="fm-filter-bar">
+                <div class="fm-filter-search">
+                    <i class="fa-solid fa-search" style="color:var(--text-muted);"></i>
+                    <input type="text" id="fm-search-input" placeholder="Search files..." oninput="onFMFilterChange()" style="border:none;outline:none;background:transparent;flex:1;font-family:'Inter',sans-serif;font-size:0.9rem;">
+                </div>
+                <div class="fm-filter-chips" id="fm-filter-chips">
+                    <span class="fm-chip active" data-filter="all" onclick="setFMTypeFilter('all', this)">Semua</span>
+                    <span class="fm-chip" data-filter="documents" onclick="setFMTypeFilter('documents', this)"><i class="fa-regular fa-file-word"></i> Documents</span>
+                    <span class="fm-chip" data-filter="images" onclick="setFMTypeFilter('images', this)"><i class="fa-regular fa-file-image"></i> Images</span>
+                    <span class="fm-chip" data-filter="pdf" onclick="setFMTypeFilter('pdf', this)"><i class="fa-regular fa-file-pdf"></i> PDF</span>
+                    <span class="fm-chip" data-filter="spreadsheets" onclick="setFMTypeFilter('spreadsheets', this)"><i class="fa-regular fa-file-excel"></i> Spreadsheets</span>
+                    <span class="fm-chip" data-filter="archives" onclick="setFMTypeFilter('archives', this)"><i class="fa-regular fa-file-zipper"></i> Archives</span>
+                </div>
+            </div>
+
+            <div class="fm-breadcrumb glassy-breadcrumb" id="fm-breadcrumb">
+                <span class="active" onclick="goToFileRoot()"><i class="fa-solid fa-home"></i> Root</span>
+            </div>
+
+            <div class="fm-dropzone" id="fm-dropzone" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event)">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p><strong>Seret & Lepas</strong> file ke sini atau klik untuk upload</p>
+                <input type="file" id="fm-drop-input" style="display:none" multiple onchange="handleFileSelect(event)">
+            </div>
+
+            <div id="fm-grid-container" class="fm-grid">
+                <div class="fm-empty"><i class="fa-solid fa-folder-open"></i>Memuat file...</div>
+            </div>
+        </div>
 
     <!-- FLOATING CHAT FAB & WIDGET -->
     <button class="chat-fab" onclick="toggleChatWidget()" id="chatFabBtn" title="Buka Chat Organisasi">
@@ -1317,13 +1421,13 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="eventDetailModal">
-        <div class="modal-content" style="max-width: 420px; position: relative;">
+    <div class="modal-overlay glassy-overlay" id="eventDetailModal">
+        <div class="modal-content glassy-modal" style="max-width: 420px; position: relative;">
             <div class="modal-header"><h2 id="event-detail-title">Detail Jadwal</h2><button class="close-btn" onclick="closeModal('eventDetailModal')"><i class="fa-solid fa-xmark"></i></button></div>
             <div id="event-detail-body">
                 <div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;">
                 <button class="btn-action-sm" id="event-detail-edit-btn" style="flex:1; justify-content:center; background:var(--info); color:white;" onclick="editEventFromDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button class="btn-danger-sm" id="event-detail-delete-btn" style="flex:1; justify-content:center;" onclick="deleteEventFromDetail()"><i class="fa-solid fa-trash"></i> Hapus</button>
                 <button class="btn-ghost" onclick="closeModal('eventDetailModal')" style="flex:1; justify-content:center;">Tutup</button>
@@ -1652,6 +1756,11 @@
             if (typeof AI !== 'undefined' && AI.detectContext) {
                 AI.detectContext();
             }
+
+            // Load My Workspace data when switching to it
+            if (tabId === 'my-workspace') {
+                setTimeout(() => { loadTemplates(); populateMWCreateForm(); }, 100);
+            }
         }
 
         // ===== FILE MANAGER FUNCTIONS =====
@@ -1838,7 +1947,12 @@
             const filePath = `workspace_${globalWorkspaceId}/${parentId || 'root'}/${fileName}`;
 
             const { error: uploadError } = await supabaseClient.storage.from(FM_BUCKET).upload(filePath, file);
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                if (uploadError.message && (uploadError.message.toLowerCase().includes('bucket') || uploadError.message.toLowerCase().includes('not found'))) {
+                    throw new Error('Storage bucket "workspace_files" belum dibuat. Buat di Supabase Dashboard > Storage terlebih dahulu.');
+                }
+                throw uploadError;
+            }
 
             const { data: publicUrlData } = supabaseClient.storage.from(FM_BUCKET).getPublicUrl(filePath);
             const fileUrl = publicUrlData.publicUrl;
@@ -2792,7 +2906,7 @@
             document.getElementById('event-detail-delete-btn').style.display = isSchedule ? 'block' : 'none';
 
             body.innerHTML = `
-                <div style="background:var(--primary-soft);padding:16px;border-radius:12px;margin-bottom:12px;">
+                <div class="glassy-info-box">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem;">
                         <div><span style="color:var(--text-muted);font-size:0.8rem;">Tipe</span><br><strong>${tipe}</strong></div>
                         <div><span style="color:var(--text-muted);font-size:0.8rem;">Tanggal</span><br><strong>${tgl}</strong></div>
@@ -2800,7 +2914,7 @@
                         <div><span style="color:var(--text-muted);font-size:0.8rem;">Lokasi</span><br><strong>${lokasi}</strong></div>
                     </div>
                 </div>
-                <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:8px;">
+                <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:8px;padding:0 4px;">
                     <strong>Detail:</strong><br>${ket}
                 </div>
                 ${rsvpHtml}
@@ -2843,7 +2957,7 @@
                 progsToday.forEach(p => {
                     let wkt = p.waktu_pelaksanaan ? p.waktu_pelaksanaan.substring(0,5) : '';
                     let tooltipProg = `Tipe: Program/Event\nLokasi: ${p.tempat || 'Belum diatur'}`;
-                    badges += `<span class="cal-event-badge program" data-tooltip="${tooltipProg}" onclick="event.stopPropagation(); showEventDetail('${p.id}', 'program')">${wkt} ${p.nama_program}</span>`;
+                    badges += `<span class="cal-event-badge program glassy-event-badge" data-tooltip="${tooltipProg}" onclick="event.stopPropagation(); showEventDetail('${p.id}', 'program')">${wkt} ${p.nama_program}</span>`;
                 });
 
                 globalSchedules.forEach(s => {
@@ -2871,7 +2985,7 @@
                         }
 
                         let tooltipSched = `Tipe: ${s.tipe_jadwal}\nKet: ${s.keterangan || '-'}`;
-                        badges += `<span class="cal-event-badge ${typeClass}" data-tooltip="${tooltipSched}" onclick="event.stopPropagation(); showEventDetail('${s.id}', 'schedule')">${wkt} ${s.judul_kegiatan}${rsvpIndicator}</span>`;
+                        badges += `<span class="cal-event-badge ${typeClass} glassy-event-badge" data-tooltip="${tooltipSched}" onclick="event.stopPropagation(); showEventDetail('${s.id}', 'schedule')">${wkt} ${s.judul_kegiatan}${rsvpIndicator}</span>`;
                     }
                 });
 
@@ -4311,14 +4425,381 @@
             }, 2000);
         });
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        // ===== MY WORKSPACE FUNCTIONS =====
+        let mwTemplates = [];
+        let mwSelectedTemplateId = null;
+
+        function switchMWTab(tabId, btn) {
+            document.querySelectorAll('[data-mw-tab]').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.mw-tab-content').forEach(c => c.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            const tabContent = document.getElementById('mw-' + tabId);
+            if (tabContent) tabContent.classList.add('active');
+            if (tabId === 'templates') loadTemplates();
+            if (tabId === 'create') populateMWCreateForm();
         }
 
-        function escapeRegex(str) {
-            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        async function loadTemplates() {
+            const container = document.getElementById('mw-template-list');
+            try {
+                const { data } = await supabaseClient.from('letter_templates')
+                    .select('*, surat_contexts(nama_konteks)')
+                    .eq('workspace_id', globalWorkspaceId)
+                    .order('name');
+                mwTemplates = data || [];
+                if (!mwTemplates.length) {
+                    container.innerHTML = '<div class="fm-empty"><i class="fa-solid fa-file-pen"></i>Belum ada template. Klik "Buat Template" untuk memulai.</div>';
+                    return;
+                }
+                let html = '';
+                mwTemplates.forEach(t => {
+                    const ctxName = t.surat_contexts ? t.surat_contexts.nama_konteks : 'Tanpa Konteks';
+                    html += `<div class="fm-item glassy" style="text-align:left;padding:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                            <h4 style="color:var(--primary);font-size:0.95rem;">${escapeHtml(t.name)}</h4>
+                            <div style="display:flex;gap:4px;">
+                                <button class="btn-ghost" style="padding:4px 8px;font-size:0.75rem;" onclick="editTemplate('${t.id}')"><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn-danger-sm" style="padding:4px 8px;font-size:0.75rem;" onclick="deleteTemplate('${t.id}')"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);"><i class="fa-solid fa-tag"></i> ${escapeHtml(ctxName)}</div>
+                        ${t.letterhead_url ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;"><i class="fa-solid fa-image"></i> Letterhead tersedia</div>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<div class="fm-empty"><i class="fa-solid fa-exclamation-triangle"></i>Gagal memuat template.</div>';
+            }
         }
+
+        async function openTemplateModal() {
+            const ctxs = await loadKonteksOptions();
+            const html = `
+                <div class="modal-overlay active" id="mw-template-modal">
+                    <div class="modal-content" style="max-width:600px;">
+                        <div class="modal-header"><h2>Buat Template Surat</h2><button class="close-btn" onclick="closeModal('mw-template-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+                        <div class="input-group"><label>Nama Template</label><input type="text" id="mw-tpl-name" placeholder="Contoh: SK Pengurus"></div>
+                        <div class="input-group"><label>Konteks Surat</label><select id="mw-tpl-konteks">${ctxs}</select></div>
+                        <div class="input-group"><label>URL Letterhead (opsional)</label><input type="url" id="mw-tpl-letterhead" placeholder="https://example.com/letterhead.png"></div>
+                        <div class="input-group"><label>Body Template (HTML optional)</label><textarea id="mw-tpl-body" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;" placeholder="Isi template surat..."></textarea></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>Tanda Tangan Kiri - Nama</label><input type="text" id="mw-tpl-sig-left-name"></div>
+                            <div class="input-group"><label>Tanda Tangan Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-left-title"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>Tanda Tangan Kanan - Nama</label><input type="text" id="mw-tpl-sig-right-name"></div>
+                            <div class="input-group"><label>Tanda Tangan Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-right-title"></div>
+                        </div>
+                        <button class="btn-action" style="width:100%;" onclick="saveTemplate()"><i class="fa-solid fa-floppy-disk"></i> Simpan Template</button>
+                    </div>
+                </div>`;
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            document.body.appendChild(div.firstElementChild);
+        }
+
+        async function loadKonteksOptions() {
+            try {
+                const { data } = await supabaseClient.from('surat_contexts').select('*').eq('workspace_id', globalWorkspaceId);
+                if (data && data.length) {
+                    return '<option value="">-- Pilih Konteks --</option>' + data.map(c => `<option value="${c.id}">${escapeHtml(c.nama_konteks)} (${c.kode_inisial})</option>`).join('');
+                }
+            } catch(e) {}
+            return '<option value="">-- Belum ada konteks --</option>';
+        }
+
+        async function saveTemplate() {
+            const name = document.getElementById('mw-tpl-name').value;
+            if (!name) { showNotification('Nama template harus diisi!', 'error'); return; }
+            try {
+                await supabaseClient.from('letter_templates').insert([{
+                    workspace_id: globalWorkspaceId,
+                    name: name,
+                    konteks_id: document.getElementById('mw-tpl-konteks').value || null,
+                    letterhead_url: document.getElementById('mw-tpl-letterhead').value || null,
+                    body_template: document.getElementById('mw-tpl-body').value || '',
+                    signature_left_name: document.getElementById('mw-tpl-sig-left-name').value || '',
+                    signature_left_title: document.getElementById('mw-tpl-sig-left-title').value || '',
+                    signature_right_name: document.getElementById('mw-tpl-sig-right-name').value || '',
+                    signature_right_title: document.getElementById('mw-tpl-sig-right-title').value || '',
+                    created_by: currentUserId
+                }]);
+                showNotification('Template berhasil dibuat!', 'success');
+                closeModal('mw-template-modal');
+                loadTemplates();
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        async function editTemplate(id) {
+            const tpl = mwTemplates.find(t => t.id === id);
+            if (!tpl) return;
+            const ctxs = await loadKonteksOptions();
+            const html = `
+                <div class="modal-overlay active" id="mw-template-modal">
+                    <div class="modal-content" style="max-width:600px;">
+                        <div class="modal-header"><h2>Edit Template</h2><button class="close-btn" onclick="closeModal('mw-template-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+                        <div class="input-group"><label>Nama Template</label><input type="text" id="mw-tpl-name" value="${escapeHtml(tpl.name)}"></div>
+                        <div class="input-group"><label>Konteks Surat</label><select id="mw-tpl-konteks">${ctxs.replace('value="' + (tpl.konteks_id || '') + '"', 'value="' + (tpl.konteks_id || '') + '" selected')}</select></div>
+                        <div class="input-group"><label>URL Letterhead</label><input type="url" id="mw-tpl-letterhead" value="${escapeHtml(tpl.letterhead_url || '')}"></div>
+                        <div class="input-group"><label>Body Template</label><textarea id="mw-tpl-body" rows="4" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;">${escapeHtml(tpl.body_template || '')}</textarea></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>TTD Kiri - Nama</label><input type="text" id="mw-tpl-sig-left-name" value="${escapeHtml(tpl.signature_left_name || '')}"></div>
+                            <div class="input-group"><label>TTD Kiri - Jabatan</label><input type="text" id="mw-tpl-sig-left-title" value="${escapeHtml(tpl.signature_left_title || '')}"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="input-group"><label>TTD Kanan - Nama</label><input type="text" id="mw-tpl-sig-right-name" value="${escapeHtml(tpl.signature_right_name || '')}"></div>
+                            <div class="input-group"><label>TTD Kanan - Jabatan</label><input type="text" id="mw-tpl-sig-right-title" value="${escapeHtml(tpl.signature_right_title || '')}"></div>
+                        </div>
+                        <button class="btn-action" style="width:100%;" onclick="updateTemplate('${id}')"><i class="fa-solid fa-floppy-disk"></i> Update Template</button>
+                    </div>
+                </div>`;
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            document.body.appendChild(div.firstElementChild);
+        }
+
+        async function updateTemplate(id) {
+            const name = document.getElementById('mw-tpl-name').value;
+            if (!name) { showNotification('Nama template harus diisi!', 'error'); return; }
+            try {
+                await supabaseClient.from('letter_templates').update({
+                    name, konteks_id: document.getElementById('mw-tpl-konteks').value || null,
+                    letterhead_url: document.getElementById('mw-tpl-letterhead').value || null,
+                    body_template: document.getElementById('mw-tpl-body').value || '',
+                    signature_left_name: document.getElementById('mw-tpl-sig-left-name').value || '',
+                    signature_left_title: document.getElementById('mw-tpl-sig-left-title').value || '',
+                    signature_right_name: document.getElementById('mw-tpl-sig-right-name').value || '',
+                    signature_right_title: document.getElementById('mw-tpl-sig-right-title').value || '',
+                }).eq('id', id);
+                showNotification('Template diupdate!', 'success');
+                closeModal('mw-template-modal');
+                loadTemplates();
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteTemplate(id) {
+            showConfirm('Hapus template ini?', async () => {
+                try {
+                    await supabaseClient.from('letter_templates').delete().eq('id', id);
+                    showNotification('Template dihapus', 'success');
+                    loadTemplates();
+                } catch (e) {
+                    showNotification('Gagal: ' + e.message, 'error');
+                }
+            });
+        }
+
+        async function populateMWCreateForm() {
+            try {
+                const { data: templates } = await supabaseClient.from('letter_templates')
+                    .select('id, name').eq('workspace_id', globalWorkspaceId).order('name');
+                const sel = document.getElementById('mw-create-template');
+                sel.innerHTML = '<option value="">-- Pilih Template --</option>' + (templates || []).map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+                const { data: ctxs } = await supabaseClient.from('surat_contexts').select('*').eq('workspace_id', globalWorkspaceId);
+                const ctxSel = document.getElementById('mw-create-konteks');
+                ctxSel.innerHTML = '<option value="">-- Pilih Konteks --</option>' + (ctxs || []).map(c => `<option value="${c.id}" data-kode="${c.kode_inisial}">${escapeHtml(c.nama_konteks)} (${c.kode_inisial})</option>`).join('');
+            } catch(e) {}
+        }
+
+        async function onMWTemplateChange() {
+            const tplId = document.getElementById('mw-create-template').value;
+            const tpl = mwTemplates.find(t => t.id === tplId);
+            if (tpl) {
+                mwSelectedTemplateId = tplId;
+                if (tpl.konteks_id) {
+                    document.getElementById('mw-create-konteks').value = tpl.konteks_id;
+                }
+                if (tpl.body_template) {
+                    document.getElementById('mw-create-body').value = tpl.body_template;
+                }
+                onMWKonteksChange();
+            }
+        }
+
+        async function onMWKonteksChange() {
+            const ctxId = document.getElementById('mw-create-konteks').value;
+            if (!ctxId) {
+                document.getElementById('mw-create-number-display').style.display = 'none';
+                return;
+            }
+            document.getElementById('mw-create-number-display').style.display = 'flex';
+            await generateNextNumberForMW(ctxId);
+        }
+
+        async function generateNextNumberForMW(ctxId) {
+            const displayEl = document.getElementById('mw-number-display');
+            try {
+                const selectEl = document.getElementById('mw-create-konteks');
+                const selectedOption = selectEl.options[selectEl.selectedIndex];
+                const kode = selectedOption.getAttribute('data-kode');
+                const currentYear = new Date().getFullYear();
+                const currentMonthRoman = toRoman(new Date().getMonth() + 1);
+                const { data } = await supabaseClient.from('digital_office').select('nomor_surat').eq('konteks_id', ctxId).like('nomor_surat', `%/${currentYear}`);
+                let maxNum = 0;
+                if (data && data.length > 0) {
+                    data.forEach(d => {
+                        const parts = d.nomor_surat.split('/');
+                        const numPart = parseInt(parts[0], 10);
+                        if(!isNaN(numPart) && numPart > maxNum) maxNum = numPart;
+                    });
+                }
+                const nextNum = maxNum + 1;
+                const nextNumStr = String(nextNum).padStart(3, '0');
+                displayEl.innerHTML = `<span style="color:var(--success);font-weight:600;">Nomor Surat:</span> ${nextNumStr}/${kode}/[Institusi]/${currentMonthRoman}/${currentYear}`;
+            } catch(e) {
+                displayEl.innerHTML = 'Gagal generate nomor...';
+            }
+        }
+
+        async function submitMWCreateLetter() {
+            const tplId = document.getElementById('mw-create-template').value;
+            const ctxId = document.getElementById('mw-create-konteks').value;
+            const judul = document.getElementById('mw-create-judul').value;
+            const tujuan = document.getElementById('mw-create-tujuan').value;
+            const body = document.getElementById('mw-create-body').value;
+            if (!tplId || !ctxId || !judul) {
+                showNotification('Template, konteks, dan judul harus diisi!', 'error');
+                return;
+            }
+            try {
+                const selectEl = document.getElementById('mw-create-konteks');
+                const selectedOption = selectEl.options[selectEl.selectedIndex];
+                const kode = selectedOption.getAttribute('data-kode');
+                const currentYear = new Date().getFullYear();
+                const currentMonthRoman = toRoman(new Date().getMonth() + 1);
+                const { data: existing } = await supabaseClient.from('digital_office').select('nomor_surat').eq('konteks_id', ctxId).like('nomor_surat', `%/${currentYear}`);
+                let maxNum = 0;
+                if (existing) existing.forEach(d => {
+                    const parts = d.nomor_surat.split('/');
+                    const numPart = parseInt(parts[0], 10);
+                    if(!isNaN(numPart) && numPart > maxNum) maxNum = numPart;
+                });
+                const nextNum = maxNum + 1;
+                const nextNumStr = String(nextNum).padStart(3, '0');
+                const nomorSurat = `${nextNumStr}/${kode}/[Institusi]/${currentMonthRoman}/${currentYear}`;
+
+                await supabaseClient.from('digital_office').insert([{
+                    workspace_id: globalWorkspaceId,
+                    konteks_id: ctxId,
+                    nomor_surat: nomorSurat,
+                    judul_surat: judul,
+                    tujuan_surat: tujuan || null,
+                    body_html: body || '',
+                    pengaju_id: currentUserId,
+                    status: 'Draft',
+                    template_id: tplId
+                }]);
+                showNotification('Surat berhasil dibuat dan dikirim ke Digital Office!', 'success');
+                document.getElementById('mw-create-judul').value = '';
+                document.getElementById('mw-create-tujuan').value = '';
+                document.getElementById('mw-create-body').value = '';
+                document.getElementById('mw-create-number-display').style.display = 'none';
+                switchTab('surat');
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        // ===== FILE MANAGER VIEW TOGGLE & FILTERS =====
+        let fmViewMode = 'grid';
+        let fmTypeFilter = 'all';
+        let fmSearchQuery = '';
+
+        function setFMView(mode) {
+            fmViewMode = mode;
+            document.querySelectorAll('.fm-view-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.fm-view-btn[data-view="${mode}"]`).classList.add('active');
+            const container = document.getElementById('fm-grid-container');
+            container.className = mode === 'grid' ? 'fm-grid' : 'fm-list';
+            renderFileGrid();
+        }
+
+        function setFMTypeFilter(filter, btn) {
+            fmTypeFilter = filter;
+            document.querySelectorAll('.fm-chip').forEach(c => c.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            loadWorkspaceFiles(fmCurrentFolderId);
+        }
+
+        function onFMFilterChange() {
+            fmSearchQuery = document.getElementById('fm-search-input').value.trim().toLowerCase();
+            loadWorkspaceFiles(fmCurrentFolderId);
+        }
+
+        function getFileTypeCategory(item) {
+            if (item.type === 'folder') return 'all';
+            const mime = (item.mime_type || '').toLowerCase();
+            const name = (item.name || '').toLowerCase();
+            const ext = '.' + name.split('.').pop();
+            if (mime.startsWith('image/')) return 'images';
+            if (mime.includes('pdf') || ext === '.pdf') return 'pdf';
+            if (mime.includes('word') || mime.includes('document') || ext === '.doc' || ext === '.docx') return 'documents';
+            if (mime.includes('excel') || mime.includes('spreadsheet') || ext === '.xlsx' || ext === '.xls' || ext === '.csv') return 'spreadsheets';
+            if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar') || ext === '.zip' || ext === '.rar' || ext === '.7z') return 'archives';
+            return 'other';
+        }
+
+        // Patch renderFileGrid to support list view and filters
+        const _origRenderFileGrid = renderFileGrid;
+        renderFileGrid = function() {
+            let filtered = fmItems;
+            if (fmTypeFilter !== 'all') {
+                filtered = filtered.filter(item => getFileTypeCategory(item) === fmTypeFilter);
+            }
+            if (fmSearchQuery) {
+                filtered = filtered.filter(item => item.name.toLowerCase().includes(fmSearchQuery));
+            }
+            const container = document.getElementById('fm-grid-container');
+            if (!filtered || filtered.length === 0) {
+                container.innerHTML = '<div class="fm-empty"><i class="fa-solid fa-folder-open"></i><h4 style="color: var(--text-secondary); margin-bottom: 5px;">Tidak ada file ditemukan</h4><p style="font-size: 0.85rem;">Coba ubah filter atau kata kunci pencarian</p></div>';
+                return;
+            }
+            if (fmViewMode === 'list') {
+                let html = '<div style="display:flex;flex-direction:column;gap:4px;">';
+                filtered.forEach(item => {
+                    const isFolder = item.type === 'folder';
+                    const icon = isFolder ? 'fa-solid fa-folder' : getFileIcon(item.mime_type, item.name);
+                    const sizeStr = isFolder ? '' : formatFileSize(item.file_size);
+                    const clickAction = isFolder ? `openFileFolder('${item.id}')` : `openFilePreview('${item.id}')`;
+                    html += `<div class="fm-item glassy" style="display:flex;align-items:center;gap:12px;padding:10px 14px;text-align:left;border-radius:var(--radius-sm);cursor:pointer;" onclick="${clickAction}">
+                        <i class="${icon}" style="font-size:1.3rem;color:${isFolder ? 'var(--primary)' : 'var(--text-muted)'};width:24px;text-align:center;"></i>
+                        <span style="flex:1;font-weight:500;font-size:0.9rem;color:var(--primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.name)}</span>
+                        ${sizeStr ? `<span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${sizeStr}</span>` : ''}
+                        <div onclick="event.stopPropagation()" style="display:flex;gap:4px;">
+                            <button class="btn-ghost" style="padding:3px 8px;font-size:0.7rem;" onclick="openRenameItem('${item.id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn-ghost" style="padding:3px 8px;font-size:0.7rem;" onclick="openMoveItem('${item.id}')"><i class="fa-solid fa-arrow-right"></i></button>
+                            <button class="btn-danger-sm" style="padding:3px 8px;font-size:0.7rem;" onclick="deleteWorkspaceItem('${item.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                let html = '';
+                filtered.forEach(item => {
+                    const isFolder = item.type === 'folder';
+                    const icon = isFolder ? 'fa-solid fa-folder' : getFileIcon(item.mime_type, item.name);
+                    const sizeStr = isFolder ? '' : formatFileSize(item.file_size);
+                    const itemClass = isFolder ? 'fm-item folder glassy' : 'fm-item file glassy';
+                    const clickAction = isFolder ? `onclick="openFileFolder('${item.id}')"` : `onclick="openFilePreview('${item.id}')"`;
+                    html += `<div class="${itemClass}" ${clickAction}>
+                        <div class="fm-actions" onclick="event.stopPropagation()">
+                            <button onclick="openRenameItem('${item.id}')" title="Rename"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="openMoveItem('${item.id}')" title="Pindahkan"><i class="fa-solid fa-arrow-right"></i></button>
+                            <button class="btn-del" onclick="deleteWorkspaceItem('${item.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <span class="fm-icon" style="color:${isFolder ? 'var(--primary)' : 'var(--text-muted)'}"><i class="${icon}"></i></span>
+                        <div class="fm-name">${escapeHtml(item.name)}</div>
+                        ${sizeStr ? `<div class="fm-size">${sizeStr}</div>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            }
+        };
 
     </script>
 <script src="ai-assistant.js"></script>

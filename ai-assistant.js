@@ -469,6 +469,7 @@ function AIAssistantCreate(pageConfig) {
     { tab: 'surat', icon: 'fa-solid fa-file-signature', title: 'Digital Office', desc: 'Ajukan dokumen untuk ditandatangani. Upload PDF, sistem akan mendeteksi nomor surat secara otomatis.' },
     { tab: 'database-surat', icon: 'fa-solid fa-database', title: 'Database Surat', desc: 'Konfigurasi format penomoran surat dan lihat riwayat semua dokumen yang telah diajukan.' },
     { tab: 'workspace-files', icon: 'fa-solid fa-cloud', title: 'File Manager', desc: 'Kelola file dan folder workspace dengan tampilan seperti Google Drive. Upload, pindahkan, rename, dan hapus file.' },
+    { tab: 'my-workspace', icon: 'fa-solid fa-briefcase', title: 'My Workspace', desc: 'Buat dan kelola template surat, buat surat dengan nomor otomatis, dan akses integrasi Google Workspace.' },
   ];
 
   const ONBOARDING_HTML = `
@@ -522,7 +523,7 @@ function AIAssistantCreate(pageConfig) {
     if (!document.getElementById('onboardingOverlay')) {
       const div = document.createElement('div');
       div.innerHTML = ONBOARDING_HTML;
-      document.body.appendChild(div.firstElementChild);
+      document.body.appendChild(div.lastElementChild);
     }
     self.renderOnboardingStep();
     const overlay = document.getElementById('onboardingOverlay');
