@@ -2661,9 +2661,25 @@
                 // Send invitation to workspace chat if there are assigned users
                 if (assignedTo.length > 0 && newScheduleId) {
                     try {
+                        let groupId = null;
                         const { data: wsGroups } = await supabaseClient.from('chat_groups')
                             .select('id').eq('workspace_id', globalWorkspaceId).limit(1);
                         if (wsGroups && wsGroups.length > 0) {
+                            groupId = wsGroups[0].id;
+                        } else {
+                            // Auto-create a workspace general group
+                            const { data: newGroup } = await supabaseClient.from('chat_groups')
+                                .insert([{ workspace_id: globalWorkspaceId, name: 'General Workspace', created_by: currentUserId }])
+                                .select().single();
+                            if (newGroup) {
+                                groupId = newGroup.id;
+                                // Add all workspace members to the group
+                                const memberIds = globalWorkspaceUsers.map(u => u.id);
+                                const memberData = memberIds.map(uid => ({ group_id: groupId, user_id: uid }));
+                                await supabaseClient.from('chat_group_members').insert(memberData);
+                            }
+                        }
+                        if (groupId) {
                             const groupId = wsGroups[0].id;
                             const waktuStr = payload.waktu ? payload.waktu.substring(0,5) : '-';
                             const inviteHtml = `<div class="event-invitation" data-event-id="${newScheduleId}">
