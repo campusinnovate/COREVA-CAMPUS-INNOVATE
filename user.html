@@ -94,6 +94,48 @@
         
         .btn-action { background: var(--accent); color: var(--primary); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
         .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3); }
+        .btn-action-sm { background: var(--accent); color: var(--primary); border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem;}
+        .btn-action-sm:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3); }
+        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 14px; border-radius: 6px; font-weight: 500; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem;}
+        .btn-ghost:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+        .btn-danger-sm { background: var(--error); color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem;}
+        .btn-danger-sm:hover { opacity: 0.85; }
+
+        /* FILE MANAGER STYLE */
+        .fm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .fm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .fm-breadcrumb { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 20px; flex-wrap: wrap; font-size: 0.9rem; }
+        .fm-breadcrumb span { color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
+        .fm-breadcrumb span:hover { color: var(--primary); background: var(--primary-soft); }
+        .fm-breadcrumb span.active { color: var(--primary); font-weight: 600; }
+        .fm-breadcrumb i.sep { color: #ccc; font-size: 0.7rem; }
+        .fm-storage-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .fm-storage-bar .bar { flex: 1; min-width: 150px; height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+        .fm-storage-bar .bar .fill { height: 100%; border-radius: 10px; background: var(--success); transition: width 0.5s; }
+        .fm-storage-bar .bar .fill.warning { background: var(--accent); }
+        .fm-storage-bar .bar .fill.danger { background: var(--error); }
+        .fm-storage-bar .info { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+        .fm-storage-bar .upgrade-btn { font-size: 0.8rem; color: var(--info); cursor: pointer; text-decoration: underline; }
+        .fm-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .fm-empty i { font-size: 4rem; color: #e2e8f0; margin-bottom: 15px; display: block; }
+        .fm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+        .fm-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px 12px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .fm-item:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .fm-item .fm-icon { font-size: 2.8rem; margin-bottom: 8px; display: block; }
+        .fm-item .fm-name { font-size: 0.85rem; color: var(--primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .fm-item .fm-size { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+        .fm-item .fm-actions { position: absolute; top: 6px; right: 6px; display: none; gap: 3px; }
+        .fm-item:hover .fm-actions { display: flex; }
+        .fm-item .fm-actions button { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 0.7rem; color: var(--text-secondary); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .fm-item .fm-actions button:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .fm-item .fm-actions .btn-del:hover { background: var(--error); }
+        .fm-item.folder { background: var(--primary-soft); border-color: transparent; }
+        .fm-item.folder .fm-icon { color: var(--primary); }
+        .fm-item.file .fm-icon { color: var(--text-muted); }
+        .fm-dropzone { border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 40px; text-align: center; margin-bottom: 20px; transition: 0.3s; cursor: pointer; }
+        .fm-dropzone:hover, .fm-dropzone.dragover { border-color: var(--primary); background: var(--primary-soft); }
+        .fm-dropzone i { font-size: 3rem; color: var(--text-muted); margin-bottom: 10px; display: block; }
+        .fm-dropzone p { color: var(--text-secondary); font-size: 0.9rem; }
 
         /* KANBAN */
         .kanban-board { display: flex; gap: 20px; align-items: flex-start; margin-top: 20px;}
@@ -397,7 +439,7 @@
             <div class="nav-item" id="menu-database-surat" onclick="switchTab('database-surat')"><i class="fa-solid fa-database"></i> Database Surat</div>
             
             <p style="padding: 15px 20px 5px; font-size: 0.75rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Playbook</p>
-            <div class="nav-item" onclick="switchTab('integrasi-docs')"><i class="fa-solid fa-cloud"></i> Workspace</div>
+            <div class="nav-item" onclick="switchTab('workspace-files')"><i class="fa-solid fa-cloud"></i> File Manager</div>
         </div>
         <div class="nav-item" style="border-top: 1px solid rgba(255,255,255,0.1);" onclick="handleLogout()"><i class="fa-solid fa-sign-out-alt"></i> Keluar</div>
     </div>
@@ -1172,34 +1214,58 @@
             </div>
         </div>
 
-        <div id="view-integrasi-docs" class="view-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div id="view-workspace-files" class="view-section">
+            <div class="fm-header">
                 <div>
-                    <h2>Integrasi Google Workspace</h2>
-                    <p style="color: #666; font-size: 0.9rem;">Pilih layanan untuk membuka dokumen baru di tab baru.</p>
+                    <h2>File Manager Workspace</h2>
+                    <p style="color: #666; font-size: 0.9rem;">Kelola file dan folder organisasi Anda.</p>
+                </div>
+                <div class="fm-actions">
+                    <button class="btn-action-sm" onclick="openUploadFileModal()"><i class="fa-solid fa-upload"></i> Upload File</button>
+                    <button class="btn-action-sm" onclick="openCreateFolderModal()"><i class="fa-solid fa-folder-plus"></i> Buat Folder</button>
                 </div>
             </div>
-            
-            <div class="grid-4" id="integrasi-cards">
-                <div class="card" onclick="window.open('https://docs.new', '_blank')" style="text-align: center; border-top: 4px solid #4285F4; cursor: pointer; transition: 0.3s;">
-                    <i class="fa-solid fa-file-word" style="font-size: 3rem; color: #4285F4; margin-bottom: 15px;"></i>
-                    <h3 style="color: var(--primary);">Google Docs</h3>
-                    <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">Buat dokumen teks baru</p>
-                </div>
-                <div class="card" onclick="window.open('https://sheets.new', '_blank')" style="text-align: center; border-top: 4px solid #0F9D58; cursor: pointer; transition: 0.3s;">
-                    <i class="fa-solid fa-file-excel" style="font-size: 3rem; color: #0F9D58; margin-bottom: 15px;"></i>
-                    <h3 style="color: var(--primary);">Google Sheets</h3>
-                    <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">Buat spreadsheet baru</p>
-                </div>
-                <div class="card" onclick="window.open('https://slides.new', '_blank')" style="text-align: center; border-top: 4px solid #F4B400; cursor: pointer; transition: 0.3s;">
-                    <i class="fa-solid fa-file-powerpoint" style="font-size: 3rem; color: #F4B400; margin-bottom: 15px;"></i>
-                    <h3 style="color: var(--primary);">Google Slides</h3>
-                    <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">Buat presentasi baru</p>
-                </div>
-                <div class="card" onclick="window.open('https://forms.new', '_blank')" style="text-align: center; border-top: 4px solid #7248B9; cursor: pointer; transition: 0.3s;">
-                    <i class="fa-solid fa-file-signature" style="font-size: 3rem; color: #7248B9; margin-bottom: 15px;"></i>
-                    <h3 style="color: var(--primary);">Google Forms</h3>
-                    <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">Buat formulir survei baru</p>
+
+            <div class="fm-storage-bar" id="fm-storage-bar">
+                <i class="fa-solid fa-database" style="color: var(--primary);"></i>
+                <div class="bar"><div class="fill" id="fm-storage-fill" style="width: 0%;"></div></div>
+                <div class="info" id="fm-storage-info">0 MB / 50 MB</div>
+                <span class="upgrade-btn" onclick="showNotification('Hubungi Super Admin untuk upgrade paket penyimpanan.','info')">Upgrade Plan</span>
+            </div>
+
+            <div class="fm-breadcrumb" id="fm-breadcrumb">
+                <span class="active" onclick="goToFileRoot()"><i class="fa-solid fa-home"></i> Root</span>
+            </div>
+
+            <div class="fm-dropzone" id="fm-dropzone" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleFileDrop(event)">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p><strong>Seret & Lepas</strong> file ke sini atau klik untuk upload</p>
+                <input type="file" id="fm-drop-input" style="display:none" multiple onchange="handleFileSelect(event)">
+            </div>
+
+            <div id="fm-grid-container" class="fm-grid">
+                <div class="fm-empty"><i class="fa-solid fa-folder-open"></i>Memuat file...</div>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+                <h3 style="color: var(--primary); font-size: 1rem; margin-bottom: 15px;"><i class="fa-brands fa-google"></i> Integrasi Google Workspace</h3>
+                <div class="grid-4" id="integrasi-cards">
+                    <div class="card" onclick="window.open('https://docs.new', '_blank')" style="text-align: center; border-top: 4px solid #4285F4; cursor: pointer; transition: 0.3s; padding: 15px;">
+                        <i class="fa-solid fa-file-word" style="font-size: 2rem; color: #4285F4; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--primary); font-size: 0.9rem;">Google Docs</h4>
+                    </div>
+                    <div class="card" onclick="window.open('https://sheets.new', '_blank')" style="text-align: center; border-top: 4px solid #0F9D58; cursor: pointer; transition: 0.3s; padding: 15px;">
+                        <i class="fa-solid fa-file-excel" style="font-size: 2rem; color: #0F9D58; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--primary); font-size: 0.9rem;">Google Sheets</h4>
+                    </div>
+                    <div class="card" onclick="window.open('https://slides.new', '_blank')" style="text-align: center; border-top: 4px solid #F4B400; cursor: pointer; transition: 0.3s; padding: 15px;">
+                        <i class="fa-solid fa-file-powerpoint" style="font-size: 2rem; color: #F4B400; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--primary); font-size: 0.9rem;">Google Slides</h4>
+                    </div>
+                    <div class="card" onclick="window.open('https://forms.new', '_blank')" style="text-align: center; border-top: 4px solid #7248B9; cursor: pointer; transition: 0.3s; padding: 15px;">
+                        <i class="fa-solid fa-file-signature" style="font-size: 2rem; color: #7248B9; margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--primary); font-size: 0.9rem;">Google Forms</h4>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1226,7 +1292,8 @@
             <div class="modal-header"><h2 id="schedule-modal-title">Tambah Jadwal Baru</h2><button class="close-btn" onclick="closeModal('scheduleModal')"><i class="fa-solid fa-xmark"></i></button></div>
             <form onsubmit="saveSchedule(event)" id="form-schedule">
                 <div class="input-group"><label>Judul Kegiatan / Agenda</label><input type="text" id="sched-judul" placeholder="Contoh: Rapat Evaluasi Panitia" required></div>
-                <div class="input-group"><label>Detail</label><input type="text" id="sched-keterangan" placeholder="Contoh: Membahas progress sponsorship"></div>
+                <div class="input-group"><label>Detail / Deskripsi</label><input type="text" id="sched-keterangan" placeholder="Contoh: Membahas progress sponsorship"></div>
+                <div class="input-group"><label>Lokasi / Tempat</label><input type="text" id="sched-lokasi" placeholder="Contoh: Ruang Rapat Lt.2 / Zoom Meeting"></div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="input-group"><label>Tanggal Mulai</label><input type="date" id="sched-tgl-mulai" required></div>
                     <div class="input-group"><label>Tanggal Selesai</label><input type="date" id="sched-tgl-selesai" required></div>
@@ -1238,8 +1305,29 @@
                         <input type="text" id="sched-tipe" placeholder="Contoh: Rapat, Penugasan, dll" required>
                     </div>
                 </div>
+                <div class="input-group">
+                    <label>Assign Anggota (undang ke acara)</label>
+                    <select id="sched-assign" multiple style="width:100%; height:100px; padding:8px; border:1.5px solid var(--border); border-radius:var(--radius-sm); outline:none;">
+                        <option value="">-- Muat anggota --</option>
+                    </select>
+                    <small style="color:#888; font-size:0.75rem;">Gunakan Ctrl/Cmd untuk memilih lebih dari satu</small>
+                </div>
                 <button type="submit" class="btn-action" style="width: 100%; margin-top: 10px;" id="btn-save-schedule">Simpan Jadwal</button>
             </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="eventDetailModal">
+        <div class="modal-content" style="max-width: 420px; position: relative;">
+            <div class="modal-header"><h2 id="event-detail-title">Detail Jadwal</h2><button class="close-btn" onclick="closeModal('eventDetailModal')"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="event-detail-body">
+                <div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button class="btn-action-sm" id="event-detail-edit-btn" style="flex:1; justify-content:center; background:var(--info); color:white;" onclick="editEventFromDetail()"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button class="btn-danger-sm" id="event-detail-delete-btn" style="flex:1; justify-content:center;" onclick="deleteEventFromDetail()"><i class="fa-solid fa-trash"></i> Hapus</button>
+                <button class="btn-ghost" onclick="closeModal('eventDetailModal')" style="flex:1; justify-content:center;">Tutup</button>
+            </div>
         </div>
     </div>
 
@@ -1373,6 +1461,75 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="fm-upload-modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header"><h2>Upload File</h2><button class="close-btn" onclick="closeModal('fm-upload-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="input-group">
+                <label>Pilih File</label>
+                <input type="file" id="fm-file-input" multiple style="padding: 10px; background: #fff;">
+            </div>
+            <div class="input-group" id="fm-folder-select-upload">
+                <label>Simpan di Folder</label>
+                <select id="fm-upload-folder-select"><option value="">Root</option></select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-ghost" onclick="closeModal('fm-upload-modal')" style="flex:1; justify-content:center;">Batal</button>
+                <button class="btn-action" onclick="processUploadFiles()" style="flex:2; justify-content:center;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="fm-folder-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header"><h2>Buat Folder Baru</h2><button class="close-btn" onclick="closeModal('fm-folder-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+            <form onsubmit="processCreateFolder(event)">
+                <div class="input-group"><label>Nama Folder</label><input type="text" id="fm-folder-name" placeholder="Contoh: Dokumen Keuangan" required></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn-ghost" onclick="closeModal('fm-folder-modal')" style="flex:1; justify-content:center;">Batal</button>
+                    <button type="submit" class="btn-action" style="flex:2; justify-content:center;"><i class="fa-solid fa-folder-plus"></i> Buat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="fm-rename-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header"><h2>Rename</h2><button class="close-btn" onclick="closeModal('fm-rename-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="input-group"><label>Nama Baru</label><input type="text" id="fm-rename-input" required></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-ghost" onclick="closeModal('fm-rename-modal')" style="flex:1; justify-content:center;">Batal</button>
+                <button class="btn-action" onclick="processRenameItem()" style="flex:2; justify-content:center;"><i class="fa-solid fa-pen"></i> Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="fm-move-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header"><h2>Pindahkan</h2><button class="close-btn" onclick="closeModal('fm-move-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="input-group">
+                <label>Pilih Folder Tujuan</label>
+                <select id="fm-move-folder-select"><option value="">Root</option></select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-ghost" onclick="closeModal('fm-move-modal')" style="flex:1; justify-content:center;">Batal</button>
+                <button class="btn-action" onclick="processMoveItem()" style="flex:2; justify-content:center;"><i class="fa-solid fa-arrow-right"></i> Pindahkan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="fm-preview-modal" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header"><h2 id="fm-preview-title">Preview File</h2><button class="close-btn" onclick="closeModal('fm-preview-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+            <div id="fm-preview-body" style="min-height: 300px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 8px; overflow: hidden;">
+                <p style="color: #aaa;">Memuat...</p>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-ghost" onclick="closeModal('fm-preview-modal')" style="flex:1; justify-content:center;">Tutup</button>
+                <button class="btn-action-sm" id="fm-preview-download" style="flex:1; justify-content:center;" onclick="downloadFileFromPreview()"><i class="fa-solid fa-download"></i> Download</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalSignaturePad" style="z-index: 1100;">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header"><h2>Gambar Tanda Tangan Anda</h2><button class="close-btn" onclick="closeModal('modalSignaturePad')"><i class="fa-solid fa-xmark"></i></button></div>
@@ -1418,6 +1575,13 @@
         let calCurrentDate = new Date();
         let activeFolderId = null; let activeNotulensiId = null; let absenPieChart = null;
         let docZoomLevel = 1.0;
+
+        // File Manager globals
+        let fmCurrentFolderId = null;
+        let fmItems = [];
+        let fmEditingId = null;
+        let fmPreviewUrl = null;
+        const MAX_STORAGE_BYTES = 50 * 1024 * 1024;
 
         function showNotification(msg, type='info') {
             const toast = document.createElement('div');
@@ -1489,6 +1653,407 @@
                 AI.detectContext();
             }
         }
+
+        // ===== FILE MANAGER FUNCTIONS =====
+        const FM_BUCKET = 'workspace_files';
+
+        async function loadWorkspaceFiles(folderId) {
+            fmCurrentFolderId = folderId;
+            try {
+                let query = supabaseClient.from('workspace_files')
+                    .select('*')
+                    .eq('workspace_id', globalWorkspaceId)
+                    .is('parent_id', folderId)
+                    .order('type', { ascending: false })
+                    .order('name', { ascending: true });
+                if (folderId) {
+                    query = supabaseClient.from('workspace_files')
+                        .select('*')
+                        .eq('workspace_id', globalWorkspaceId)
+                        .eq('parent_id', folderId)
+                        .order('type', { ascending: false })
+                        .order('name', { ascending: true });
+                }
+                const { data, error } = await query;
+                if (error) throw error;
+                fmItems = data || [];
+                renderFileGrid();
+                renderBreadcrumbs();
+                updateStorageBar();
+            } catch (e) {
+                console.error('FM load error:', e);
+                document.getElementById('fm-grid-container').innerHTML = '<div class="fm-empty"><i class="fa-solid fa-exclamation-triangle"></i>Gagal memuat file.</div>';
+            }
+        }
+
+        async function calculateStorageUsed() {
+            try {
+                const { data, error } = await supabaseClient.from('workspace_files')
+                    .select('file_size')
+                    .eq('workspace_id', globalWorkspaceId)
+                    .eq('type', 'file');
+                if (error) throw error;
+                return (data || []).reduce((sum, f) => sum + (f.file_size || 0), 0);
+            } catch (e) {
+                console.error('Storage calc error:', e);
+                return 0;
+            }
+        }
+
+        async function updateStorageBar() {
+            const used = await calculateStorageUsed();
+            const pct = Math.min((used / MAX_STORAGE_BYTES) * 100, 100);
+            const fill = document.getElementById('fm-storage-fill');
+            const info = document.getElementById('fm-storage-info');
+            fill.style.width = pct + '%';
+            fill.className = 'fill' + (pct > 90 ? ' danger' : pct > 70 ? ' warning' : '');
+            info.innerText = formatFileSize(used) + ' / 50 MB';
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 KB';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function getFileIcon(mimeType, name) {
+            if (!mimeType) return 'fa-regular fa-file';
+            const ext = name ? '.' + name.split('.').pop().toLowerCase() : '';
+            if (mimeType.startsWith('image/')) return 'fa-regular fa-file-image';
+            if (mimeType === 'application/pdf') return 'fa-regular fa-file-pdf';
+            if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || ext === '.xlsx' || ext === '.xls' || ext === '.csv') return 'fa-regular fa-file-excel';
+            if (mimeType.includes('document') || mimeType.includes('word') || ext === '.doc' || ext === '.docx') return 'fa-regular fa-file-word';
+            if (mimeType.includes('presentation') || mimeType.includes('powerpoint') || ext === '.ppt' || ext === '.pptx') return 'fa-regular fa-file-powerpoint';
+            if (mimeType.startsWith('text/') || ext === '.txt') return 'fa-regular fa-file-lines';
+            if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar') || ext === '.zip' || ext === '.rar') return 'fa-regular fa-file-zipper';
+            if (mimeType.includes('audio/')) return 'fa-regular fa-file-audio';
+            if (mimeType.includes('video/')) return 'fa-regular fa-file-video';
+            return 'fa-regular fa-file';
+        }
+
+        function renderFileGrid() {
+            const container = document.getElementById('fm-grid-container');
+            if (!fmItems || fmItems.length === 0) {
+                container.innerHTML = '<div class="fm-empty"><i class="fa-solid fa-folder-open"></i><h4 style="color: var(--text-secondary); margin-bottom: 5px;">Belum ada file atau folder</h4><p style="font-size: 0.85rem;">Upload file atau buat folder untuk mulai</p></div>';
+                return;
+            }
+            let html = '';
+            fmItems.forEach(item => {
+                const isFolder = item.type === 'folder';
+                const icon = isFolder ? 'fa-solid fa-folder' : getFileIcon(item.mime_type, item.name);
+                const sizeStr = isFolder ? '' : formatFileSize(item.file_size);
+                const iconColor = isFolder ? 'var(--primary)' : 'var(--text-muted)';
+                const itemClass = isFolder ? 'fm-item folder' : 'fm-item file';
+                const clickAction = isFolder ? `onclick="openFileFolder('${item.id}')"` : `onclick="openFilePreview('${item.id}')"`;
+
+                html += `<div class="${itemClass}" ${clickAction}>
+                    <div class="fm-actions" onclick="event.stopPropagation()">
+                        <button onclick="openRenameItem('${item.id}')" title="Rename"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="openMoveItem('${item.id}')" title="Pindahkan"><i class="fa-solid fa-arrow-right"></i></button>
+                        <button class="btn-del" onclick="deleteWorkspaceItem('${item.id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <span class="fm-icon" style="color:${iconColor}"><i class="${icon}"></i></span>
+                    <div class="fm-name">${escapeHtml(item.name)}</div>
+                    ${sizeStr ? `<div class="fm-size">${sizeStr}</div>` : ''}
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderBreadcrumbs() {
+            const container = document.getElementById('fm-breadcrumb');
+            if (!fmCurrentFolderId) {
+                container.innerHTML = `<span class="active"><i class="fa-solid fa-home"></i> Root</span>`;
+                return;
+            }
+            // Build breadcrumb path by traversing parent chain
+            container.innerHTML = `<span onclick="goToFileRoot()"><i class="fa-solid fa-home"></i> Root</span><i class="fa-solid fa-chevron-right sep"></i>`;
+            const path = [];
+            let current = fmItems.find(i => i.id === fmCurrentFolderId);
+            // If we're in a folder, we need to look up the parent chain
+            // Actually we need to load current folder info
+            renderBreadcrumbAsync(container);
+        }
+
+        async function renderBreadcrumbAsync(container) {
+            let ids = [];
+            let currentId = fmCurrentFolderId;
+            while (currentId) {
+                ids.unshift(currentId);
+                const { data } = await supabaseClient.from('workspace_files')
+                    .select('id, name, parent_id')
+                    .eq('id', currentId)
+                    .single();
+                if (data) {
+                    currentId = data.parent_id;
+                } else {
+                    currentId = null;
+                }
+            }
+            // Re-render from root
+            let html = `<span onclick="goToFileRoot()"><i class="fa-solid fa-home"></i> Root</span>`;
+            let parentId = null;
+            for (let i = 0; i < ids.length; i++) {
+                const { data } = await supabaseClient.from('workspace_files')
+                    .select('id, name')
+                    .eq('id', ids[i])
+                    .single();
+                if (data) {
+                    const isLast = i === ids.length - 1;
+                    html += `<i class="fa-solid fa-chevron-right sep"></i>`;
+                    html += `<span ${isLast ? 'class="active"' : `onclick="openFileFolder('${data.id}')"`}>${escapeHtml(data.name)}</span>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function goToFileRoot() {
+            loadWorkspaceFiles(null);
+        }
+
+        function openFileFolder(folderId) {
+            loadWorkspaceFiles(folderId);
+        }
+
+        async function createWorkspaceFolder(name, parentId) {
+            const { error } = await supabaseClient.from('workspace_files').insert([{
+                workspace_id: globalWorkspaceId,
+                parent_id: parentId,
+                name: name,
+                type: 'folder',
+                created_by: currentUserId
+            }]);
+            if (error) throw error;
+        }
+
+        async function uploadWorkspaceFile(file, parentId) {
+            const used = await calculateStorageUsed();
+            if (used + file.size > MAX_STORAGE_BYTES) {
+                showNotification('Penyimpanan penuh! Upgrade plan untuk menambah kapasitas.', 'error');
+                return false;
+            }
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `workspace_${globalWorkspaceId}/${parentId || 'root'}/${fileName}`;
+
+            const { error: uploadError } = await supabaseClient.storage.from(FM_BUCKET).upload(filePath, file);
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabaseClient.storage.from(FM_BUCKET).getPublicUrl(filePath);
+            const fileUrl = publicUrlData.publicUrl;
+
+            const { error: dbError } = await supabaseClient.from('workspace_files').insert([{
+                workspace_id: globalWorkspaceId,
+                parent_id: parentId,
+                name: file.name,
+                type: 'file',
+                file_url: fileUrl,
+                file_size: file.size,
+                mime_type: file.type,
+                created_by: currentUserId
+            }]);
+            if (dbError) throw dbError;
+            return true;
+        }
+
+        async function deleteWorkspaceItem(id) {
+            showConfirm('Hapus item ini?', async () => {
+                try {
+                    const item = fmItems.find(i => i.id === id);
+                    if (item && item.type === 'file' && item.file_url) {
+                        // Extract path from URL
+                        const urlParts = item.file_url.split('/');
+                        const bucketIndex = urlParts.indexOf(FM_BUCKET);
+                        if (bucketIndex >= 0) {
+                            const storagePath = urlParts.slice(bucketIndex + 1).join('/');
+                            await supabaseClient.storage.from(FM_BUCKET).remove([storagePath]);
+                        }
+                    }
+                    if (item && item.type === 'folder') {
+                        // Delete all children too
+                        const { data: children } = await supabaseClient.from('workspace_files')
+                            .select('id, file_url, type')
+                            .eq('workspace_id', globalWorkspaceId)
+                            .eq('parent_id', id);
+                        if (children) {
+                            for (const child of children) {
+                                await deleteWorkspaceItem(child.id);
+                            }
+                        }
+                    }
+                    await supabaseClient.from('workspace_files').delete().eq('id', id).eq('workspace_id', globalWorkspaceId);
+                    showNotification('Item berhasil dihapus', 'success');
+                    loadWorkspaceFiles(fmCurrentFolderId);
+                } catch (e) {
+                    showNotification('Gagal menghapus: ' + e.message, 'error');
+                }
+            });
+        }
+
+        // --- Modal Handlers ---
+        function openUploadFileModal() {
+            document.getElementById('fm-file-input').value = '';
+            populateFolderSelect('fm-upload-folder-select', fmCurrentFolderId);
+            openModal('fm-upload-modal');
+        }
+
+        async function populateFolderSelect(selectId, selectedId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Root</option>';
+            try {
+                const { data } = await supabaseClient.from('workspace_files')
+                    .select('id, name')
+                    .eq('workspace_id', globalWorkspaceId)
+                    .eq('type', 'folder')
+                    .order('name');
+                if (data) {
+                    data.forEach(f => {
+                        const sel = f.id === selectedId ? 'selected' : '';
+                        select.innerHTML += `<option value="${f.id}" ${sel}>${escapeHtml(f.name)}</option>`;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        async function processUploadFiles() {
+            const files = document.getElementById('fm-file-input').files;
+            const folderId = document.getElementById('fm-upload-folder-select').value || null;
+            if (!files || files.length === 0) {
+                showNotification('Pilih file terlebih dahulu!', 'error');
+                return;
+            }
+            const btn = document.querySelector('#fm-upload-modal .btn-action');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            try {
+                for (const file of files) {
+                    await uploadWorkspaceFile(file, folderId);
+                }
+                showNotification('File berhasil diupload!', 'success');
+                closeModal('fm-upload-modal');
+                loadWorkspaceFiles(fmCurrentFolderId);
+            } catch (e) {
+                showNotification('Gagal upload: ' + e.message, 'error');
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload';
+        }
+
+        function openCreateFolderModal() {
+            document.getElementById('fm-folder-name').value = '';
+            openModal('fm-folder-modal');
+        }
+
+        async function processCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('fm-folder-name').value.trim();
+            if (!name) return;
+            try {
+                await createWorkspaceFolder(name, fmCurrentFolderId);
+                showNotification('Folder berhasil dibuat', 'success');
+                closeModal('fm-folder-modal');
+                loadWorkspaceFiles(fmCurrentFolderId);
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        function openRenameItem(id) {
+            const item = fmItems.find(i => i.id === id);
+            if (!item) return;
+            fmEditingId = id;
+            document.getElementById('fm-rename-input').value = item.name;
+            openModal('fm-rename-modal');
+        }
+
+        async function processRenameItem() {
+            const newName = document.getElementById('fm-rename-input').value.trim();
+            if (!newName || !fmEditingId) return;
+            try {
+                await supabaseClient.from('workspace_files').update({ name: newName }).eq('id', fmEditingId);
+                showNotification('Berhasil di rename', 'success');
+                closeModal('fm-rename-modal');
+                fmEditingId = null;
+                loadWorkspaceFiles(fmCurrentFolderId);
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        function openMoveItem(id) {
+            const item = fmItems.find(i => i.id === id);
+            if (!item) return;
+            fmEditingId = id;
+            populateFolderSelect('fm-move-folder-select', item.parent_id);
+            openModal('fm-move-modal');
+        }
+
+        async function processMoveItem() {
+            const targetFolderId = document.getElementById('fm-move-folder-select').value || null;
+            if (!fmEditingId) return;
+            // Prevent moving into itself
+            if (fmEditingId === targetFolderId) {
+                showNotification('Tidak bisa memindahkan ke dirinya sendiri', 'error');
+                return;
+            }
+            try {
+                await supabaseClient.from('workspace_files').update({ parent_id: targetFolderId }).eq('id', fmEditingId);
+                showNotification('Berhasil dipindahkan', 'success');
+                closeModal('fm-move-modal');
+                fmEditingId = null;
+                loadWorkspaceFiles(fmCurrentFolderId);
+            } catch (e) {
+                showNotification('Gagal: ' + e.message, 'error');
+            }
+        }
+
+        function openFilePreview(id) {
+            const item = fmItems.find(i => i.id === id);
+            if (!item || !item.file_url) return;
+            document.getElementById('fm-preview-title').innerText = item.name;
+            const body = document.getElementById('fm-preview-body');
+            fmPreviewUrl = item.file_url;
+
+            if (item.mime_type && item.mime_type.startsWith('image/')) {
+                body.innerHTML = `<img src="${item.file_url}" alt="${item.name}" style="max-width:100%; max-height:400px; border-radius:8px;">`;
+            } else if (item.mime_type === 'application/pdf') {
+                body.innerHTML = `<iframe src="${item.file_url}" style="width:100%; height:400px; border:none; border-radius:8px;"></iframe>`;
+            } else if (item.mime_type && item.mime_type.startsWith('text/')) {
+                fetch(item.file_url).then(r => r.text()).then(text => {
+                    body.innerHTML = `<pre style="max-height:400px; overflow:auto; width:100%; padding:15px; background:#fff; border-radius:8px; font-size:0.85rem; text-align:left;">${escapeHtml(text.substring(0, 5000))}</pre>`;
+                }).catch(() => {
+                    body.innerHTML = `<p style="color:#aaa;">Tidak bisa menampilkan preview</p>`;
+                });
+            } else {
+                body.innerHTML = `<div style="text-align:center; padding:40px;"><i class="${getFileIcon(item.mime_type, item.name)}" style="font-size:4rem; color:#ccc; margin-bottom:15px; display:block;"></i><p style="color:#888;">${item.name}</p><p style="color:#aaa; font-size:0.85rem; margin-top:5px;">${formatFileSize(item.file_size)}</p></div>`;
+            }
+            openModal('fm-preview-modal');
+        }
+
+        function downloadFileFromPreview() {
+            if (fmPreviewUrl) window.open(fmPreviewUrl, '_blank');
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                document.getElementById('fm-file-input').files = files;
+                openUploadFileModal();
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                openUploadFileModal();
+            }
+        }
+
+        document.getElementById('fm-dropzone')?.addEventListener('click', function() {
+            document.getElementById('fm-drop-input').click();
+        });
 
         /* ----- FUNGSI FLOATING CHAT WIDGET ----- */
         function toggleChatWidget() {
@@ -1846,6 +2411,7 @@
             try { loadFolders(); } catch(e){}
             try { await loadKPIData(); } catch(e){}
             try { await loadDigitalOffice(); } catch(e){}
+            try { await loadWorkspaceFiles(null); } catch(e){}
             
             if(currentUserRole === 'admin') {
                 try { await loadSuratContexts(); await loadDatabaseSuratLog(); } catch(e){}
@@ -1866,6 +2432,12 @@
                     loadAbsensiData(); 
                 })
                 // TAMBAHAN BARU: Realtime Kunci Fitur dari Super Admin
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'workspace_files', filter: `workspace_id=eq.${globalWorkspaceId}` }, () => {
+                    loadWorkspaceFiles(fmCurrentFolderId);
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'event_responses', filter: `workspace_id=eq.${globalWorkspaceId}` }, () => {
+                    loadEventResponses().then(() => { renderCalendar(); renderMergedTimeline(); });
+                })
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'workspaces', filter: `id=eq.${globalWorkspaceId}` }, (payload) => {
                     if (payload.new.locked_features) {
                         workspaceFeatures = payload.new.locked_features;
@@ -1957,15 +2529,65 @@
         }
         async function deleteProgramAction(progId, progName) { showConfirm(`Yakin hapus Program "${progName}"?`, async () => { await supabaseClient.from('programs').delete().eq('id', progId); await loadProgramData(); await loadRabTable(); await loadRealisasiTable(); await recalculateGlobalRAB(); await loadRekapitulasiData(); showNotification("Dihapus", "success"); }); }
 
+        let globalEventResponses = [];
+        let eventDetailCurrentId = null;
+        let eventDetailCurrentType = null;
+
+        async function loadEventResponses() {
+            try {
+                const { data } = await supabaseClient.from('event_responses').select('*').eq('workspace_id', globalWorkspaceId);
+                if (data) globalEventResponses = data;
+            } catch (e) { globalEventResponses = []; }
+        }
+
         async function loadSchedules() {
             const { data } = await supabaseClient.from('custom_schedules').select('*').eq('workspace_id', globalWorkspaceId);
             if (data) globalSchedules = data;
+            // Also load workspace_agenda items that don't have source_event_id (created from chat)
+            try {
+                const { data: agendaData } = await supabaseClient.from('workspace_agenda').select('*').eq('workspace_id', globalWorkspaceId).is('source_event_id', null);
+                if (agendaData && agendaData.length > 0) {
+                    // Merge into globalSchedules as synthetic items
+                    agendaData.forEach(a => {
+                        if (!globalSchedules.some(s => s.id === a.id && s._fromAgenda)) {
+                            globalSchedules.push({
+                                id: a.id,
+                                judul_kegiatan: a.title,
+                                keterangan: a.description || '',
+                                tanggal_mulai: a.date,
+                                tanggal_selesai: a.date,
+                                waktu: a.time || null,
+                                tipe_jadwal: 'Agenda',
+                                created_by: a.created_by,
+                                workspace_id: globalWorkspaceId,
+                                _fromAgenda: true,
+                                _agendaSource: true
+                            });
+                        }
+                    });
+                }
+            } catch(e) {}
+            await loadEventResponses();
+        }
+
+        function populateAssignSelect() {
+            const select = document.getElementById('sched-assign');
+            if (!select) return;
+            select.innerHTML = '';
+            if (!globalWorkspaceUsers || globalWorkspaceUsers.length === 0) {
+                select.innerHTML = '<option value="">-- Tidak ada anggota --</option>';
+                return;
+            }
+            globalWorkspaceUsers.forEach(u => {
+                select.innerHTML += `<option value="${u.id}">${escapeHtml(u.name)}</option>`;
+            });
         }
 
         function openScheduleModal(dateStr = '') { 
             editingScheduleId = null; document.getElementById('form-schedule').reset(); 
             document.getElementById('schedule-modal-title').innerText = "Tambah Jadwal Baru"; 
             if(dateStr) { document.getElementById('sched-tgl-mulai').value = dateStr; document.getElementById('sched-tgl-selesai').value = dateStr; }
+            populateAssignSelect();
             openModal('scheduleModal'); 
         }
         
@@ -1973,25 +2595,215 @@
             const s = globalSchedules.find(sc => sc.id === id); if(!s) return;
             editingScheduleId = id; document.getElementById('schedule-modal-title').innerText = "Edit Jadwal"; 
             document.getElementById('sched-judul').value = s.judul_kegiatan; document.getElementById('sched-keterangan').value = s.keterangan || ''; 
+            document.getElementById('sched-lokasi').value = s.lokasi || '';
             document.getElementById('sched-tgl-mulai').value = s.tanggal_mulai; document.getElementById('sched-tgl-selesai').value = s.tanggal_selesai;
-            document.getElementById('sched-waktu').value = s.waktu || ''; document.getElementById('sched-tipe').value = s.tipe_jadwal; 
+            document.getElementById('sched-waktu').value = s.waktu || ''; document.getElementById('sched-tipe').value = s.tipe_jadwal;
+            populateAssignSelect();
+            // Pre-select assigned users
+            const select = document.getElementById('sched-assign');
+            if (select && s.assigned_to) {
+                const assigned = s.assigned_to || [];
+                Array.from(select.options).forEach(opt => {
+                    if (assigned.includes(opt.value)) opt.selected = true;
+                });
+            }
             openModal('scheduleModal'); 
         }
 
         async function saveSchedule(e) {
             e.preventDefault(); 
-            const payload = { workspace_id: globalWorkspaceId, judul_kegiatan: document.getElementById('sched-judul').value, keterangan: document.getElementById('sched-keterangan').value, tanggal_mulai: document.getElementById('sched-tgl-mulai').value, tanggal_selesai: document.getElementById('sched-tgl-selesai').value, waktu: document.getElementById('sched-waktu').value || null, tipe_jadwal: document.getElementById('sched-tipe').value };
+            const assignSelect = document.getElementById('sched-assign');
+            const assignedTo = assignSelect ? Array.from(assignSelect.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
+            const lokasi = document.getElementById('sched-lokasi')?.value || '';
+            const payload = { 
+                workspace_id: globalWorkspaceId, 
+                judul_kegiatan: document.getElementById('sched-judul').value, 
+                keterangan: document.getElementById('sched-keterangan').value, 
+                lokasi: lokasi,
+                assigned_to: assignedTo,
+                tanggal_mulai: document.getElementById('sched-tgl-mulai').value, 
+                tanggal_selesai: document.getElementById('sched-tgl-selesai').value, 
+                waktu: document.getElementById('sched-waktu').value || null, 
+                tipe_jadwal: document.getElementById('sched-tipe').value 
+            };
             document.getElementById('btn-save-schedule').innerText = "Menyimpan..."; document.getElementById('btn-save-schedule').disabled = true;
 
-            if (editingScheduleId) { await supabaseClient.from('custom_schedules').update(payload).eq('id', editingScheduleId); } 
-            else { payload.created_by = currentUserId; await supabaseClient.from('custom_schedules').insert([payload]); }
-            
+            let newScheduleId = null;
+            if (editingScheduleId) { 
+                await supabaseClient.from('custom_schedules').update(payload).eq('id', editingScheduleId); 
+                newScheduleId = editingScheduleId;
+            } else { 
+                payload.created_by = currentUserId; 
+                const { data } = await supabaseClient.from('custom_schedules').insert([payload]).select().single();
+                if (data) newScheduleId = data.id;
+            }
+
+            // Sync to workspace_agenda
+            if (newScheduleId) {
+                const agendaPayload = {
+                    workspace_id: globalWorkspaceId,
+                    title: payload.judul_kegiatan,
+                    date: payload.tanggal_mulai,
+                    time: payload.waktu || null,
+                    description: lokasi + (payload.keterangan ? ' | ' + payload.keterangan : ''),
+                    created_by: currentUserId,
+                    source: 'custom_schedules',
+                    source_event_id: newScheduleId
+                };
+                const { data: existingAgenda } = await supabaseClient.from('workspace_agenda')
+                    .select('id').eq('source_event_id', newScheduleId).eq('source', 'custom_schedules').maybeSingle();
+                if (existingAgenda) {
+                    await supabaseClient.from('workspace_agenda').update(agendaPayload).eq('id', existingAgenda.id);
+                } else {
+                    await supabaseClient.from('workspace_agenda').insert([agendaPayload]);
+                }
+
+                // Send invitation to workspace chat if there are assigned users
+                if (assignedTo.length > 0 && newScheduleId) {
+                    try {
+                        const { data: wsGroups } = await supabaseClient.from('chat_groups')
+                            .select('id').eq('workspace_id', globalWorkspaceId).limit(1);
+                        if (wsGroups && wsGroups.length > 0) {
+                            const groupId = wsGroups[0].id;
+                            const waktuStr = payload.waktu ? payload.waktu.substring(0,5) : '-';
+                            const inviteHtml = `<div class="event-invitation" data-event-id="${newScheduleId}">
+                                <div style="background:#eff6ff; padding:14px; border-left:4px solid var(--primary); border-radius:8px; box-shadow:var(--shadow-sm);">
+                                    <strong style="color:var(--primary);font-size:1.05rem;"><i class="fa-solid fa-calendar-check"></i> Undangan: ${escapeHtml(payload.judul_kegiatan)}</strong>
+                                    <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">
+                                        <i class="fa-regular fa-calendar"></i> ${payload.tanggal_mulai} | <i class="fa-regular fa-clock"></i> ${waktuStr}
+                                        ${lokasi ? ' | <i class="fa-solid fa-location-dot"></i> ' + escapeHtml(lokasi) : ''}
+                                    </div>
+                                    ${payload.keterangan ? '<div style="font-size:0.85rem;margin-top:6px;color:#555;"><i>"' + escapeHtml(payload.keterangan) + '"</i></div>' : ''}
+                                    <div style="margin-top:10px;display:flex;gap:8px;" class="rsvp-actions">
+                                        <button onclick="respondToEvent('${newScheduleId}','hadir')" style="flex:1;padding:8px;border:none;border-radius:8px;background:var(--success);color:white;font-weight:700;font-size:0.8rem;cursor:pointer;">✅ Hadir</button>
+                                        <button onclick="respondToEvent('${newScheduleId}','tidak_hadir')" style="flex:1;padding:8px;border:none;border-radius:8px;background:var(--error);color:white;font-weight:700;font-size:0.8rem;cursor:pointer;">❌ Tidak</button>
+                                        <button onclick="respondToEvent('${newScheduleId}','tentatif')" style="flex:1;padding:8px;border:none;border-radius:8px;background:var(--accent);color:var(--primary);font-weight:700;font-size:0.8rem;cursor:pointer;">❓ Tentatif</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                            await supabaseClient.from('chat_messages').insert([{
+                                group_id: groupId,
+                                sender_id: currentUserId,
+                                content: inviteHtml,
+                                created_at: new Date().toISOString()
+                            }]);
+                        }
+                    } catch(e) { console.error('Invitation send error:', e); }
+                }
+            }
+
             closeModal('scheduleModal'); await loadSchedules(); renderCalendar(); renderMergedTimeline(); showNotification("Tersimpan!", "success");
             document.getElementById('btn-save-schedule').innerText = "Simpan Jadwal"; document.getElementById('btn-save-schedule').disabled = false;
         }
 
         async function deleteScheduleAction(id) { 
-            showConfirm(`Hapus jadwal manual ini?`, async () => { await supabaseClient.from('custom_schedules').delete().eq('id', id); await loadSchedules(); renderCalendar(); renderMergedTimeline(); showNotification("Dihapus", "success"); }); 
+            showConfirm(`Hapus jadwal manual ini?`, async () => { 
+                await supabaseClient.from('custom_schedules').delete().eq('id', id); 
+                // Also delete from workspace_agenda
+                await supabaseClient.from('workspace_agenda').delete().eq('source_event_id', id).eq('source', 'custom_schedules');
+                await loadSchedules(); renderCalendar(); renderMergedTimeline(); showNotification("Dihapus", "success"); 
+            }); 
+        }
+
+        async function respondToEvent(eventId, response) {
+            try {
+                const { data: existing } = await supabaseClient.from('event_responses')
+                    .select('id').eq('event_id', eventId).eq('user_id', currentUserId).maybeSingle();
+                const payload = { event_id: eventId, event_type: 'schedule', user_id: currentUserId, response: response, workspace_id: globalWorkspaceId };
+                if (existing) {
+                    await supabaseClient.from('event_responses').update({ response: response, responded_at: new Date() }).eq('id', existing.id);
+                } else {
+                    await supabaseClient.from('event_responses').insert([payload]);
+                }
+                showNotification('Respon terkirim: ' + response, 'success');
+                await loadEventResponses();
+                renderCalendar();
+                // Update the RSVP buttons if visible
+                document.querySelectorAll('.rsvp-actions').forEach(el => {
+                    el.innerHTML = `<span style="font-size:0.85rem;color:var(--success);font-weight:600;"><i class="fa-solid fa-check-circle"></i> Sudah respond</span>`;
+                });
+            } catch (e) {
+                showNotification('Gagal mengirim respon: ' + e.message, 'error');
+            }
+        }
+
+        // Event Detail Popup
+        function showEventDetail(id, type) {
+            const data = type === 'program' ? globalPrograms.find(p => p.id === id) : globalSchedules.find(s => s.id === id);
+            if (!data) return;
+            eventDetailCurrentId = id;
+            eventDetailCurrentType = type;
+
+            document.getElementById('event-detail-title').innerText = data.judul_kegiatan || data.nama_program || 'Detail';
+            const body = document.getElementById('event-detail-body');
+            
+            const tgl = data.tanggal_mulai || data.tanggal_pelaksanaan || '-';
+            const wkt = data.waktu ? data.waktu.substring(0,5) : (data.waktu_pelaksanaan ? data.waktu_pelaksanaan.substring(0,5) : '-');
+            const lokasi = data.lokasi || data.tempat || '-';
+            const ket = data.keterangan || '-';
+            const tipe = data.tipe_jadwal || 'Program/Event';
+            const assignedTo = data.assigned_to || [];
+            const isSchedule = type === 'schedule';
+
+            // Get responses for this event
+            const responses = globalEventResponses.filter(r => r.event_id === id);
+            const hadir = responses.filter(r => r.response === 'hadir');
+            const tidakHadir = responses.filter(r => r.response === 'tidak_hadir');
+            const tentatif = responses.filter(r => r.response === 'tentatif');
+
+            let rsvpHtml = '';
+            if (assignedTo.length > 0) {
+                rsvpHtml = `<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+                    <h4 style="font-size:0.85rem;color:var(--primary);margin-bottom:8px;"><i class="fa-solid fa-users"></i> Responden (${responses.length}/${assignedTo.length})</h4>`;
+                assignedTo.forEach(uid => {
+                    const user = globalWorkspaceUsers.find(u => u.id === uid);
+                    if (!user) return;
+                    const resp = responses.find(r => r.user_id === uid);
+                    const statusIcon = resp ? (resp.response === 'hadir' ? '✅' : resp.response === 'tidak_hadir' ? '❌' : '❓') : '⏳';
+                    const statusText = resp ? (resp.response === 'hadir' ? 'Hadir' : resp.response === 'tidak_hadir' ? 'Tidak Hadir' : 'Tentatif') : 'Belum Respond';
+                    const statusColor = resp ? (resp.response === 'hadir' ? 'var(--success)' : resp.response === 'tidak_hadir' ? 'var(--error)' : 'var(--accent)') : '#94a3b8';
+                    rsvpHtml += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.85rem;">
+                        <span style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.7rem;flex-shrink:0;">${user.name.charAt(0).toUpperCase()}</span>
+                        <span style="flex:1;">${escapeHtml(user.name)}</span>
+                        <span style="color:${statusColor};font-weight:600;font-size:0.8rem;">${statusIcon} ${statusText}</span>
+                    </div>`;
+                });
+                rsvpHtml += `</div>`;
+            }
+
+            // Clicking edit should be only for schedule type
+            document.getElementById('event-detail-edit-btn').style.display = isSchedule ? 'block' : 'none';
+            document.getElementById('event-detail-delete-btn').style.display = isSchedule ? 'block' : 'none';
+
+            body.innerHTML = `
+                <div style="background:var(--primary-soft);padding:16px;border-radius:12px;margin-bottom:12px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem;">
+                        <div><span style="color:var(--text-muted);font-size:0.8rem;">Tipe</span><br><strong>${tipe}</strong></div>
+                        <div><span style="color:var(--text-muted);font-size:0.8rem;">Tanggal</span><br><strong>${tgl}</strong></div>
+                        <div><span style="color:var(--text-muted);font-size:0.8rem;">Waktu</span><br><strong>${wkt}</strong></div>
+                        <div><span style="color:var(--text-muted);font-size:0.8rem;">Lokasi</span><br><strong>${lokasi}</strong></div>
+                    </div>
+                </div>
+                <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:8px;">
+                    <strong>Detail:</strong><br>${ket}
+                </div>
+                ${rsvpHtml}
+            `;
+            openModal('eventDetailModal');
+        }
+
+        function editEventFromDetail() {
+            closeModal('eventDetailModal');
+            if (eventDetailCurrentType === 'schedule' && eventDetailCurrentId) {
+                openEditSchedule(eventDetailCurrentId);
+            }
+        }
+
+        function deleteEventFromDetail() {
+            closeModal('eventDetailModal');
+            if (eventDetailCurrentType === 'schedule' && eventDetailCurrentId) {
+                deleteScheduleAction(eventDetailCurrentId);
+            }
         }
 
         function renderCalendar() {
@@ -2014,9 +2826,8 @@
                 const progsToday = globalPrograms.filter(p => p.tanggal_pelaksanaan === dateStr);
                 progsToday.forEach(p => {
                     let wkt = p.waktu_pelaksanaan ? p.waktu_pelaksanaan.substring(0,5) : '';
-                    let delAttr = isAdmin ? `onclick="event.stopPropagation(); deleteProgramAction('${p.id}', '${p.nama_program.replace(/'/g, "\\'")}')"` : `onclick="event.stopPropagation();"`;
                     let tooltipProg = `Tipe: Program/Event\nLokasi: ${p.tempat || 'Belum diatur'}`;
-                    badges += `<span class="cal-event-badge program" data-tooltip="${tooltipProg}" ${delAttr}>${wkt} ${p.nama_program}</span>`;
+                    badges += `<span class="cal-event-badge program" data-tooltip="${tooltipProg}" onclick="event.stopPropagation(); showEventDetail('${p.id}', 'program')">${wkt} ${p.nama_program}</span>`;
                 });
 
                 globalSchedules.forEach(s => {
@@ -2028,10 +2839,23 @@
                         if(tipeLower.includes('rapat')) typeClass = 'rapat';
                         else if(tipeLower.includes('tugas') || tipeLower.includes('penugasan')) typeClass = 'tugas';
 
-                        let isOwner = s.created_by === currentUserId;
-                        let delAttr = (isAdmin || isOwner) ? `onclick="event.stopPropagation(); deleteScheduleAction('${s.id}')"` : `onclick="event.stopPropagation();"`;
+                        // Add RSVP indicator
+                        let rsvpIndicator = '';
+                        const assigned = s.assigned_to || [];
+                        if (assigned.length > 0) {
+                            const eventResp = globalEventResponses.filter(r => r.event_id === s.id);
+                            const hadirCount = eventResp.filter(r => r.response === 'hadir').length;
+                            const tidakCount = eventResp.filter(r => r.response === 'tidak_hadir').length;
+                            const tentatifCount = eventResp.filter(r => r.response === 'tentatif').length;
+                            if (hadirCount || tidakCount || tentatifCount) {
+                                rsvpIndicator = `<span style="font-size:0.6rem;color:var(--text-muted);display:block;margin-top:1px;">
+                                    ${hadirCount ? '✅' + hadirCount : ''} ${tidakCount ? '❌' + tidakCount : ''} ${tentatifCount ? '❓' + tentatifCount : ''}
+                                </span>`;
+                            }
+                        }
+
                         let tooltipSched = `Tipe: ${s.tipe_jadwal}\nKet: ${s.keterangan || '-'}`;
-                        badges += `<span class="cal-event-badge ${typeClass}" data-tooltip="${tooltipSched}" ${delAttr}>${wkt} ${s.judul_kegiatan}</span>`;
+                        badges += `<span class="cal-event-badge ${typeClass}" data-tooltip="${tooltipSched}" onclick="event.stopPropagation(); showEventDetail('${s.id}', 'schedule')">${wkt} ${s.judul_kegiatan}${rsvpIndicator}</span>`;
                     }
                 });
 
@@ -3459,7 +4283,22 @@
                 },
             });
             AI.init();
+
+            // ===== ONBOARDING TUTORIAL TRIGGER =====
+            setTimeout(() => {
+                const onboardingKey = 'onboarding_completed_' + currentUserId;
+                if (!localStorage.getItem(onboardingKey)) {
+                    if (window.AI && window.AI.startOnboarding) {
+                        window.AI.startOnboarding();
+                    }
+                }
+            }, 2000);
         });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        }
 
         function escapeRegex(str) {
             return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

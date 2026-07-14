@@ -1226,6 +1226,30 @@
                 </div>`;
         }
 
+        // ===== CALENDAR INVITATION RSVP HANDLER =====
+        async function respondToEvent(eventId, response) {
+            try {
+                const { data: existing } = await supabaseClient.from('event_responses')
+                    .select('id').eq('event_id', eventId).eq('user_id', currentUser.id).maybeSingle();
+                if (existing) {
+                    await supabaseClient.from('event_responses').update({ response: response, responded_at: new Date() }).eq('id', existing.id);
+                } else {
+                    await supabaseClient.from('event_responses').insert([{
+                        event_id: eventId, event_type: 'schedule', user_id: currentUser.id,
+                        response: response, workspace_id: currentWorkspaceId, responded_at: new Date().toISOString()
+                    }]);
+                }
+                showToast("Respon Terkirim", "Terima kasih! Respon Anda telah dicatat.", "success");
+                // Disable all RSVP buttons in this invitation
+                document.querySelectorAll(`.event-invitation[data-event-id="${eventId}"] .rsvp-actions button`).forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+            } catch (e) {
+                showToast("Gagal", "Gagal mengirim respon: " + e.message, "error");
+            }
+        }
+
         function scrollToBottom() { 
             const c = document.getElementById('messages-container'); 
             c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' }); 

@@ -455,6 +455,180 @@ function AIAssistantCreate(pageConfig) {
     document.querySelectorAll('.ai-highlight-field').forEach(el => el.classList.remove('ai-highlight-field'));
   };
 
+  // ── ONBOARDING SYSTEM ──
+  const ONBOARDING_STEPS = [
+    { tab: 'dashboard', icon: 'fa-solid fa-border-all', title: 'Dashboard Utama', desc: 'Dasbor utama menampilkan laporan finansial, progres KPI, dan jadwal kegiatan terbaru. Ini adalah pusat kendali workspace Anda.' },
+    { tab: 'program-event', icon: 'fa-solid fa-clipboard-list', title: 'Program & Event', desc: 'Kelola program kerja dan event menggunakan papan Kanban. Seret kartu untuk mengubah status dari "Belum" ke "Progress" hingga "Selesai".' },
+    { tab: 'input-rab', icon: 'fa-solid fa-file-invoice-dollar', title: 'Input RAB', desc: 'Buat Rencana Anggaran Biaya untuk setiap program. Tentukan barang, volume, harga satuan, dan sumber dana.' },
+    { tab: 'realisasi-anggaran', icon: 'fa-solid fa-hand-holding-dollar', title: 'Realisasi Anggaran', desc: 'Catat realisasi pengeluaran anggaran. Pantau penggunaan dana dibandingkan dengan RAB yang telah dibuat.' },
+    { tab: 'rekap-rab', icon: 'fa-solid fa-scale-balanced', title: 'Analitik Anggaran', desc: 'Lihat rekap dan analisis anggaran secara visual dengan grafik. Bandingkan RAB dengan realisasi per divisi dan program.' },
+    { tab: 'absensi', icon: 'fa-solid fa-calendar-check', title: 'Absensi', desc: 'Catat kehadiran anggota setiap hari. Pilih status: Hadir, Izin, Sakit, atau Tanpa Keterangan.' },
+    { tab: 'timeline', icon: 'fa-regular fa-calendar-days', title: 'Kalender & Jadwal', desc: 'Kalender interaktif yang menampilkan semua program, jadwal rapat, dan agenda. Klik tanggal untuk menambah jadwal baru.' },
+    { tab: 'notulensi', icon: 'fa-solid fa-folder-open', title: 'Notulensi', desc: 'Buat dan kelola notulensi rapat dalam folder. Editor dokumen dilengkapi fitur format teks, tabel, dan export Word/PDF.' },
+    { tab: 'kpi', icon: 'fa-solid fa-bullseye', title: 'Indikator KPI', desc: 'Tetapkan Key Performance Indicators untuk setiap program. Pantau pencapaian target secara real-time.' },
+    { tab: 'surat', icon: 'fa-solid fa-file-signature', title: 'Digital Office', desc: 'Ajukan dokumen untuk ditandatangani. Upload PDF, sistem akan mendeteksi nomor surat secara otomatis.' },
+    { tab: 'database-surat', icon: 'fa-solid fa-database', title: 'Database Surat', desc: 'Konfigurasi format penomoran surat dan lihat riwayat semua dokumen yang telah diajukan.' },
+    { tab: 'workspace-files', icon: 'fa-solid fa-cloud', title: 'File Manager', desc: 'Kelola file dan folder workspace dengan tampilan seperti Google Drive. Upload, pindahkan, rename, dan hapus file.' },
+  ];
+
+  const ONBOARDING_HTML = `
+    <style>
+      .onboarding-overlay { position: fixed; inset: 0; background: rgba(10,48,85,0.8); backdrop-filter: blur(6px); z-index: 200000; display: none; align-items: center; justify-content: center; }
+      .onboarding-overlay.active { display: flex; }
+      .onboarding-card { background: white; border-radius: 24px; padding: 36px; max-width: 520px; width: 92%; box-shadow: 0 40px 80px rgba(0,0,0,0.4); animation: onboardingIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); position: relative; text-align: center; }
+      @keyframes onboardingIn { from { opacity: 0; transform: scale(0.85) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      .onboarding-icon-wrap { width: 80px; height: 80px; background: var(--primary-soft,#f0f4f8); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem; color: var(--primary,#0A3055); }
+      .onboarding-card h2 { font-size: 1.5rem; font-weight: 800; color: var(--primary,#0A3055); margin-bottom: 10px; }
+      .onboarding-card p { font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 20px; }
+      .onboarding-progress { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; }
+      .onboarding-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; transition: 0.3s; }
+      .onboarding-dot.active { background: var(--accent,#f59e0b); transform: scale(1.3); }
+      .onboarding-dot.done { background: var(--primary,#0A3055); }
+      .onboarding-actions { display: flex; gap: 10px; margin-top: 10px; }
+      .onboarding-btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
+      .onboarding-btn.primary { background: var(--primary,#0A3055); color: white; }
+      .onboarding-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,48,85,0.3); }
+      .onboarding-btn.secondary { background: #f1f5f9; color: #475569; }
+      .onboarding-btn.secondary:hover { background: #e2e8f0; }
+      .onboarding-btn.skip { background: transparent; color: #94a3b8; flex: 0.5; }
+      .onboarding-btn.skip:hover { color: var(--primary); }
+      .onboarding-sidebar-highlight { position: relative; z-index: 200001 !important; animation: obSidebarPulse 1.2s ease-in-out 5; }
+      @keyframes obSidebarPulse { 0%,100% { background: rgba(245,158,11,0.2); border-left-color: var(--accent); } 50% { background: rgba(245,158,11,0.4); border-left-color: #fff; } }
+      .onboarding-sidebar-highlight i { color: var(--accent) !important; }
+      .onboarding-sidebar-highlight span { color: #fff !important; }
+    </style>
+    <div class="onboarding-overlay" id="onboardingOverlay">
+      <div class="onboarding-card" id="onboardingCard">
+        <div class="onboarding-icon-wrap" id="onboardingIcon"><i class="fa-solid fa-compass"></i></div>
+        <h2 id="onboardingTitle">Selamat Datang!</h2>
+        <p id="onboardingDesc">Mari kita jelajahi fitur-fitur yang tersedia di workspace Anda.</p>
+        <div class="onboarding-progress" id="onboardingProgress"></div>
+        <div class="onboarding-actions">
+          <button class="onboarding-btn skip" id="onboardingSkipBtn" onclick="AI.onboardingSkip()">Lewati</button>
+          <button class="onboarding-btn secondary" id="onboardingPrevBtn" onclick="AI.onboardingPrev()" style="display:none;"><i class="fa-solid fa-arrow-left"></i> Sebelumnya</button>
+          <button class="onboarding-btn primary" id="onboardingNextBtn" onclick="AI.onboardingNext()">Selanjutnya <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="onboarding-btn primary" id="onboardingDoneBtn" onclick="AI.onboardingComplete()" style="display:none;"><i class="fa-solid fa-check"></i> Selesai</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  self.onboardingState = { current: 0, total: ONBOARDING_STEPS.length, active: false };
+
+  self.startOnboarding = function() {
+    if (self.onboardingState.active) return;
+    self.onboardingState = { current: 0, total: ONBOARDING_STEPS.length, active: true };
+    // Inject onboarding HTML if not present
+    if (!document.getElementById('onboardingOverlay')) {
+      const div = document.createElement('div');
+      div.innerHTML = ONBOARDING_HTML;
+      document.body.appendChild(div.firstElementChild);
+    }
+    self.renderOnboardingStep();
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) overlay.classList.add('active');
+  };
+
+  self.renderOnboardingStep = function() {
+    const state = self.onboardingState;
+    const step = ONBOARDING_STEPS[state.current];
+    if (!step) return;
+
+    document.getElementById('onboardingIcon').innerHTML = `<i class="${step.icon}"></i>`;
+    document.getElementById('onboardingTitle').textContent = step.title;
+    document.getElementById('onboardingDesc').textContent = step.desc;
+
+    // Progress dots
+    const progressEl = document.getElementById('onboardingProgress');
+    progressEl.innerHTML = '';
+    for (let i = 0; i < state.total; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'onboarding-dot';
+      if (i === state.current) dot.classList.add('active');
+      else if (i < state.current) dot.classList.add('done');
+      progressEl.appendChild(dot);
+    }
+
+    // Buttons
+    document.getElementById('onboardingPrevBtn').style.display = state.current > 0 ? 'block' : 'none';
+    document.getElementById('onboardingNextBtn').style.display = state.current < state.total - 1 ? 'block' : 'none';
+    document.getElementById('onboardingDoneBtn').style.display = state.current >= state.total - 1 ? 'block' : 'none';
+    document.getElementById('onboardingSkipBtn').style.display = 'block';
+
+    // Auto-navigate to the tab
+    self.onboardingNavigateTo(step.tab);
+    // Highlight sidebar item
+    self.onboardingHighlightSidebar(step.tab);
+  };
+
+  self.onboardingNavigateTo = function(tab) {
+    // Try to call switchTab if available (defined in page context)
+    if (typeof switchTab === 'function') {
+      switchTab(tab);
+    } else {
+      // Fallback: navigate via AI navigate
+      if (cfg.onNavigate) {
+        cfg.onNavigate(tab);
+      }
+    }
+  };
+
+  self.onboardingHighlightSidebar = function(tab) {
+    // Remove previous highlight
+    self.onboardingClearHighlight();
+    // Find the nav-item that has this tab in its onclick
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(el => {
+      const onclick = el.getAttribute('onclick') || '';
+      if (onclick.includes("'" + tab + "'") || onclick.includes('"' + tab + '"')) {
+        el.classList.add('onboarding-sidebar-highlight');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  };
+
+  self.onboardingClearHighlight = function() {
+    document.querySelectorAll('.onboarding-sidebar-highlight').forEach(el => {
+      el.classList.remove('onboarding-sidebar-highlight');
+    });
+  };
+
+  self.onboardingNext = function() {
+    if (self.onboardingState.current < self.onboardingState.total - 1) {
+      self.onboardingState.current++;
+      self.renderOnboardingStep();
+    }
+  };
+
+  self.onboardingPrev = function() {
+    if (self.onboardingState.current > 0) {
+      self.onboardingState.current--;
+      self.renderOnboardingStep();
+    }
+  };
+
+  self.onboardingSkip = function() {
+    self.onboardingClearHighlight();
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) overlay.classList.remove('active');
+    self.onboardingState.active = false;
+  };
+
+  self.onboardingComplete = function() {
+    self.onboardingClearHighlight();
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) overlay.classList.remove('active');
+    self.onboardingState.active = false;
+    // Store in localStorage
+    const userId = cfg.pageUser || 'default';
+    // Also store in a way that's accessible from user.html
+    localStorage.setItem('onboarding_completed_' + userId, 'true');
+    // Also store workspace-specific
+    if (cfg.workspaceId) {
+      localStorage.setItem('onboarding_completed_ws_' + cfg.workspaceId + '_' + userId, 'true');
+    }
+  };
+
   // ── WIDGET HTML ──
   self.WIDGET_HTML = `
     <style id="ai-assistant-styles">
