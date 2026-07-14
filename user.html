@@ -1320,14 +1320,24 @@
                             <label>Header / Kop Surat (gambar)</label>
                             <div style="display:flex;gap:8px;align-items:center;">
                                 <input type="file" id="mw-create-header-input" accept="image/*" style="flex:1;" onchange="uploadMWHeader(event)">
-                                <button class="btn-ghost" onclick="document.getElementById('mw-create-header-input').value='';document.getElementById('mw-preview-header-img').style.display='none';updateMWLivePreview();" style="padding:6px 10px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn-ghost" onclick="document.getElementById('mw-create-header-input').value='';mwHeaderDataUrl=null;document.getElementById('mw-preview-header-img').style.display='none';updateMWLivePreview();" style="padding:6px 10px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                                <label style="font-size:0.75rem;color:var(--text-muted);min-width:50px;">Ukuran:</label>
+                                <input type="range" id="mw-header-width" min="30" max="100" value="80" oninput="updateMWLivePreview()" style="flex:1;">
+                                <span id="mw-header-width-label" style="font-size:0.75rem;min-width:30px;color:var(--text-muted);">80%</span>
                             </div>
                         </div>
                         <div class="input-group">
                             <label>Footer / Kaki Surat (gambar)</label>
                             <div style="display:flex;gap:8px;align-items:center;">
                                 <input type="file" id="mw-create-footer-input" accept="image/*" style="flex:1;" onchange="uploadMWFooter(event)">
-                                <button class="btn-ghost" onclick="document.getElementById('mw-create-footer-input').value='';document.getElementById('mw-preview-footer-img').style.display='none';updateMWLivePreview();" style="padding:6px 10px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn-ghost" onclick="document.getElementById('mw-create-footer-input').value='';mwFooterDataUrl=null;document.getElementById('mw-preview-footer-img').style.display='none';updateMWLivePreview();" style="padding:6px 10px;font-size:0.8rem;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                                <label style="font-size:0.75rem;color:var(--text-muted);min-width:50px;">Ukuran:</label>
+                                <input type="range" id="mw-footer-width" min="30" max="100" value="80" oninput="updateMWLivePreview()" style="flex:1;">
+                                <span id="mw-footer-width-label" style="font-size:0.75rem;min-width:30px;color:var(--text-muted);">80%</span>
                             </div>
                         </div>
                         <div class="input-group">
@@ -3997,8 +4007,9 @@
 
                 if (contexts && contexts.length > 0) {
                     // Pattern 1: Cari di teks normal (spasi sudah dinormalisasi)
-                    // Format: NNN / KODE / INST / ROMAN / TAHUN
-                    const baseRegex = /(\d{3,})\s*\/\s*([A-Za-z0-9\.\-_]+)\s*\/\s*([A-Za-z0-9\.\-_]+)\s*\/\s*([IVXLCDMivxlcdm]+)\s*\/\s*(\d{4})/g;
+                    // Format: NNN / KODE / [INST] / ROMAN / TAHUN  (INST opsional)
+                    // Groups: [1]=num, [2]=kode, [3]=inst?(optional), [4]=roman, [5]=year
+                    const baseRegex = /(\d{3,})\s*\/\s*([A-Za-z0-9\.\-_]+)\s*\/\s*(?:([A-Za-z0-9\.\-_]+)\s*\/\s*)?([IVXLCDMivxlcdm]+)\s*\/\s*(\d{4})/g;
                     
                     let match;
                     while ((match = baseRegex.exec(normalText)) !== null) {
@@ -4006,7 +4017,10 @@
                         for (const ctx of contexts) {
                             if (kodePart === ctx.kode_inisial.toUpperCase()) {
                                 matchedContext = ctx;
-                                detectedNomor = `${match[1]}/${kodePart}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`;
+                                const kode = ctx.kode_inisial.toUpperCase();
+                                detectedNomor = match[3] !== undefined
+                                    ? `${match[1]}/${kode}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`
+                                    : `${match[1]}/${kode}/${match[4].toUpperCase()}/${match[5]}`;
                                 break;
                             }
                         }
@@ -4015,13 +4029,16 @@
 
                     // Pattern 2: Fallback - cari di teks tanpa spasi (PDF dengan OCR kacau)
                     if (!matchedContext) {
-                        const noSpaceRegex = /(\d{3,})\/([A-Za-z0-9\.\-_]+)\/([A-Za-z0-9\.\-_]+)\/([IVXLCDMivxlcdm]+)\/(\d{4})/g;
+                        const noSpaceRegex = /(\d{3,})\/([A-Za-z0-9\.\-_]+)\/(?:([A-Za-z0-9\.\-_]+)\/)?([IVXLCDMivxlcdm]+)\/(\d{4})/g;
                         while ((match = noSpaceRegex.exec(noSpaceText)) !== null) {
                             const kodePart = match[2].toUpperCase();
                             for (const ctx of contexts) {
                                 if (kodePart === ctx.kode_inisial.toUpperCase()) {
                                     matchedContext = ctx;
-                                    detectedNomor = `${match[1]}/${kodePart}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`;
+                                    const kode = ctx.kode_inisial.toUpperCase();
+                                    detectedNomor = match[3] !== undefined
+                                        ? `${match[1]}/${kode}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`
+                                        : `${match[1]}/${kode}/${match[4].toUpperCase()}/${match[5]}`;
                                     break;
                                 }
                             }
@@ -4030,16 +4047,20 @@
                     }
 
                     // Pattern 3: Fallback - regex per-konteks dari kode_inisial (paling akurat)
+                    // Groups: [1]=num, [2]=inst?(optional), [3]=roman, [4]=year  (kode ada di literal pattern)
                     if (!matchedContext) {
                         for (const ctx of contexts) {
                             const escapedKode = ctx.kode_inisial.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                             const ctxRegex = new RegExp(
-                                `(\\d{3,})\\s*\\/\\s*${escapedKode}\\s*\\/\\s*([A-Za-z0-9]+)\\s*\\/\\s*([IVXLCDM]+)\\s*\\/\\s*(\\d{4})`, 'gi'
+                                `(\\d{3,})\\s*\\/\\s*${escapedKode}\\s*\\/\\s*(?:([A-Za-z0-9]+)\\s*\\/\\s*)?([IVXLCDM]+)\\s*\\/\\s*(\\d{4})`, 'gi'
                             );
                             const ctxMatch = ctxRegex.exec(normalText) || ctxRegex.exec(noSpaceText);
                             if (ctxMatch) {
                                 matchedContext = ctx;
-                                detectedNomor = `${ctxMatch[1]}/${ctx.kode_inisial.toUpperCase()}/${ctxMatch[2]}/${ctxMatch[3].toUpperCase()}/${ctxMatch[4]}`;
+                                const kode = ctx.kode_inisial.toUpperCase();
+                                detectedNomor = ctxMatch[2] !== undefined
+                                    ? `${ctxMatch[1]}/${kode}/${ctxMatch[2]}/${ctxMatch[3].toUpperCase()}/${ctxMatch[4]}`
+                                    : `${ctxMatch[1]}/${kode}/${ctxMatch[3].toUpperCase()}/${ctxMatch[4]}`;
                                 break;
                             }
                         }
@@ -4171,6 +4192,7 @@
 
                     htmlContainer.innerHTML = buildCompleteLetterHtml({
                         headerUrl, footerUrl,
+                        headerWidth: 80, footerWidth: 80,
                         nomorSurat: surat.nomor_surat || '',
                         judul: surat.judul_surat || '',
                         tujuan: surat.tujuan_surat || '',
@@ -5095,13 +5117,15 @@
             const ml = opts.marginLeft || 25;
             const mr = opts.marginRight || 25;
             const lineSpacing = opts.lineSpacing || 1.6;
+            const headerWidth = opts.headerWidth || 80;
+            const footerWidth = opts.footerWidth || 80;
 
             const headerSection = headerUrl
-                ? `<div style="text-align:center;margin-bottom:15px;"><img src="${headerUrl}" alt="Header" style="max-width:100%;height:auto;"></div>`
+                ? `<div style="text-align:center;margin-bottom:15px;"><img src="${headerUrl}" alt="Header" style="max-width:${headerWidth}%;height:auto;"></div>`
                 : '';
 
             const footerSection = footerUrl
-                ? `<div style="text-align:center;margin-top:15px;"><img src="${footerUrl}" alt="Footer" style="max-width:100%;height:auto;"></div>`
+                ? `<div style="text-align:center;margin-top:15px;"><img src="${footerUrl}" alt="Footer" style="max-width:${footerWidth}%;height:auto;"></div>`
                 : '';
 
             const nomorSection = nomorSurat
@@ -5208,6 +5232,15 @@
             const headerUrl = mwHeaderDataUrl || (tpl ? tpl.header_url : '') || '';
             const footerUrl = mwFooterDataUrl || (tpl ? tpl.footer_url : '') || '';
 
+            const headerWidthEl = document.getElementById('mw-header-width');
+            const footerWidthEl = document.getElementById('mw-footer-width');
+            const headerWidth = headerWidthEl ? parseInt(headerWidthEl.value) : 80;
+            const footerWidth = footerWidthEl ? parseInt(footerWidthEl.value) : 80;
+            const headerLabel = document.getElementById('mw-header-width-label');
+            const footerLabel = document.getElementById('mw-footer-width-label');
+            if (headerLabel) headerLabel.textContent = headerWidth + '%';
+            if (footerLabel) footerLabel.textContent = footerWidth + '%';
+
             const nomorDisplay = document.getElementById('mw-number-display');
             const nomorSurat = nomorDisplay ? nomorDisplay.innerText.replace('Nomor Surat:', '').trim() : '';
 
@@ -5228,6 +5261,7 @@
 
             preview.innerHTML = buildCompleteLetterHtml({
                 headerUrl, footerUrl,
+                headerWidth, footerWidth,
                 nomorSurat, judul, tujuan,
                 bodyHtml: body,
                 signatories: signatoriesData,
@@ -5317,8 +5351,14 @@
                 const mr = parseInt(document.getElementById('mw-margin-right').value) || 25;
                 const lineSpacing = parseFloat(document.getElementById('mw-line-spacing').value) || 1.6;
 
+                const hwEl = document.getElementById('mw-header-width');
+                const fwEl = document.getElementById('mw-footer-width');
+                const headerWidth = hwEl ? parseInt(hwEl.value) : 80;
+                const footerWidth = fwEl ? parseInt(fwEl.value) : 80;
+
                 const fullHtml = buildCompleteLetterHtml({
                     headerUrl, footerUrl,
+                    headerWidth, footerWidth,
                     nomorSurat, judul,
                     tujuan: tujuan || '',
                     bodyHtml: bodyClean,
