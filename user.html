@@ -5201,19 +5201,19 @@
 
                 const bodyHtml = (body && body !== '<p>Tulis isi surat di sini...</p>' && body !== '<p><br></p>') ? body : '';
 
-                await supabaseClient.from('digital_office').insert([{
-                    workspace_id: globalWorkspaceId,
-                    konteks_id: ctxId,
-                    nomor_surat: nomorSurat,
-                    judul_surat: judul,
-                    tujuan_surat: tujuan || '',
-                    body_html: bodyHtml,
-                    pengirim_id: currentUserId,
-                    pengaju_id: currentUserId,
-                    status: 'Draft',
-                    template_id: tplId,
-                    signatories: signatoriesData
-                }]);
+                const { error: insertError } = await supabaseClient.rpc('insert_digital_office_letter', {
+                    p_workspace_id: globalWorkspaceId,
+                    p_konteks_id: ctxId,
+                    p_nomor_surat: nomorSurat,
+                    p_judul_surat: judul,
+                    p_tujuan_surat: tujuan || '',
+                    p_body_html: bodyHtml,
+                    p_pengirim_id: currentUserId,
+                    p_pengaju_id: currentUserId,
+                    p_template_id: tplId,
+                    p_signatories: signatoriesData
+                });
+                if (insertError) throw insertError;
                 await loadDigitalOffice();
                 if(currentUserRole === 'admin') await loadDatabaseSuratLog();
                 showNotification('Surat berhasil dibuat dan dikirim ke Digital Office!', 'success');
