@@ -3984,10 +3984,11 @@
 
             try {
                 const pdfText = await extractTextFromPDFFile(file);
-                
-                // FIX OCR: Hapus SELURUH spasi yang tidak sengaja tergenerasi oleh pembacaan PDF.js
-                // Ini akan mengubah "001 / SK - MOU / CAMPUSINNOVATE" menjadi "001/SK-MOU/CAMPUSINNOVATE"
-                const cleanPdfText = pdfText.replace(/\s+/g, ''); 
+
+                // Normalisasi whitespace: spasi berlebih jadi 1 spasi, lalu trim
+                const normalText = pdfText.replace(/\s+/g, ' ').trim();
+                // Versi tanpa spasi untuk fallback
+                const noSpaceText = pdfText.replace(/\s+/g, '');
 
                 const { data: contexts } = await supabaseClient.from('surat_contexts').select('*').eq('workspace_id', globalWorkspaceId);
                 
@@ -3995,23 +3996,53 @@
                 let detectedNomor = null;
 
                 if (contexts && contexts.length > 0) {
-                    // FIX OCR REGEX: Pola disederhanakan dan dibebaskan dari pengecekan spasi (\s*)
-                    const nomorSuratRegex = /(\d{3,})\/([A-Za-z0-9\.\-_]+)\/([A-Za-z0-9\.\-_]+)\/([IVXLCDMivxlcdm]+)\/(\d{4})/g;
+                    // Pattern 1: Cari di teks normal (spasi sudah dinormalisasi)
+                    // Format: NNN / KODE / INST / ROMAN / TAHUN
+                    const baseRegex = /(\d{3,})\s*\/\s*([A-Za-z0-9\.\-_]+)\s*\/\s*([A-Za-z0-9\.\-_]+)\s*\/\s*([IVXLCDMivxlcdm]+)\s*\/\s*(\d{4})/g;
                     
                     let match;
-                    while ((match = nomorSuratRegex.exec(cleanPdfText)) !== null) {
-                        const numPart = match[1];
-                        const kodePart = match[2].toUpperCase(); // Memastikan kode bebas masalah huruf besar/kecil
-                        
+                    while ((match = baseRegex.exec(normalText)) !== null) {
+                        const kodePart = match[2].toUpperCase();
                         for (const ctx of contexts) {
                             if (kodePart === ctx.kode_inisial.toUpperCase()) {
                                 matchedContext = ctx;
-                                // Merakit kembali nomor surat ke format baku
-                                detectedNomor = `${numPart}/${kodePart}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`;
+                                detectedNomor = `${match[1]}/${kodePart}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`;
                                 break;
                             }
                         }
                         if(matchedContext) break;
+                    }
+
+                    // Pattern 2: Fallback - cari di teks tanpa spasi (PDF dengan OCR kacau)
+                    if (!matchedContext) {
+                        const noSpaceRegex = /(\d{3,})\/([A-Za-z0-9\.\-_]+)\/([A-Za-z0-9\.\-_]+)\/([IVXLCDMivxlcdm]+)\/(\d{4})/g;
+                        while ((match = noSpaceRegex.exec(noSpaceText)) !== null) {
+                            const kodePart = match[2].toUpperCase();
+                            for (const ctx of contexts) {
+                                if (kodePart === ctx.kode_inisial.toUpperCase()) {
+                                    matchedContext = ctx;
+                                    detectedNomor = `${match[1]}/${kodePart}/${match[3]}/${match[4].toUpperCase()}/${match[5]}`;
+                                    break;
+                                }
+                            }
+                            if(matchedContext) break;
+                        }
+                    }
+
+                    // Pattern 3: Fallback - regex per-konteks dari kode_inisial (paling akurat)
+                    if (!matchedContext) {
+                        for (const ctx of contexts) {
+                            const escapedKode = ctx.kode_inisial.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const ctxRegex = new RegExp(
+                                `(\\d{3,})\\s*\\/\\s*${escapedKode}\\s*\\/\\s*([A-Za-z0-9]+)\\s*\\/\\s*([IVXLCDM]+)\\s*\\/\\s*(\\d{4})`, 'gi'
+                            );
+                            const ctxMatch = ctxRegex.exec(normalText) || ctxRegex.exec(noSpaceText);
+                            if (ctxMatch) {
+                                matchedContext = ctx;
+                                detectedNomor = `${ctxMatch[1]}/${ctx.kode_inisial.toUpperCase()}/${ctxMatch[2]}/${ctxMatch[3].toUpperCase()}/${ctxMatch[4]}`;
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -4120,14 +4151,38 @@
             const htmlContainer = document.getElementById('do-html-review-container');
 
             if (!url && surat && surat.body_html) {
-                // HTML body review
                 if (pdfContainer) pdfContainer.style.display = 'none';
                 if (htmlContainer) {
                     htmlContainer.style.display = 'block';
-                    htmlContainer.innerHTML = surat.body_html;
+                    htmlContainer.style.height = '500px';
+
+                    let headerUrl = '';
+                    let footerUrl = '';
+                    if (surat.template_id) {
+                        const { data: tpl } = await supabaseClient.from('letter_templates')
+                            .select('header_url, footer_url')
+                            .eq('id', surat.template_id)
+                            .single();
+                        if (tpl) {
+                            headerUrl = tpl.header_url || '';
+                            footerUrl = tpl.footer_url || '';
+                        }
+                    }
+
+                    htmlContainer.innerHTML = buildCompleteLetterHtml({
+                        headerUrl, footerUrl,
+                        nomorSurat: surat.nomor_surat || '',
+                        judul: surat.judul_surat || '',
+                        tujuan: surat.tujuan_surat || '',
+                        bodyHtml: surat.body_html,
+                        signatories: surat.signatories || []
+                    });
                 }
                 document.getElementById('pdf-controls-bar').style.display = 'none';
-                document.getElementById('btn-approve-pdf').style.display = 'none';
+                document.getElementById('sig-draggable-overlay').style.display = 'none';
+                document.getElementById('btn-approve-pdf').style.display = 'inline-flex';
+                document.getElementById('btn-approve-pdf').innerText = 'Tanda Tangani (Approve)';
+                document.getElementById('btn-approve-pdf').disabled = false;
                 return;
             }
 
@@ -4280,6 +4335,11 @@
                         const { data: publicUrlData } = supabaseClient.storage.from('digital_office').getPublicUrl(filePath);
                         finalUrl = publicUrlData.publicUrl;
                         updatePayload.file_url = finalUrl;
+                    } else if (activeSuratData && activeSuratData.body_html && !activeSuratData.file_url) {
+                        // HTML letter: sign digitally without PDF
+                        document.getElementById('btn-approve-pdf').innerText = "Memproses TTD Digital...";
+                        document.getElementById('btn-approve-pdf').disabled = true;
+                        finalUrl = '';
                     }
                 }
 
@@ -5022,6 +5082,104 @@
         let mwCachedSigHtml = '';
         let mwCachedTplId = null;
 
+        function buildCompleteLetterHtml(opts) {
+            const headerUrl = opts.headerUrl || '';
+            const footerUrl = opts.footerUrl || '';
+            const nomorSurat = opts.nomorSurat || '';
+            const judul = opts.judul || '';
+            const tujuan = opts.tujuan || '';
+            const bodyHtml = opts.bodyHtml || '';
+            const signatoriesArr = opts.signatories || [];
+            const mt = opts.marginTop || 30;
+            const mb = opts.marginBottom || 30;
+            const ml = opts.marginLeft || 25;
+            const mr = opts.marginRight || 25;
+            const lineSpacing = opts.lineSpacing || 1.6;
+
+            const headerSection = headerUrl
+                ? `<div style="text-align:center;margin-bottom:15px;"><img src="${headerUrl}" alt="Header" style="max-width:100%;height:auto;"></div>`
+                : '';
+
+            const footerSection = footerUrl
+                ? `<div style="text-align:center;margin-top:15px;"><img src="${footerUrl}" alt="Footer" style="max-width:100%;height:auto;"></div>`
+                : '';
+
+            const nomorSection = nomorSurat
+                ? `<div style="text-align:center;margin-bottom:8px;font-size:11pt;"><strong>${escapeHtml(nomorSurat)}</strong></div>`
+                : '';
+
+            const judulSection = judul
+                ? `<h3 style="text-align:center;font-size:13pt;font-weight:bold;margin-bottom:15px;text-transform:uppercase;">${escapeHtml(judul)}</h3>`
+                : '';
+
+            const tujuanSection = tujuan
+                ? `<p style="margin-bottom:12px;font-size:11pt;">${escapeHtml(tujuan)}</p>`
+                : '';
+
+            const bodyClean = bodyHtml && bodyHtml !== '<p>Tulis isi surat di sini...</p>' && bodyHtml !== '<p><br></p>' ? bodyHtml : '';
+            const bodySection = bodyClean
+                ? `<div style="text-align:justify;line-height:${lineSpacing};">${bodyClean}</div>`
+                : '';
+
+            let sigSection = '';
+            if (signatoriesArr.length > 0) {
+                const layers = {};
+                signatoriesArr.forEach(s => {
+                    if (!layers[s.layer]) layers[s.layer] = {};
+                    layers[s.layer][s.position] = s;
+                });
+                const hasLayer1 = layers[1] && (layers[1].left || layers[1].right);
+                for (let layer of [1, 2]) {
+                    const l = layers[layer];
+                    if (!l) continue;
+                    const left = l.left;
+                    const right = l.right;
+                    if (!left && !right) continue;
+                    if (layer === 2 && hasLayer1) sigSection += `<hr style="margin:20px 0;border:none;border-top:1px dashed #999;">`;
+                    sigSection += `<div style="display:flex;justify-content:space-between;margin-top:30px;gap:40px;">`;
+                    if (left) {
+                        const nama = globalWorkspaceUsers.find(u => u.id === left.user_id)?.name || left.custom_title || 'User';
+                        sigSection += `<div style="flex:1;text-align:center;min-width:200px;">`;
+                        if (left.signed) {
+                            sigSection += `<div style="margin-bottom:5px;font-style:italic;color:var(--success);font-size:10pt;">✅ Ditandatangani</div>`;
+                        } else {
+                            sigSection += `<div style="margin-bottom:40px;">&nbsp;</div>`;
+                        }
+                        sigSection += `<div style="border-top:1px solid #000;width:200px;margin:0 auto 5px auto;"></div>`;
+                        sigSection += `<div style="font-weight:bold;font-size:11pt;">${escapeHtml(nama)}</div>`;
+                        sigSection += left.custom_title ? `<div style="font-size:10pt;color:#555;">${escapeHtml(left.custom_title)}</div>` : '';
+                        sigSection += `</div>`;
+                    }
+                    if (right) {
+                        const nama = globalWorkspaceUsers.find(u => u.id === right.user_id)?.name || right.custom_title || 'User';
+                        sigSection += `<div style="flex:1;text-align:center;min-width:200px;">`;
+                        if (right.signed) {
+                            sigSection += `<div style="margin-bottom:5px;font-style:italic;color:var(--success);font-size:10pt;">✅ Ditandatangani</div>`;
+                        } else {
+                            sigSection += `<div style="margin-bottom:40px;">&nbsp;</div>`;
+                        }
+                        sigSection += `<div style="border-top:1px solid #000;width:200px;margin:0 auto 5px auto;"></div>`;
+                        sigSection += `<div style="font-weight:bold;font-size:11pt;">${escapeHtml(nama)}</div>`;
+                        sigSection += right.custom_title ? `<div style="font-size:10pt;color:#555;">${escapeHtml(right.custom_title)}</div>` : '';
+                        sigSection += `</div>`;
+                    }
+                    sigSection += `</div>`;
+                }
+            }
+
+            return `
+                <div style="padding:${mt}px ${mr}px ${mb}px ${ml}px;line-height:${lineSpacing};font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;">
+                    ${headerSection}
+                    ${nomorSection}
+                    ${judulSection}
+                    ${tujuanSection}
+                    ${bodySection}
+                    ${sigSection}
+                    ${footerSection}
+                </div>
+            `;
+        }
+
         async function updateMWLivePreview() {
             const judul = document.getElementById('mw-create-judul').value;
             const tujuan = document.getElementById('mw-create-tujuan').value;
@@ -5047,88 +5205,36 @@
                 return;
             }
 
-            let headerHtml = '';
-            if (mwHeaderDataUrl) {
-                headerHtml = `<div class="preview-header-container"><img src="${mwHeaderDataUrl}" alt="Header"></div>`;
-            } else if (tpl && tpl.header_url) {
-                headerHtml = `<div class="preview-header-container"><img src="${tpl.header_url}" alt="Header"></div>`;
-            }
-
-            let footerHtml = '';
-            if (mwFooterDataUrl) {
-                footerHtml = `<div class="preview-footer-container"><img src="${mwFooterDataUrl}" alt="Footer"></div>`;
-            } else if (tpl && tpl.footer_url) {
-                footerHtml = `<div class="preview-footer-container"><img src="${tpl.footer_url}" alt="Footer"></div>`;
-            }
+            const headerUrl = mwHeaderDataUrl || (tpl ? tpl.header_url : '') || '';
+            const footerUrl = mwFooterDataUrl || (tpl ? tpl.footer_url : '') || '';
 
             const nomorDisplay = document.getElementById('mw-number-display');
-            const nomorText = nomorDisplay ? nomorDisplay.innerText.replace('Nomor Surat:', '').trim() : '';
+            const nomorSurat = nomorDisplay ? nomorDisplay.innerText.replace('Nomor Surat:', '').trim() : '';
 
-            const tujuanHtml = tujuan ? `<p style="margin-bottom:12px;font-size:11pt;">${escapeHtml(tujuan)}</p>` : '';
-            const judulHtml = judul ? `<h3 style="text-align:center;font-size:13pt;font-weight:bold;margin-bottom:15px;text-transform:uppercase;">${escapeHtml(judul)}</h3>` : '';
-            const bodyClean = body && body !== '<p>Tulis isi surat di sini...</p>' && body !== '<p><br></p>' ? body : '';
-            const bodyHtml = bodyClean ? `<div style="text-align:justify;line-height:${lineSpacing};">${bodyClean}</div>` : '';
-
-            // Use cached signature HTML if template hasn't changed, else fetch and cache
+            let signatoriesData = [];
             if (tpl) {
                 if (tplId !== mwCachedTplId) {
                     mwCachedTplId = tplId;
                     const { data: sigs } = await supabaseClient.from('letter_signatories')
-                        .select('*, workspace_members!inner(user_id, nama_user)')
+                        .select('user_id, layer, position, custom_title, workspace_members!inner(user_id, nama_user)')
                         .eq('template_id', tplId);
-
-                    let sigHtml = '';
-                    if (sigs && sigs.length > 0) {
-                        const layers = {};
-                        sigs.forEach(s => {
-                            if (!layers[s.layer]) layers[s.layer] = {};
-                            layers[s.layer][s.position] = s;
-                        });
-                        const hasLayer1 = layers[1] && (layers[1].left || layers[1].right);
-                        for (let layer of [1, 2]) {
-                            const l = layers[layer];
-                            if (!l) continue;
-                            const left = l.left;
-                            const right = l.right;
-                            if (!left && !right) continue;
-                            if (layer === 2 && hasLayer1) sigHtml += `<hr class="sig-layer-divider">`;
-                            sigHtml += `<div class="sig-layer">
-                                <div class="sig-block">
-                                    ${left ? `<div class="sig-line">${escapeHtml(left.workspace_members?.nama_user || 'User')}</div><br><span class="sig-title">${escapeHtml(left.custom_title || '')}</span>` : ''}
-                                </div>
-                                <div class="sig-block">
-                                    ${right ? `<div class="sig-line">${escapeHtml(right.workspace_members?.nama_user || 'User')}</div><br><span class="sig-title">${escapeHtml(right.custom_title || '')}</span>` : ''}
-                                </div>
-                            </div>`;
-                        }
-                    } else if (tpl.signature_left_name || tpl.signature_right_name) {
-                        sigHtml = `<div class="sig-layer">
-                            <div class="sig-block">
-                                ${tpl.signature_left_name ? `<div class="sig-line">${escapeHtml(tpl.signature_left_name)}</div><br><span class="sig-title">${escapeHtml(tpl.signature_left_title || '')}</span>` : ''}
-                            </div>
-                            <div class="sig-block">
-                                ${tpl.signature_right_name ? `<div class="sig-line">${escapeHtml(tpl.signature_right_name)}</div><br><span class="sig-title">${escapeHtml(tpl.signature_right_title || '')}</span>` : ''}
-                            </div>
-                        </div>`;
-                    }
-                    mwCachedSigHtml = sigHtml;
+                    mwCachedSigHtml = sigs || [];
                 }
+                signatoriesData = mwCachedSigHtml;
             } else {
-                mwCachedSigHtml = '';
+                mwCachedSigHtml = [];
                 mwCachedTplId = null;
             }
 
-            preview.innerHTML = `
-                <div style="padding:${mt}px ${mr}px ${mb}px ${ml}px;line-height:${lineSpacing};">
-                    ${headerHtml}
-                    ${nomorText ? `<div style="text-align:center;margin-bottom:15px;font-size:10pt;"><strong>${escapeHtml(nomorText)}</strong></div>` : ''}
-                    ${judulHtml}
-                    ${tujuanHtml}
-                    ${bodyHtml}
-                    ${mwCachedSigHtml}
-                    ${footerHtml}
-                </div>
-            `;
+            preview.innerHTML = buildCompleteLetterHtml({
+                headerUrl, footerUrl,
+                nomorSurat, judul, tujuan,
+                bodyHtml: body,
+                signatories: signatoriesData,
+                marginTop: mt, marginBottom: mb,
+                marginLeft: ml, marginRight: mr,
+                lineSpacing
+            });
         }
 
         async function uploadMWHeader(event) {
@@ -5199,7 +5305,28 @@
                     signed_at: null
                 }));
 
-                const bodyHtml = (body && body !== '<p>Tulis isi surat di sini...</p>' && body !== '<p><br></p>') ? body : '';
+                const bodyClean = (body && body !== '<p>Tulis isi surat di sini...</p>' && body !== '<p><br></p>') ? body : '';
+
+                const tpl = mwTemplates.find(t => t.id === tplId);
+                const headerUrl = mwHeaderDataUrl || (tpl ? tpl.header_url : '') || '';
+                const footerUrl = mwFooterDataUrl || (tpl ? tpl.footer_url : '') || '';
+
+                const mt = parseInt(document.getElementById('mw-margin-top').value) || 30;
+                const mb = parseInt(document.getElementById('mw-margin-bottom').value) || 30;
+                const ml = parseInt(document.getElementById('mw-margin-left').value) || 25;
+                const mr = parseInt(document.getElementById('mw-margin-right').value) || 25;
+                const lineSpacing = parseFloat(document.getElementById('mw-line-spacing').value) || 1.6;
+
+                const fullHtml = buildCompleteLetterHtml({
+                    headerUrl, footerUrl,
+                    nomorSurat, judul,
+                    tujuan: tujuan || '',
+                    bodyHtml: bodyClean,
+                    signatories: signatoriesData,
+                    marginTop: mt, marginBottom: mb,
+                    marginLeft: ml, marginRight: mr,
+                    lineSpacing
+                });
 
                 const { error: insertError } = await supabaseClient.rpc('insert_digital_office_letter', {
                     p_workspace_id: globalWorkspaceId,
@@ -5211,7 +5338,7 @@
                     p_template_id: tplId,
                     p_file_url: '',
                     p_tujuan_surat: tujuan || '',
-                    p_body_html: bodyHtml,
+                    p_body_html: fullHtml,
                     p_signatories: signatoriesData
                 });
                 if (insertError) throw insertError;
