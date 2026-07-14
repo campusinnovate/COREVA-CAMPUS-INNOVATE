@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-wrapper.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -1576,7 +1577,7 @@ function closeTcModal() { document.getElementById('tcModal').classList.remove('a
 // =============================================
 const SUPABASE_URL = 'https://wnhftesxaicqffnyrdkn.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_i2-_17x_KOh0HxNw4DaaNA_vqXMBO2R'; 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch: window.supabaseFetchFn } });
 
 async function handleLogin(e) {
     e.preventDefault();
@@ -1584,19 +1585,21 @@ async function handleLogin(e) {
     const password = document.getElementById('login-password').value;
     const btn = document.getElementById('btn-login'); 
     btn.disabled = true; btn.innerText = "Mengecek otoritas..."; 
-    const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data: authData, error: authError } = await supabaseFetch(function() { return supabaseClient.auth.signInWithPassword({ email: email, password: password }); });
     if (authError) {
         window.showToast("Login Gagal", authError.message, "error");
         btn.disabled = false; btn.innerText = "Masuk ke Sistem";
         return;
     }
-    const { data: roleData, error: roleError } = await supabaseClient.from('user_roles').select('role').eq('user_id', authData.user.id).single();
+    var { data: roleData, error: roleError } = await supabaseFetch(function() { return supabaseClient.from('user_roles').select('role').eq('user_id', authData.user.id).single(); });
     if (roleError || !roleData) {
         window.showToast("Akses Ditolak", "Akun Anda belum disetujui atau role belum diatur oleh Sistem.", "error");
-        await supabaseClient.auth.signOut();
+        await supabaseFetch(function() { return supabaseClient.auth.signOut(); });
         btn.disabled = false; btn.innerText = "Masuk ke Sistem";
         return;
     }
+    sessionStorage.setItem('cached_user_role', roleData.role);
+    sessionStorage.setItem('cached_user_role_time', String(Date.now()));
     window.showToast("Berhasil Masuk", "Kredensial valid. Mengalihkan ke ruang kerja...", "success");
     setTimeout(() => {
         const userRole = roleData.role;
@@ -1618,9 +1621,9 @@ async function submitRegistrationRequest(e) {
     const password = document.getElementById('req-password').value; 
     const btn = document.getElementById('btn-register'); 
     btn.disabled = true; btn.innerText = "Mengirim Blok Data..."; 
-    const { error } = await supabaseClient.from('registration_requests').insert([{
+    const { error } = await supabaseFetch(function() { return supabaseClient.from('registration_requests').insert([{
         nama: name, dob: dob, email: email, password: password, organisasi: org, status: 'pending', terms_accepted: true
-    }]);
+    }]); });
     if (error) {
         window.showToast("Sistem Menolak Pengajuan", error.message, "error");
         btn.disabled = false; btn.innerText = "Kirim Formulir Pengajuan";
@@ -2380,10 +2383,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     initScrollReveal();
     generateCaptcha();
     
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    var cachedRole = sessionStorage.getItem('cached_user_role');
+    var cachedTime = parseInt(sessionStorage.getItem('cached_user_role_time'));
+    if (cachedRole && cachedTime && Date.now() - cachedTime < 300000) {
+        if (cachedRole === 'superadmin') window.location.href = 'superadmin.html';
+        else if (cachedRole === 'admin') window.location.href = 'admin.html';
+        else window.location.href = 'user-hub.html';
+        return;
+    }
+    var { data: { session } } = await supabaseFetch(function() { return supabaseClient.auth.getSession(); });
     if (session) {
-        const { data: roleData } = await supabaseClient.from('user_roles').select('role').eq('user_id', session.user.id).single();
+        var { data: roleData } = await supabaseFetch(function() { return supabaseClient.from('user_roles').select('role').eq('user_id', session.user.id).single(); });
         if (roleData) {
+            sessionStorage.setItem('cached_user_role', roleData.role);
+            sessionStorage.setItem('cached_user_role_time', String(Date.now()));
             if (roleData.role === 'superadmin') window.location.href = 'superadmin.html';
             else if (roleData.role === 'admin') window.location.href = 'admin.html';
             else window.location.href = 'user-hub.html';
