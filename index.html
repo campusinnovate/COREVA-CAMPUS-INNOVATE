@@ -1457,6 +1457,7 @@
                 <div class="input-group">
                     <i class="fa-solid fa-lock"></i>
                     <input type="password" id="login-password" placeholder="Kata Sandi" required>
+                    <i class="fa-solid fa-eye toggle-password" onclick="togglePassword('login-password', this)"></i>
                 </div>
                 <button type="submit" class="btn btn-yellow btn-auth-submit" id="btn-login">Masuk ke Sistem</button>
             </form>
@@ -1486,6 +1487,7 @@
                 <div class="input-group">
                     <i class="fa-solid fa-lock"></i>
                     <input type="password" id="req-password" placeholder="Buat Kata Sandi" required minlength="6">
+                    <i class="fa-solid fa-eye toggle-password" onclick="togglePassword('req-password', this)"></i>
                 </div>
                 <div class="captcha-box">
                     <div class="captcha-text" id="captcha-question">5 + 3 =</div>
