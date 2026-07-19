@@ -519,13 +519,7 @@
                             <label>Buatkan Kata Sandi (Password)</label>
                             <input type="text" id="create-member-password" placeholder="Minimal 6 karakter" required minlength="6">
                         </div>
-                        <div class="input-group">
-                            <label>Tetapkan Hak Akses</label>
-                            <select id="create-member-role" required>
-                                <option value="admin">Admin Organisasi (Tertinggi)</option>
-                                <option value="user" selected>Pengurus/Anggota Biasa</option>
-                            </select>
-                        </div>
+                        <input type="hidden" id="create-member-role" value="user">
 
                         <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 25px; font-size: 0.85rem; color: #475569; text-align: justify;">
                             Akun pengurus akan aktif seketika. Pastikan Anda mencatat dan memberikan kredensial (Email & Sandi) kepada pengurus yang bersangkutan agar mereka bisa login.
@@ -1027,7 +1021,7 @@
             const email = document.getElementById('create-member-email').value;
             const password = document.getElementById('create-member-password').value;
             const name = document.getElementById('create-member-name').value;
-            const role = document.getElementById('create-member-role').value;
+            const role = 'user';
             
             const btn = document.getElementById('btn-submit-create-member');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
